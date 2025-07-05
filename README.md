@@ -54,8 +54,11 @@ This is just a small console based Pokemon battle simulator program. I started t
 
    </summary>
    
-### 7/52025
+### 7/5/2025
 - Redesigned the whole BattleSystem class. Now split up into smaller classes.
+- Moves, Pokemon and their Learnsets now loaded from embedded calls rather than from a text file.
+- Won't bother with listing bug fixes as there may be some fixed but new ones introduced that I haven't quite scrubbed out yet.
+- From what I have tested it is in a fully playable state.
    
 ### 3/1/2025
 - Some bug fixes in MakeEnemySwitch effect
