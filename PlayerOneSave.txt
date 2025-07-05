@@ -1,0 +1,61 @@
+Player Name: Red
+
+Pokemon 1:
+Pikachu
+Level: 100
+EVs: 4 HP  / 0 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Thunderbolt
+- Thunder Wave
+- Body Slam
+- Toxic
+
+Pokemon 2:
+Lapras
+Level: 100
+EVs: 252 HP  / 0 Atk  / 188 Def  / 0 SpA  / 68 SpD  / 0 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Surf
+- Ice Beam
+- Psychic
+- Body Slam
+
+Pokemon 3:
+Snorlax
+Level: 100
+EVs: 252 HP  / 4 Atk  / 252 Def  / 0 SpA  / 0 SpD  / 0 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Rest
+- Earthquake
+- Headbutt
+- Double-Edge
+
+Pokemon 4:
+Venusaur
+Level: 100
+EVs: 4 HP  / 0 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Sleep Powder
+- Body Slam
+- Leech Seed
+- Razor Leaf
+
+Pokemon 5:
+Charizard
+Level: 100
+EVs: 4 HP  / 0 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Flamethrower
+- Body Slam
+- Earthquake
+- Fire Spin
+
+Pokemon 6:
+Blastoise
+Level: 100
+EVs: 252 HP  / 0 Atk  / 0 Def  / 0 SpA  / 252 SpD  / 4 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Surf
+- Ice Beam
+- Body Slam
+- Earthquake

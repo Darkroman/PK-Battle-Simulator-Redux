@@ -1,0 +1,61 @@
+Player Name: Blue
+
+Pokemon 1:
+Pidgeot
+Level: 100
+EVs: 4 HP  / 252 Atk  / 0 Def  / 0 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Quick Attack
+- Fly
+- Hyper Beam
+- Double-Edge
+
+Pokemon 2:
+Alakazam
+Level: 100
+EVs: 4 HP  / 0 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Tri Attack
+- Psychic
+- Reflect
+- Recover
+
+Pokemon 3:
+Rhydon
+Level: 100
+EVs: 252 HP  / 252 Atk  / 0 Def  / 0 SpA  / 0 SpD  / 0 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Earthquake
+- Stomp
+- Body Slam
+- Rock Slide
+
+Pokemon 4:
+Exeggutor
+Level: 100
+EVs: 4 HP  / 252 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 0 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Psychic
+- Toxic
+- Stomp
+- Mega Drain
+
+Pokemon 5:
+Arcanine
+Level: 100
+EVs: 0 HP  / 88 Atk  / 0 Def  / 168 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Bite
+- Body Slam
+- Flamethrower
+- Double Team
+
+Pokemon 6:
+Gyarados
+Level: 100
+EVs: 0 HP  / 0 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Body Slam
+- Surf
+- Hyper Beam
+- Ice Beam
