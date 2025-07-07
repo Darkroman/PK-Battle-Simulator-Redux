@@ -53,6 +53,7 @@ This is just a small console based Pokemon battle simulator program. I started t
 ## UPDATES
 
    </summary>
+   
 ### 7/7/2025
 - Added A.I (only easy difficulty right now)
 - NOTE: When switching player one or two's controller type it will erase the team. Make sure to choose player type before setting up your team. (I'll fix that soon)
