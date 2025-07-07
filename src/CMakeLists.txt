@@ -52,3 +52,16 @@ include_directories(
 )
 
 add_executable(PokemonBattleSimulator ${SOURCES})
+
+
+add_custom_command(TARGET PokemonBattleSimulator POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_SOURCE_DIR}/PlayerOneSave.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/PlayerOneSave.txt
+)
+
+add_custom_command(TARGET PokemonBattleSimulator POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_SOURCE_DIR}/PlayerTwoSave.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/PlayerTwoSave.txt
+)
