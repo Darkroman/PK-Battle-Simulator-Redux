@@ -47,7 +47,7 @@ void EasyAIStrategy::ChooseSwitch(Player& self, BattlePokemon& selfMon)
     }
     else
     {
-        std::cout << "Well this isn't supposed to happen. (EasyAIStrategy.cpp error line 43)\n";
+        //std::cout << "Well this isn't supposed to happen. (EasyAIStrategy.cpp error line 43)\n";
     }
     
 }

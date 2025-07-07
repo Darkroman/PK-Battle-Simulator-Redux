@@ -62,8 +62,8 @@ bool TurnManager::RunBattleLoop()
 
 		std::cout << '\n';
 
-		m_postTurnProcessor.ProcessAllPostTurnEffects();
-		if (winCondition) { break; }
+		m_postTurnProcessor.ProcessAllPostTurnEffects(winCondition);
+		if (winCondition) { continue; }
 
 		m_context.playerOne->SetHasSwitched(false);
 		m_context.playerTwo->SetHasSwitched(false);

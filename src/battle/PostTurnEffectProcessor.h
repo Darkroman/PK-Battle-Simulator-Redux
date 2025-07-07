@@ -12,7 +12,7 @@ class PostTurnEffectProcessor
 public:
     explicit PostTurnEffectProcessor(BattleContext& context, BattleStatusManager& statusManager, WinChecker& winChecker, RandomEngine& rng);
 
-    void ProcessAllPostTurnEffects();
+    void ProcessAllPostTurnEffects(bool&);
 
 private:
     void CheckSeededStatuses();

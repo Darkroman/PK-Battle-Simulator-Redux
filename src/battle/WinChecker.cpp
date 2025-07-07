@@ -69,8 +69,8 @@ bool WinChecker::CheckWinOrSwitch(Player* sourcePlayer, Player* targetPlayer, Ba
 	}
 	else
 	{
-		return true;
+		return winCondition;
 	}
 	
-	return false;
+	return winCondition;
 }
