@@ -1,9 +1,15 @@
+#include "../battle/BattleContext.h"
 #include "Menu.h"
 #include "../data/InputValidation.h"
+#include "../battle/RandomEngine.h"
+#include "../entities/ai strategies/EasyAIStrategy.h"
 
-Menu::Menu(std::vector<Player>& vec_players)
-	: players { &vec_players[0], &vec_players[1]}
+Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage, RandomEngine& rng)
+	: playerStorage(playerStorage), m_rng(rng)
 {
+	players[0] = playerStorage[0].get();
+	players[1] = playerStorage[1].get();
+
 #if !defined NDEBUG
 	SetDefaultPokemon();
 #endif
@@ -711,10 +717,10 @@ void Menu::ChangePlayerOneType()
 		std::cout << "---Change Player One's Controller Type---\n";
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
-		std::cout << "3. Medium A.I.\n";
+		//std::cout << "3. Medium A.I.\n";
 		std::cout << "0. Go Back\n";
 
-		players[0]->PrintType();
+		//players[0]->PrintType();
 
 		std::string input{};
 		std::cout << "Option: ";
@@ -736,28 +742,45 @@ void Menu::ChangePlayerOneType()
 
 		switch (choice)
 		{
-		case 0:
-			exit = true;
-			return;
+			case 0:
+			{
+				exit = true;
+				return;
+			}
 
-		case 1:
-			players[0]->SwitchTypeToHuman();
-			std::cout << "Switched Player One to human.\n\n";
-			break;
+			case 1:
+			{
+				auto newHuman = std::make_unique<HumanPlayer>("Player One");
+				players[0] = newHuman.get();
+				playerStorage[0] = std::move(newHuman);
 
-		case 2:
-			players[0]->SwitchTypeToEasyAI();
-			std::cout << "Switched Player One to Easy A.I.\n\n";
-			break;
+				std::cout << "Switched Player One to Human.\n\n";
+				break;
+			}
 
-		case 3:
-			players[0]->SwitchTypeToMediumAI();
-			std::cout << "Switched Player One to Medium A.I.\n\n";
-			break;
+			case 2:
+			{
+				auto strategy = std::make_unique<EasyAIStrategy>(m_rng);
+				auto* strategyPtr = strategy.get();
+				strategies.push_back(std::move(strategy));
 
-		default:
-			std::cout << "Invalid input!\n\n";
-			break;
+				auto newAI = std::make_unique<AIPlayer>("Player One", *strategyPtr);
+				players[0] = newAI.get();
+				playerStorage[0] = std::move(newAI);
+
+				std::cout << "Switched Player One to Easy A.I.\n\n";
+				break;
+			}
+			/*
+			case 3:
+			{	//players[0]->SwitchTypeToMediumAI();
+				std::cout << "Switched Player One to Medium A.I.\n\n";
+				break;
+			}
+			*/
+			default:
+				std::cout << "Invalid input!\n\n";
+				break;
 		}
 	}
 }
@@ -853,10 +876,10 @@ void Menu::ChangePlayerTwoType()
 		std::cout << "---Change Player Two's Controller Type---\n";
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
-		std::cout << "3. Medium A.I.\n";
+		//std::cout << "3. Medium A.I.\n";
 		std::cout << "0. Go Back\n";
 
-		players[1]->PrintType();
+		//players[1]->PrintType();
 
 		std::string input{};
 		std::cout << "Option: ";
@@ -879,24 +902,41 @@ void Menu::ChangePlayerTwoType()
 		switch (choice)
 		{
 		case 0:
+		{
 			exit = true;
 			return;
+		}
 
 		case 1:
-			players[1]->SwitchTypeToHuman();
-			std::cout << "Switched Player Two to human.\n\n";
+		{
+			auto newHuman = std::make_unique<HumanPlayer>("Player Two");
+			players[1] = newHuman.get();
+			playerStorage[1] = std::move(newHuman);
+
+			std::cout << "Switched Player Two to Human.\n\n";
 			break;
+		}
 
 		case 2:
-			players[1]->SwitchTypeToEasyAI();
+		{
+			auto strategy = std::make_unique<EasyAIStrategy>(m_rng);
+			auto* strategyPtr = strategy.get();
+			strategies.push_back(std::move(strategy));
+
+			auto newAI = std::make_unique<AIPlayer>("Player Two", *strategyPtr);
+			players[1] = newAI.get();
+			playerStorage[1] = std::move(newAI);
+
 			std::cout << "Switched Player Two to Easy A.I.\n\n";
 			break;
-
+		}
+		/*
 		case 3:
-			players[1]->SwitchTypeToMediumAI();
-			std::cout << "Switched Player Two to Medium A.I.\n\n";
+		{	//players[0]->SwitchTypeToMediumAI();
+			std::cout << "Switched Player One to Medium A.I.\n\n";
 			break;
-
+		}
+		*/
 		default:
 			std::cout << "Invalid input!\n\n";
 			break;

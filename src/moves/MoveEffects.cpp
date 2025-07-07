@@ -781,7 +781,7 @@ void MakeEnemySwitch::DoMove(MoveEffectsDependencies& deps)
 			ctx.defendingPokemon->SetSubstituteHP(0);
 		}
 
-		if (ctx.defendingPlayer->IsPlayerOne())
+		if (ctx.defendingPlayer == ctx.playerOne)
 		{
 			// Update player one's current Pokémon to the chosen new one
 			deps.context.playerOneCurrentPokemon = enemyPokemonList.at(randomMod - 1);

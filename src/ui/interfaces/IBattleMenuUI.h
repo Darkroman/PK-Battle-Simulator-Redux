@@ -14,6 +14,7 @@ public:
     virtual void PlayerOneMakeSelection() = 0;
     virtual void PlayerTwoMakeSelection() = 0;
     virtual bool SwitchPokemonOption(Player* currentPlayer, BattlePokemon* currentPokemon) = 0;
+    virtual bool AnnounceWinner() = 0;
 
 protected:
     virtual void MakeASelectionLoop(Player* player, BattlePokemon* currentPokemon) = 0;

@@ -1,4 +1,5 @@
 #pragma once
+
 #include "ui/Menu.h"
 #include "battle/RandomEngine.h"
 #include "battle/BattleContext.h"
@@ -6,6 +7,7 @@
 #include "battle/TurnProcessor.h"
 #include "ui/MoveResultsText.h"
 #include "ui/BattleTextMenu.h"
+#include "entities/ai strategies/EasyAIStrategy.h"
 
 void RunGame()
 {
@@ -18,19 +20,17 @@ void RunGame()
     std::chrono::duration<double> ms = (end - start) * 1000;
 
     std::cout << "Time it took to load database: " << ms.count() << "ms" << "\n\n";
-    
-    std::vector<Player> players{ Player("Player One"), Player("Player Two") };
 
-    Menu menu(players);
-
-    BattleContext context(players);
     RandomEngine rng;
-    BattleTextMenu battleMenu(context);
-    IBattleMenuUI& battleMenuUI = battleMenu;
-    MoveResultsText moveResultsText(context);
-    IMoveResultsUI& moveResultsUI = moveResultsText;
 
-    TurnManager turnManager(context, rng, battleMenu, moveResultsText);
+    EasyAIStrategy easyStrat(rng);
+    IAIStrategy& aiStrat = easyStrat;
+
+    std::vector<std::unique_ptr<Player>> players;
+    players.push_back(std::make_unique<HumanPlayer>("Player One"));
+    players.push_back(std::make_unique<AIPlayer>("Player Two", aiStrat));
+
+    Menu menu(players, rng);
 
     bool exit = false;
     while (exit == false)
@@ -42,12 +42,16 @@ void RunGame()
             return;
         }
 
+        BattleContext context(players);
+        BattleTextMenu battleMenu(context);
+        IBattleMenuUI& battleMenuUI = battleMenu;
+        MoveResultsText moveResultsText(context);
+        IMoveResultsUI& moveResultsUI = moveResultsText;
+
+        TurnManager turnManager(context, rng, battleMenu, moveResultsText);
+
         exit = turnManager.RunBattleLoop();
 
-        exit = turnManager.AnnounceWinner();
-
-        //exit = battle.StartBattle();
-
-        //exit = battle.AnnounceWinner();
+        exit = battleMenu.AnnounceWinner();
     }
 }

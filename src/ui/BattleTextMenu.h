@@ -14,6 +14,7 @@ public:
     void PlayerOneMakeSelection() override;
     void PlayerTwoMakeSelection() override;
     bool SwitchPokemonOption(Player* currentPlayer, BattlePokemon* currentPokemon) override;
+    bool AnnounceWinner() override;
 
 protected:
     void MakeASelectionLoop(Player* player, BattlePokemon* currentPokemon) override;

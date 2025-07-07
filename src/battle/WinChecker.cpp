@@ -3,6 +3,7 @@
 #include "../ui/interfaces/IBattleMenuUI.h"
 #include "BattleContext.h"
 #include "../entities/Player.h"
+#include "../entities/AIPlayer.h"
 #include "../entities/BattlePokemon.h"
 #include <iostream>
 
@@ -42,9 +43,10 @@ bool WinChecker::CheckWinOrSwitch(Player* sourcePlayer, Player* targetPlayer, Ba
 
 	if (!winCondition)
 	{
-		if (targetPlayer->IsAI())
+		if (!targetPlayer->IsHuman())
 		{
-			//AISwitch(targetPlayer, targetPokemon);
+			auto* aiPlayer = static_cast<AIPlayer*>(targetPlayer);
+			aiPlayer->ChooseSwitch(*targetPokemon);
 		}
 		else
 		{

@@ -2,97 +2,87 @@
 
 #include "BattlePokemon.h"
 
+struct BattleContext;
+
 class Player
 {
 public:
+    explicit Player(std::string_view);
 
-    Player(std::string_view);
+    virtual ~Player() = default;
 
-    BattlePokemon* GetBelt(size_t);
-    const std::string& GetPlayerName() const;
-    std::string_view GetPlayerNameView() const;
-    void SetName(std::string_view);
-    void DisplayPlayerPokemon();
-    void DisplayAllPokemon();
-    void IncrementPokemonCount();
-    void DecrementPokemonCount();
-    const int GetPokemonCount() const;
+    virtual const bool IsHuman() const = 0;
 
-    const bool IsFirst() const;
-    void SetFirst(bool);
+    virtual const std::string& GetPlayerName() const;
+    virtual std::string_view GetPlayerNameView() const;
+    virtual void SetName(std::string_view);
 
-    const bool IsPlayerOne() const;
-    void SetPlayerOne(bool);
+    virtual BattlePokemon* GetBelt(size_t);
+    virtual void DisplayPlayerPokemon();
+    virtual void DisplayAllPokemon();
 
-    const bool IsAI() const;
-    const bool IsAIEasy() const;
-    const bool IsAIMedium() const;
+    virtual void IncrementPokemonCount();
+    virtual void DecrementPokemonCount();
+    virtual const int GetPokemonCount() const;
 
-    void SwitchTypeToHuman();
-    void SwitchTypeToAI();
-    void SwitchTypeToEasyAI();
-    void SwitchTypeToMediumAI();
-    void PrintType() const;
+    virtual const int GetFaintedCount() const;
+    virtual void IncrementFaintedCount();
+    virtual void DecrementFaintedCount();
 
-    const int GetFaintedCount() const;
-    void IncrementFaintedCount();
-    void DecrementFaintedCount();
+    virtual const bool IsFirst() const;
+    virtual void SetFirst(bool);
 
-    const bool CanSwitch() const;
-    void SetCanSwitch(bool);
+    virtual const bool CanSwitch() const;
+    virtual void SetCanSwitch(bool);
 
-    const bool IsSwitching() const;
-    void SetIsSwitching(bool);
+    virtual const bool IsSwitching() const;
+    virtual void SetIsSwitching(bool);
 
-    const bool HasSwitched() const;
-    void SetHasSwitched(bool);
+    virtual const bool HasSwitched() const;
+    virtual void SetHasSwitched(bool);
 
-    void SetPokemonToSwitchTo(BattlePokemon*);
-    BattlePokemon* GetPokemonToSwitchTo();
+    virtual void SetPokemonToSwitchTo(BattlePokemon*);
+    virtual BattlePokemon* GetPokemonToSwitchTo();
 
-    void SetWinCondition(bool);
+    virtual void SetWinCondition(bool);
 
-    const bool HasWon() const;
+    virtual const bool HasWon() const;
 
-    void SetForfeit(bool);
-    const bool HasForfeited() const;
+    virtual void SetForfeit(bool);
+    virtual const bool HasForfeited() const;
 
-    void SetMist(bool);
-    const bool HasMist() const;
-    void IncrementMistCounter();
-    const int GetMistCounter() const;
-    void ResetMistCounter();
+    virtual void SetMist(bool);
+    virtual const bool HasMist() const;
+    virtual void IncrementMistCounter();
+    virtual const int GetMistCounter() const;
+    virtual void ResetMistCounter();
 
-    void SetLightScreen(bool);
-    const bool HasLightScreen() const;
-    void IncrementLightScreenCounter();
-    const int GetLightScreenCounter() const;
-    void ResetLightScreenCounter();
+    virtual void SetLightScreen(bool);
+    virtual const bool HasLightScreen() const;
+    virtual void IncrementLightScreenCounter();
+    virtual const int GetLightScreenCounter() const;
+    virtual void ResetLightScreenCounter();
 
-    void SetReflect(bool);
-    const bool HasReflect() const;
-    void IncrementReflectCounter();
-    const int GetReflectCounter() const;
-    void ResetReflectCounter();
+    virtual void SetReflect(bool);
+    virtual const bool HasReflect() const;
+    virtual void IncrementReflectCounter();
+    virtual const int GetReflectCounter() const;
+    virtual void ResetReflectCounter();
 
-    void ResetValues();
+    virtual void ResetValues();
 
-private:
+protected:
     std::array<BattlePokemon, 6> belt;
 
     BattlePokemon* pokemonToSwitchTo{ nullptr };
-    
+
     std::string m_name;
 
     int m_PokemonCount{ 0 };
+    int m_faintedPokemon{ 0 };
 
     bool b_isFirst = false;
-    bool b_isPlayerOne = false;
 
-    bool b_isAI = false;
-    bool b_isEasyAI = false;
-    bool b_isMediumAI = false;
-    
     bool b_canSwitch{ true };
     bool b_isSwitching{ false };
     bool b_hasSwitched{ false };
@@ -106,6 +96,4 @@ private:
     int m_mistCounter{};
     int m_lightscreenCounter{};
     int m_reflectCounter{};
-
-    int m_faintedPokemon{ 0 };
 };

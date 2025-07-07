@@ -1,6 +1,7 @@
 #include "BattleTextMenu.h"
 #include "../battle/BattleContext.h"
 #include "../data/InputValidation.h"
+#include "../entities/AIPlayer.h"
 #include <iostream>
 #include <limits>
 #include <string>
@@ -33,9 +34,10 @@ void BattleTextMenu::PlayerOneMakeSelection()
         return;
     }
 
-    if (m_context.playerOne->IsAI())
+    if (!m_context.playerOne->IsHuman())
     {
-        //AISelection(m_context.playerOne, m_context.playerTwo, m_context.playerOneCurrentPokemon, m_context.playerTwoCurrentPokemon);
+        AIPlayer* aiPlayer = static_cast<AIPlayer*>(m_context.playerOne);
+        aiPlayer->ChooseAction(m_context.playerOneCurrentPokemon, m_context);
     }
     else
     {
@@ -58,9 +60,10 @@ void BattleTextMenu::PlayerTwoMakeSelection()
         return;
     }
 
-    if (m_context.playerTwo->IsAI())
+    if (!m_context.playerTwo->IsHuman())
     {
-        //AISelection(m_context.playerTwo, m_context.playerOne, m_context.playerTwoCurrentPokemon, m_context.playerOneCurrentPokemon);
+        AIPlayer* aiPlayer = static_cast<AIPlayer*>(m_context.playerTwo);
+        aiPlayer->ChooseAction(m_context.playerTwoCurrentPokemon, m_context);
     }
     else
     {
@@ -300,5 +303,33 @@ bool BattleTextMenu::CheckPPCountForStruggle(BattlePokemon* pokemon)
     {
         return true;
     }
+    return false;
+}
+
+bool BattleTextMenu::AnnounceWinner()
+{
+    if (m_context.playerOne->HasWon() && m_context.playerTwo->HasWon())
+    {
+        std::cout << "Both players Pokemon have fainted in the same turn!\n";
+        std::cout << "It is a tie game!\n\n";
+        m_context.playerOne->SetWinCondition(false);
+        m_context.playerTwo->SetWinCondition(false);
+        return false;
+    }
+
+    if (m_context.playerOne->HasWon())
+    {
+        std::cout << m_context.playerOne->GetPlayerNameView() << " wins!\n\n";
+        m_context.playerOne->SetWinCondition(false);
+        return false;
+    }
+
+    if (m_context.playerTwo->HasWon())
+    {
+        std::cout << m_context.playerTwo->GetPlayerNameView() << " wins!\n\n";
+        m_context.playerTwo->SetWinCondition(false);
+        return false;
+    }
+
     return false;
 }

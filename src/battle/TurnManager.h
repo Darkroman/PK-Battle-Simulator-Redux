@@ -17,7 +17,6 @@ public:
 	TurnManager(BattleContext&, RandomEngine&, IBattleMenuUI&, IMoveResultsUI&);
 
 	bool RunBattleLoop();
-	bool AnnounceWinner();
 	void ResetValues();
 
 private:

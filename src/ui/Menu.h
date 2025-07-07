@@ -1,18 +1,26 @@
 #pragma once
 
 #include "../entities/Player.h"
+#include "../entities/HumanPlayer.h"
+#include "../entities/AIPlayer.h"
 #include "../save/SaveParty.h"
 #include "../save/LoadParty.h"
 #include "../data/InputValidation.h"
 
+class RandomEngine;
+struct BattleContext;
+
 class Menu
 {
 private:
+	std::vector<std::unique_ptr<Player>>& playerStorage;
 	std::array<Player*, 2> players;
+	RandomEngine& m_rng;
+	std::vector<std::unique_ptr<IAIStrategy>> strategies;
 
 public:
 	Menu() = delete;
-	explicit Menu(std::vector<Player>&);
+	explicit Menu(std::vector<std::unique_ptr<Player>>&, RandomEngine&);
 
 	void SetPlayerPokemon(Player*, size_t, size_t);
 	void SetPlayerPokemon(Player*, size_t, std::string_view);

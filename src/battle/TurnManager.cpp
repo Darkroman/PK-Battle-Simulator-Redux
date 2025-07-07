@@ -77,33 +77,7 @@ bool TurnManager::RunBattleLoop()
 	}
 
 	turnCount = 0;
-	return false;
-}
-
-bool TurnManager::AnnounceWinner()
-{
-	if (m_context.playerOne->HasWon() && m_context.playerTwo->HasWon())
-	{
-		std::cout << "Both players Pokemon have fainted in the same turn!\n";
-		std::cout << "It is a tie game!\n\n";
-		ResetValues();
-		return false;
-	}
-
-	if (m_context.playerOne->HasWon())
-	{
-		std::cout << m_context.playerOne->GetPlayerNameView() << " wins!\n\n";
-		ResetValues();
-		return false;
-	}
-
-	if (m_context.playerTwo->HasWon())
-	{
-		std::cout << m_context.playerTwo->GetPlayerNameView() << " wins!\n\n";
-		ResetValues();
-		return false;
-	}
-
+	ResetValues();
 	return false;
 }
 

@@ -1,8 +1,7 @@
 #include "Player.h"
 
-Player::Player(std::string_view name)
-    : m_name{ name }
-{}
+Player::Player(std::string_view name) :
+    m_name(name) {}
 
 BattlePokemon* Player::GetBelt(size_t beltslot)
 {
@@ -67,85 +66,6 @@ const int Player::GetPokemonCount() const
     return m_PokemonCount;
 }
 
-const bool Player::IsFirst() const
-{
-    return b_isFirst;
-}
-
-void Player::SetFirst(bool first)
-{
-    b_isFirst = first;
-}
-
-const bool Player::IsPlayerOne() const
-{
-    return b_isPlayerOne;
-}
-
-void Player::SetPlayerOne(bool playerOne)
-{
-    b_isPlayerOne = playerOne;
-}
-
-const bool Player::IsAI() const
-{
-    return b_isAI;
-}
-
-const bool Player::IsAIEasy() const
-{
-    return b_isEasyAI;
-}
-
-const bool Player::IsAIMedium() const
-{
-    return b_isMediumAI;
-}
-
-void Player::SwitchTypeToHuman()
-{
-    b_isAI = false;
-}
-
-void Player::SwitchTypeToAI()
-{
-    b_isAI = true;
-}
-
-void Player::SwitchTypeToEasyAI()
-{
-    b_isAI = true;
-    b_isMediumAI = false;
-    b_isEasyAI = true;
-}
-
-void Player::SwitchTypeToMediumAI()
-{
-    b_isAI = true;
-    b_isMediumAI = true;
-    b_isEasyAI = false;
-}
-
-void Player::PrintType() const
-{
-    if (!b_isAI)
-    {
-        std::cout << this->GetPlayerNameView() << " is a human player.\n";
-    }
-    else
-    {
-        if (b_isEasyAI)
-        {
-            std::cout << this->GetPlayerNameView() << " is an easy A.I.\n";
-        }
-        else if (b_isMediumAI)
-        {
-            std::cout << this->GetPlayerNameView() << " is a medium A.I.\n";
-        }
-    }
-        
-}
-
 const int Player::GetFaintedCount() const
 {
     return m_faintedPokemon;
@@ -159,6 +79,16 @@ void Player::IncrementFaintedCount()
 void Player::DecrementFaintedCount()
 {
     --m_faintedPokemon;
+}
+
+const bool Player::IsFirst() const
+{
+    return b_isFirst;
+}
+
+void Player::SetFirst(bool first)
+{
+    b_isFirst = first;
 }
 
 const bool Player::CanSwitch() const
@@ -300,7 +230,7 @@ void Player::ResetValues()
 {
     b_canSwitch = true;
     b_isSwitching = false;
-    b_hasWon = false;
+    //b_hasWon = false;
     b_hasForfeited = false;
     b_hasMist = false;
     b_hasLightScreen = false;
