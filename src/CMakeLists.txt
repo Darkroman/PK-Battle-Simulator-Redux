@@ -14,8 +14,13 @@ set(SOURCES
     data/StringToTypes.cpp
 
     # entities
+    entities/AIPlayer.cpp
     entities/BattlePokemon.cpp
+    entities/HumanPlayer.cpp
     entities/Player.cpp
+
+    # ai strategies
+    "entities/ai strategies/EasyAIStrategy.cpp"
 
     # battle
     battle/BattleCalculations.cpp
@@ -44,6 +49,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/data
     ${CMAKE_CURRENT_SOURCE_DIR}/entities
+    "${CMAKE_CURRENT_SOURCE_DIR}/entities/ai strategies"
     ${CMAKE_CURRENT_SOURCE_DIR}/battle
     ${CMAKE_CURRENT_SOURCE_DIR}/moves
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
