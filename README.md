@@ -31,7 +31,7 @@ This is just a small console based Pokemon battle simulator program. I started t
 - IVs, and EVs
 - Physical/Special move split from gen 4 onward implemented.
 - All generation 1 volatile and non-volatile status conditions working as they do in later generations.
-- No A.I in the redux (yet). There is a simple one in my OG repo if you wanna try that one.
+- A.I (only an easy mode right now)
 - There are however no natures, held items, or abilities. Whether I might add them in the future is up in the air.
 </details>
 
