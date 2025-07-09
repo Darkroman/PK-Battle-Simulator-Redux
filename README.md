@@ -53,6 +53,10 @@ This is just a small console based Pokemon battle simulator program. I started t
 ## UPDATES
 
    </summary>
+
+### 7/9/2025
+- Fixed the erasing Pokemon team on switching player controller type issue.
+- Some more software architectural changes and code cleanup. Moved most console text output to separate classes.
    
 ### 7/7/2025
 - Added A.I (only easy difficulty right now)
