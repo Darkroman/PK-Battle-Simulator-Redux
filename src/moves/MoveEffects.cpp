@@ -6,6 +6,7 @@
 #include "../battle/TurnProcessor.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../ui/interfaces/IBattleMenuUI.h"
+#include "../ui/interfaces/IStatusEffectUI.h"
 #include "../battle/RandomEngine.h"
 #include <deque>
 
@@ -47,20 +48,21 @@ void IMoveEffects::InflictNVStatus(Status status, int chance, MoveEffectsDepende
 		return;
 	}
 
-	std::string statusMessage = ctx.defendingPlayer->GetPlayerName() + "'s " + ctx.defendingPokemon->GetName() + " is ";
+	std::string statusMessage = ctx.defendingPlayer->GetPlayerName() + "'s " + ctx.defendingPokemon->GetName() + " ";
 
 	if (status == Status::Burned)
-		statusMessage += "burned!";
+		statusMessage += "was burned!";
 	else if (status == Status::Frozen)
-		statusMessage += "frozen solid!";
+		statusMessage += "was frozen solid!";
 	else if (status == Status::Paralyzed)
-		statusMessage += "paralyzed! It may be unable to move!";
+		statusMessage += "is paralyzed! It may be unable to move!";
 	else if (status == Status::Poisoned)
-		statusMessage += "poisoned!";
+		statusMessage += "was poisoned!";
 	else if (status == Status::Badly_Poisoned)
-		statusMessage += "badly poisoned!";
-	else if (status == Status::Sleeping)
+		statusMessage += "was badly poisoned!";
+	else if (status == Status::Sleeping && ctx.defendingPokemon->GetStatus() == Status::Normal)
 		statusMessage += "fell asleep!";
+
 
 	ctx.defendingPokemon->ChangeStatus(status);
 	if (status == Status::Badly_Poisoned)
@@ -76,7 +78,7 @@ void IMoveEffects::InflictNVStatus(Status status, int chance, MoveEffectsDepende
 		ctx.defendingPokemon->ResetSleepCounter();
 	}
 
-	std::cout << statusMessage << '\n';
+	deps.statusUI.DisplayNVStatusMsg(statusMessage);
 }
 
 std::unique_ptr<IMoveEffects> MoveEffectsFactory::Call(MoveEffect ID)
@@ -371,8 +373,6 @@ std::unique_ptr<IMoveEffects> MoveEffectsFactory::Call(MoveEffect ID)
 
 void Noop::DoMove(MoveEffectsDependencies& deps)
 {
-	std::cout << "This isn't implemented yet!\n\n";
-
 	auto& ctx = deps.context;
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
@@ -485,7 +485,7 @@ void MultiAttack::DoMove(MoveEffectsDependencies& deps)
 			--turnCount;
 		}
 
-		std::cout << ctx.defendingPokemon->GetNameView() << " was hit " << timesHit << " times!\n";
+		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
 	}
 
 	else
@@ -669,7 +669,7 @@ void RazorWind::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " made a whirlwind!\n";
+		deps.resultsUI.DisplayRazorWindChargeMsg();
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 	}
@@ -685,17 +685,17 @@ void AttackUp2::DoMove(MoveEffectsDependencies& deps)
 
 	if (attackStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " can't raise its attack any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("attack");
 	}
 	else if (attackStage == 5)
 	{
 		ctx.attackingPokemon->SetAttackStage(6);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s attack rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("attack");
 	}
 	else // attackStage < 5
 	{
 		ctx.attackingPokemon->SetAttackStage(attackStage + 2);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s attack rose sharply!\n";
+		deps.statusUI.DisplayStatRaised2Msg("attack");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -792,7 +792,7 @@ void MakeEnemySwitch::DoMove(MoveEffectsDependencies& deps)
 			deps.context.playerTwoCurrentPokemon = enemyPokemonList.at(randomMod - 1);
 		}
 
-		std::cout << "The opposing " << enemyPokemonList.at(randomMod - 1)->GetNameView() << " was dragged out!\n";
+		deps.resultsUI.DisplayEnemySwitchMsg(*enemyPokemonList.at(randomMod - 1));
 	}
 	else
 	{
@@ -843,7 +843,8 @@ void Fly::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPokemon->GetNameView() << " flew up high in the sky!\n";
+		deps.resultsUI.DisplayFlyChargeMsg();
+
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPokemon->SetSemiInvulnerableFly(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
@@ -976,7 +977,7 @@ void DoubleHit::DoMove(MoveEffectsDependencies& deps)
 			--turnCount;
 		}
 
-		std::cout << ctx.defendingPokemon->GetNameView() << " was hit " << timesHit << " times!\n";
+		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
 	}
 	else
 	{
@@ -1014,7 +1015,7 @@ void JumpKick::DoMove(MoveEffectsDependencies& deps)
 		double crashDamage = std::floor(ctx.attackingPokemon->GetMaxHP() / 2);
 		ctx.attackingPokemon->DamageCurrentHP(static_cast<int>(crashDamage));
 
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " kept going and crashed!\n";
+		deps.resultsUI.DisplayJumpKickCrashMsg();
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -1071,7 +1072,7 @@ void AccuracyDown::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is protected by the mist!\n";
+		deps.statusUI.DisplayProtectedByMistMsg();
 
 		ctx.currentMove->m_currentPP -= 1;
 
@@ -1097,7 +1098,7 @@ void AccuracyDown::DoMove(MoveEffectsDependencies& deps)
 		}
 		else
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s accuracy won't go any lower!\n";
+			deps.statusUI.DisplayStatLoweredFailMsg("accuracy");
 		}
 	}
 	else
@@ -1134,23 +1135,7 @@ void BodySlam::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayCritTextDialog();
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-
-		if (ctx.defendingPokemon->GetStatus() == Status::Normal &&
-			ctx.defendingPokemon->GetTypeOneEnum() != PokemonType::Electric &&
-			ctx.defendingPokemon->GetTypeTwoEnum() != PokemonType::Electric &&
-			!ctx.defendingPokemon->HasSubstitute() &&
-			ctx.defendingPokemon->GetCurrentHP() != 0)
-		{
-			std::uniform_int_distribution<int> rngDist(1, 101);
-			int randomNumber = rngDist(deps.rng.GetGenerator());
-
-			if (randomNumber <= 30 && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No)
-			{
-				ctx.defendingPokemon->ChangeStatus(Status::Paralyzed);
-				std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is paralyzed, so it may be unable to move!\n";
-			}
-		}
-
+		InflictNVStatus(Status::Paralyzed, 30, deps);
 		deps.statusManager.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 	}
 	else
@@ -1192,7 +1177,7 @@ void RecoilQuarter::DoMove(MoveEffectsDependencies& deps)
 
 		if (ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No)
 		{
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " was damaged by the recoil!\n";
+			deps.resultsUI.DisplayRecoilMsg();
 			deps.statusManager.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 		}
 	}
@@ -1215,7 +1200,7 @@ void RecoilQuarter::DoMove(MoveEffectsDependencies& deps)
 
 		if (ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No)
 		{
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " was damaged by the recoil!\n";
+			deps.resultsUI.DisplayRecoilMsg();
 			deps.statusManager.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 		}
 	}
@@ -1266,7 +1251,7 @@ void Thrash::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s Thrash is disabled!\n";
+		deps.statusUI.DisplayThrashDisabledMsg();
 	}
 
 	ctx.attackingPokemon->IncrementThrashCounter();
@@ -1316,7 +1301,7 @@ void RecoilThird::DoMove(MoveEffectsDependencies& deps)
 
 		if (ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No)
 		{
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " was damaged by the recoil!\n";
+			deps.resultsUI.DisplayRecoilMsg();
 
 			deps.statusManager.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 		}
@@ -1339,7 +1324,7 @@ void RecoilThird::DoMove(MoveEffectsDependencies& deps)
 
 		if (ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No)
 		{
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " was damaged by the recoil!\n";
+			deps.resultsUI.DisplayRecoilMsg();
 
 			deps.statusManager.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 		}
@@ -1364,7 +1349,7 @@ void DefenseDown::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is protected by the mist!\n";
+		deps.statusUI.DisplayProtectedByMistMsg();
 
 		ctx.currentMove->m_currentPP -= 1;
 
@@ -1386,11 +1371,11 @@ void DefenseDown::DoMove(MoveEffectsDependencies& deps)
 			int lowerDefense{ ctx.defendingPokemon->GetDefenseStage() - 1 };
 			ctx.defendingPokemon->SetDefenseStage(lowerDefense);
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s defense fell!\n";
+			deps.statusUI.DisplayStatLowered1Msg("defense");
 		}
 		else
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s defense won't go any lower!\n";
+			deps.statusUI.DisplayStatLoweredFailMsg("defense");
 		}
 	}
 	else
@@ -1467,7 +1452,7 @@ void Twineedle::DoMove(MoveEffectsDependencies& deps)
 			--turnCount;
 		}
 
-		std::cout << ctx.defendingPokemon->GetNameView() << " was hit " << timesHit << " times!\n";
+		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
 	}
 	else
 	{
@@ -1491,7 +1476,7 @@ void AttackDown::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.flags.hit && ctx.defendingPlayer->HasMist())
 	{
-		std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is protected by the mist!\n";
+		deps.statusUI.DisplayProtectedByMistMsg();
 
 		ctx.currentMove->m_currentPP -= 1;
 
@@ -1512,11 +1497,11 @@ void AttackDown::DoMove(MoveEffectsDependencies& deps)
 			int lowered = ctx.defendingPokemon->GetAttackStage() - 1;
 			ctx.defendingPokemon->SetAttackStage(lowered);
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s attack fell!\n";
+			deps.statusUI.DisplayStatLowered1Msg("attack");
 		}
 		else
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s attack won't go any lower!\n";
+			deps.statusUI.DisplayStatLoweredFailMsg("attack");
 		}
 	}
 	else
@@ -1543,7 +1528,7 @@ void BypassSubSleep::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetStatus() == Status::Normal)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " fell asleep!\n";
+			deps.statusUI.DisplayFellAsleepMsg();
 
 			ctx.defendingPokemon->ChangeStatus(Status::Sleeping);
 
@@ -1554,7 +1539,7 @@ void BypassSubSleep::DoMove(MoveEffectsDependencies& deps)
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already asleep!\n";
+			deps.statusUI.DisplayAlreadyAsleepMsg();
 		}
 		else
 		{
@@ -1585,7 +1570,7 @@ void Confuse::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (!ctx.defendingPokemon->IsConfused() && ctx.currentMove->mp_move->CanBypassSubstitute())
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " became confused!\n";
+			deps.statusUI.DisplayBecameConfuseMsg();
 
 			ctx.defendingPokemon->SetConfusedStatus(true);
 
@@ -1651,7 +1636,6 @@ void SonicBoom::DoMove(MoveEffectsDependencies& deps)
 			ctx.defendingPokemon->DamageCurrentHP(static_cast<int>(sonicBoomDamage));
 		}
 
-		std::cout << sonicBoomDamage << " damage inflicted.\n";
 	}
 	else
 	{
@@ -1692,8 +1676,7 @@ void Disable::DoMove(MoveEffectsDependencies& deps)
 			ctx.defendingPokemon->SetDisabledStatus(true);
 			ctx.defendingPokemon->ResetDisabledCounter();
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView()
-				<< "'s " << ctx.defendingPokemon->GetLastUsedMove()->mp_move->GetName() << " was disabled!\n";
+			deps.statusUI.DisplayMoveDisabledMsg();
 		}
 	}
 	else
@@ -1723,7 +1706,7 @@ void SpecialDefenseDownHit::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> rngDist(1, 101);
+		std::uniform_int_distribution<int> rngDist(1, 100);
 		int randomNumber{ rngDist(deps.rng.GetGenerator()) };
 
 		if (randomNumber <= 10 &&
@@ -1736,9 +1719,7 @@ void SpecialDefenseDownHit::DoMove(MoveEffectsDependencies& deps)
 				int lowerSpecialDefense = ctx.defendingPokemon->GetSpecialDefenseStage() - 1;
 				ctx.defendingPokemon->SetSpecialDefenseStage(lowerSpecialDefense);
 
-				std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s "
-					<< ctx.defendingPokemon->GetNameView()
-					<< "'s special defense fell!\n";
+				deps.statusUI.DisplayStatLowered1Msg("special defense");
 			}
 		}
 
@@ -1764,7 +1745,7 @@ void Mist::DoMove(MoveEffectsDependencies& deps)
 
 	if (!ctx.attackingPlayer->HasMist())
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s team became shrouded in mist!\n";
+		deps.statusUI.DisplayMistMsg();
 		ctx.attackingPlayer->SetMist(true);
 	}
 	else
@@ -1801,7 +1782,7 @@ void ConfuseHit::DoMove(MoveEffectsDependencies& deps)
 
 			if (randomNumber <= 10 && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 			{
-				std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " became confused!\n";
+				deps.statusUI.DisplayBecameConfuseMsg();
 
 				ctx.defendingPokemon->SetConfusedStatus(true);
 
@@ -1851,7 +1832,7 @@ void SpeedDownHit::DoMove(MoveEffectsDependencies& deps)
 				int lowerSpeed{ ctx.defendingPokemon->GetSpeedStage() - 1 };
 				ctx.defendingPokemon->SetSpeedStage(lowerSpeed);
 
-				std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s speed fell!\n";
+				deps.statusUI.DisplayStatLowered1Msg("speed");
 			}
 		}
 		deps.statusManager.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1893,7 +1874,7 @@ void AttackDownHit::DoMove(MoveEffectsDependencies& deps)
 				int lowerAttack{ ctx.defendingPokemon->GetAttackStage() - 1 };
 				ctx.defendingPokemon->SetAttackStage(lowerAttack);
 
-				std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s attack fell!\n";
+				deps.statusUI.DisplayStatLowered1Msg("attack");
 			}
 		}
 		deps.statusManager.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1946,7 +1927,7 @@ void RechargeAttack::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " must recharge!\n";
+		deps.resultsUI.DisplayRechargeMsg();
 		ctx.attackingPokemon->SetRecharging(false);
 		ctx.attackingPlayer->SetCanSwitch(true);
 	}
@@ -2032,7 +2013,6 @@ void Counter::DoMove(MoveEffectsDependencies& deps)
 				ctx.defendingPokemon->DamageCurrentHP(static_cast<int>(counterDamage));
 			}
 
-			std::cout << counterDamage << " damage inflicted.\n";
 		}
 	}
 	else
@@ -2088,7 +2068,6 @@ void SeismicToss::DoMove(MoveEffectsDependencies& deps)
 			ctx.defendingPokemon->DamageCurrentHP(static_cast<int>(seismicTossDamage));
 		}
 
-		std::cout << seismicTossDamage << " damage inflicted.\n";
 	}
 	else
 	{
@@ -2142,7 +2121,7 @@ void Leech::DoMove(MoveEffectsDependencies& deps)
 
 		ctx.attackingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
 
-		std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " had its energy drained!\n";
+		deps.resultsUI.DisplayEnergyDrainedMsg();
 	}
 	else
 	{
@@ -2168,7 +2147,7 @@ void LeechSeed::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetTypeOneEnum() == PokemonType::Grass || ctx.defendingPokemon->GetTypeTwoEnum() == PokemonType::Grass)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << '\n';
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->IsSeeded() || ctx.defendingPokemon->HasSubstitute())
 		{
@@ -2178,7 +2157,7 @@ void LeechSeed::DoMove(MoveEffectsDependencies& deps)
 		{
 			ctx.defendingPokemon->SetSeededStatus(true);
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " was seeded!\n";
+			deps.statusUI.DisplaySeededMsg();
 		}
 	}
 	else
@@ -2204,24 +2183,24 @@ void Growth::DoMove(MoveEffectsDependencies& deps)
 
 	if (attackStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " can't raise its attack any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("attack");
 	}
 	else
 	{
 		++attackStage;
 		ctx.attackingPokemon->SetAttackStage(attackStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s attack rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("attack");
 	}
 
 	if (specialAttackStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " can't raise its special attack any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("special attack");
 	}
 	else
 	{
 		++specialAttackStage;
 		ctx.attackingPokemon->SetSpecialAttackStage(specialAttackStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s special attack rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("special attack");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -2260,7 +2239,7 @@ void SolarBeam::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " absorbed light!\n";
+		deps.resultsUI.DisplaySolarBeamChargeMsg();
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 		ctx.currentMove->m_currentPP -= 1;
@@ -2283,15 +2262,15 @@ void PoisonPowder::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetStatus() != Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Poisoned)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already poisoned!\n";
+			deps.statusUI.DisplayAlreadyPoisonedMsg();
 		}
 		else if ((ctx.defendingPokemon->GetStatus() != Status::Poisoned && ctx.defendingPokemon->GetStatus() != Status::Normal) || ctx.defendingPokemon->HasSubstitute())
 		{
@@ -2329,15 +2308,15 @@ void StunSpore::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetStatus() != Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Paralyzed)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already paralyzed!\n";
+			deps.statusUI.DisplayAlreadyParalyzedMsg();
 		}
 		else if ((ctx.defendingPokemon->GetStatus() != Status::Paralyzed && ctx.defendingPokemon->GetStatus() != Status::Normal) || ctx.defendingPokemon->HasSubstitute())
 		{
@@ -2374,15 +2353,15 @@ void SleepPowder::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetStatus() != Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already asleep!\n";
+			deps.statusUI.DisplayAlreadyAsleepMsg();
 		}
 		else if ((ctx.defendingPokemon->GetStatus() != Status::Sleeping && ctx.defendingPokemon->GetStatus() != Status::Normal) || ctx.defendingPokemon->HasSubstitute())
 		{
@@ -2415,7 +2394,7 @@ void SpeedDown2::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is protected by the mist!\n";
+		deps.statusUI.DisplayProtectedByMistMsg();
 
 		ctx.currentMove->m_currentPP -= 1;
 
@@ -2437,18 +2416,18 @@ void SpeedDown2::DoMove(MoveEffectsDependencies& deps)
 			int lowerSpeed{ ctx.defendingPokemon->GetSpeedStage() - 1 };
 			ctx.defendingPokemon->SetSpeedStage(lowerSpeed);
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s speed fell!\n";
+			deps.statusUI.DisplayStatLowered1Msg("speed");
 		}
 		else if (ctx.defendingPokemon->GetSpeedStage() > -5)
 		{
 			int lowerSpeed{ ctx.defendingPokemon->GetSpeedStage() - 2 };
 			ctx.defendingPokemon->SetSpeedStage(lowerSpeed);
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s speed fell harshly!\n";
+			deps.statusUI.DisplayStatLowered2Msg("speed");
 		}
 		else if (ctx.defendingPokemon->GetSpeedStage() < -5)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "'s speed won't go any lower!\n";
+			deps.statusUI.DisplayStatLoweredFailMsg("speed");
 		}
 	}
 	else
@@ -2502,7 +2481,6 @@ void DragonRage::DoMove(MoveEffectsDependencies& deps)
 			ctx.defendingPokemon->DamageCurrentHP(dragonRageDamage);
 		}
 
-		std::cout << dragonRageDamage << " damage inflicted.\n";
 	}
 	else
 	{
@@ -2545,15 +2523,15 @@ void Paralyze::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetStatus() != Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Normal && isImmune)
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Paralyzed)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already paralyzed!\n";
+			deps.statusUI.DisplayAlreadyParalyzedMsg();
 		}
 		else if ((ctx.defendingPokemon->GetStatus() != Status::Paralyzed && ctx.defendingPokemon->GetStatus() != Status::Normal) || ctx.defendingPokemon->HasSubstitute())
 		{
@@ -2668,7 +2646,7 @@ void Dig::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPokemon->GetNameView() << " burrowed its way under the ground!\n";
+		deps.resultsUI.DisplayDigChargeMsg();
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPokemon->SetSemiInvulnerableDig(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
@@ -2692,11 +2670,11 @@ void Toxic::DoMove(MoveEffectsDependencies& deps)
 		if ((ctx.defendingPokemon->GetStatus() != Status::Normal && isImmune) ||
 			(ctx.defendingPokemon->GetStatus() == Status::Normal && isImmune))
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Poisoned)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already poisoned!\n";
+			deps.statusUI.DisplayAlreadyPoisonedMsg();
 		}
 		else if ((ctx.defendingPokemon->GetStatus() != Status::Poisoned && ctx.defendingPokemon->GetStatus() != Status::Normal) || ctx.defendingPokemon->HasSubstitute())
 		{
@@ -2731,7 +2709,7 @@ void SleepMove::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already asleep!\n";
+			deps.statusUI.DisplayAlreadyAsleepMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Normal && !ctx.defendingPokemon->HasSubstitute())
 		{
@@ -2768,13 +2746,13 @@ void AttackUp::DoMove(MoveEffectsDependencies& deps)
 
 	if (attackStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " can't raise its attack any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("attack");
 	}
 	else
 	{
 		++attackStage;
 		ctx.attackingPokemon->SetAttackStage(attackStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s attack rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("attack");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -2792,19 +2770,19 @@ void SpeedUp2::DoMove(MoveEffectsDependencies& deps)
 
 	if (speedStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " can't raise its speed any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("speed");
 	}
 	else if (speedStage == 5)
 	{
 		++speedStage;
 		ctx.attackingPokemon->SetSpeedStage(speedStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s speed rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("speed");
 	}
 	else if (speedStage < 5)
 	{
 		speedStage += 2;
 		ctx.attackingPokemon->SetSpeedStage(speedStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s speed rose sharply!\n";
+		deps.statusUI.DisplayStatRaised2Msg("speed");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -2905,7 +2883,6 @@ void NightShade::DoMove(MoveEffectsDependencies& deps)
 			ctx.defendingPokemon->DamageCurrentHP(nightShadeDamage);
 		}
 
-		std::cout << nightShadeDamage << " damage inflicted.\n";
 	}
 	else
 	{
@@ -2952,8 +2929,7 @@ void Mimic::DoMove(MoveEffectsDependencies& deps)
 	ctx.attackingPokemon->SetUsedMimic(true);
 	ctx.attackingPokemon->SetMimicPP(ctx.currentMove->m_currentPP);
 
-	std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-		<< " learned " << ctx.defendingPokemon->GetLastUsedMove()->mp_move->GetName() << "!\n";
+	deps.statusUI.DisplayLearnedMimicMoveMsg();
 
 	ctx.currentMove->mp_move = Database::GetInstance().GetPointerToMovedexNumber(
 		ctx.defendingPokemon->GetLastUsedMove()->mp_move->GetMoveIndex() - 1);
@@ -2972,8 +2948,7 @@ void DefenseDown2::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView()
-			<< " is protected by the mist!\n";
+		deps.statusUI.DisplayProtectedByMistMsg();
 
 		ctx.currentMove->m_currentPP -= 1;
 
@@ -2988,24 +2963,21 @@ void DefenseDown2::DoMove(MoveEffectsDependencies& deps)
 	{
 		if (ctx.defendingPokemon->GetDefenseStage() <= -6)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView()
-				<< "'s defense won't go any lower!\n";
+			deps.statusUI.DisplayStatLoweredFailMsg("defense");
 		}
 		else if (ctx.defendingPokemon->GetDefenseStage() == -5)
 		{
 			int lowerDefense = ctx.defendingPokemon->GetDefenseStage() - 1;
 			ctx.defendingPokemon->SetDefenseStage(lowerDefense);
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView()
-				<< "'s defense fell!\n";
+			deps.statusUI.DisplayStatLowered1Msg("defense");
 		}
 		else if (ctx.defendingPokemon->GetDefenseStage() > -5)
 		{
 			int lowerDefense = ctx.defendingPokemon->GetDefenseStage() - 2;
 			ctx.defendingPokemon->SetDefenseStage(lowerDefense);
 
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView()
-				<< "'s defense fell harshly!\n";
+			deps.statusUI.DisplayStatLowered2Msg("defense");
 		}
 	}
 	else
@@ -3030,15 +3002,13 @@ void EvasionUp::DoMove(MoveEffectsDependencies& deps)
 
 	if (evasionStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< " evasiveness won't go any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("evasiveness");
 	}
 	else
 	{
 		++evasionStage;
 		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s evasiveness rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("evasiveness");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3058,14 +3028,12 @@ void HealHalfHP::DoMove(MoveEffectsDependencies& deps)
 
 		ctx.attackingPokemon->HealCurrentHP(static_cast<int>(healAmount));
 
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< " had its HP restored!\n";
-		std::cout << "Amount healed: " << healAmount << '\n';
+		deps.resultsUI.DisplayRecoveredHPRestoredMsg(healAmount);
 	}
+
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< " HP is full!\n";
+		deps.resultsUI.DisplayHPFullMsg();
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3085,15 +3053,13 @@ void DefenseUp::DoMove(MoveEffectsDependencies& deps)
 
 	if (defenseStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< " defense won't go any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("defense");
 	}
 	else
 	{
 		++defenseStage;
 		ctx.attackingPokemon->SetDefenseStage(defenseStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s defense rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("defense");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3111,23 +3077,20 @@ void Minimize::DoMove(MoveEffectsDependencies& deps)
 
 	if (evasionStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< " evasiveness won't go any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("evasiveness");
 	}
 	else if (evasionStage == 5)
 	{
 		++evasionStage;
 		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s evasiveness rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("evasiveness");
 		ctx.attackingPokemon->SetUsedMinimize(true);
 	}
 	else if (evasionStage < 5)
 	{
 		evasionStage += 2;
 		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s evasiveness rose sharply!\n";
+		deps.statusUI.DisplayStatRaised2Msg("evasiveness");
 		ctx.attackingPokemon->SetUsedMinimize(true);
 	}
 
@@ -3146,22 +3109,19 @@ void DefenseUp2::DoMove(MoveEffectsDependencies& deps)
 
 	if (defenseStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< " can't raise its defense any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("defense");
 	}
 	else if (defenseStage == 5)
 	{
 		++defenseStage;
 		ctx.attackingPokemon->SetDefenseStage(defenseStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s defense rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("defense");
 	}
 	else if (defenseStage < 5)
 	{
 		defenseStage += 2;
 		ctx.attackingPokemon->SetDefenseStage(defenseStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s defense rose sharply!\n";
+		deps.statusUI.DisplayStatRaised2Msg("defense");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3182,8 +3142,7 @@ void LightScreen::DoMove(MoveEffectsDependencies& deps)
 	else
 	{
 		ctx.attackingPlayer->SetLightScreen(true);
-		std::cout << "Light screen made " << ctx.attackingPlayer->GetPlayerNameView()
-			<< "'s team stronger against special moves!\n";
+		deps.statusUI.DisplayLightScreenMsg();
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3215,7 +3174,7 @@ void Haze::DoMove(MoveEffectsDependencies& deps)
 	ctx.defendingPokemon->SetEvasionStage(0);
 	ctx.defendingPokemon->SetAccuracyStage(0);
 
-	std::cout << "All stat changes were eliminated!\n";
+	deps.statusUI.DisplayHazeMsg();
 
 	ctx.currentMove->m_currentPP -= 1;
 
@@ -3237,8 +3196,7 @@ void Reflect::DoMove(MoveEffectsDependencies& deps)
 	else
 	{
 		ctx.attackingPlayer->SetReflect(true);
-		std::cout << "Reflect made " << ctx.attackingPlayer->GetPlayerNameView()
-			<< "'s team stronger against physical moves!\n";
+		deps.statusUI.DisplayReflectMsg();
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3262,8 +3220,7 @@ void FocusEnergy::DoMove(MoveEffectsDependencies& deps)
 	{
 		ctx.attackingPokemon->SetFocusEnergy(true);
 		ctx.attackingPokemon->SetCriticalHitStage(2);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< " is getting pumped!\n";
+		deps.statusUI.DisplayFocusEnergyMsg();
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3296,8 +3253,7 @@ void Bide::DoMove(MoveEffectsDependencies& deps)
 		{
 			bool hit = !ctx.defendingPokemon->IsSemiInvulnerable();
 
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-				<< " unleashed its energy!\n";
+			deps.statusUI.DisplayBideUnleashedMsg();
 
 			int bideDamage = ctx.attackingPokemon->GetBideDamage() * 2;
 
@@ -3333,7 +3289,6 @@ void Bide::DoMove(MoveEffectsDependencies& deps)
 					ctx.damageTaken = bideDamage;
 				}
 
-				std::cout << bideDamage << " damage inflicted!\n";
 			}
 			else
 			{
@@ -3346,14 +3301,12 @@ void Bide::DoMove(MoveEffectsDependencies& deps)
 		else
 		{
 			ctx.attackingPokemon->IncrementBideCounter();
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-				<< " is storing energy!\n";
+			deps.statusUI.DisplayBideStoringEnergyMsg();
 		}
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s Bide is disabled!\n";
+		deps.statusUI.DisplayBideDisabledMsg();
 
 		deps.statusManager.BideStop();
 		deps.statusManager.BideReset();
@@ -3384,8 +3337,7 @@ void Metronome::DoMove(MoveEffectsDependencies& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	std::cout << "Waggling its finger let " << ctx.attackingPlayer->GetPlayerNameView() << "'s "
-		<< ctx.attackingPokemon->GetNameView() << " use " << selectedMove->GetName() << "!\n";
+	deps.statusUI.DisplayMetronomeMsg(selectedMove);
 
 	ctx.currentMove->m_currentPP -= 1;
 
@@ -3640,19 +3592,19 @@ void SkullBash::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " tucked in its head!\n";
+		deps.resultsUI.DisplaySkullBashChargeMsg();
 
 		int defenseStage = ctx.attackingPokemon->GetDefenseStage();
 
 		if (defenseStage >= 6)
 		{
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " defense won't go any higher!\n";
+			deps.statusUI.DisplayStatRaiseFailMsg("defense");
 		}
 		else
 		{
 			++defenseStage;
 			ctx.attackingPokemon->SetDefenseStage(defenseStage);
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s defense rose!\n";
+			deps.statusUI.DisplayStatRaised1Msg("defense");
 		}
 
 		ctx.attackingPokemon->SetCharging(true);
@@ -3670,19 +3622,19 @@ void SpecialDefenseUp2::DoMove(MoveEffectsDependencies& deps)
 
 	if (specialDefenseStage >= 6)
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " can't raise its special defense any higher!\n";
+		deps.statusUI.DisplayStatRaiseFailMsg("special defense");
 	}
 	else if (specialDefenseStage == 5)
 	{
 		++specialDefenseStage;
 		ctx.attackingPokemon->SetSpecialDefenseStage(specialDefenseStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s special defense rose!\n";
+		deps.statusUI.DisplayStatRaised1Msg("special defense");
 	}
 	else if (specialDefenseStage < 5)
 	{
 		specialDefenseStage += 2;
 		ctx.attackingPokemon->SetSpecialDefenseStage(specialDefenseStage);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << "'s special defense rose sharply!\n";
+		deps.statusUI.DisplayStatRaised2Msg("special defense");
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -3696,7 +3648,7 @@ void DreamEater::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.defendingPokemon->GetStatus() != Status::Sleeping)
 	{
-		std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+		deps.statusUI.DisplayDoesntAffectMsg();
 		ctx.currentMove->m_currentPP -= 1;
 		ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 		return;
@@ -3736,7 +3688,7 @@ void DreamEater::DoMove(MoveEffectsDependencies& deps)
 
 		ctx.attackingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
 
-		std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " had its energy drained!\n";
+		deps.resultsUI.DisplayEnergyDrainedMsg();
 	}
 	else
 	{
@@ -3766,11 +3718,11 @@ void PoisonGas::DoMove(MoveEffectsDependencies& deps)
 		if ((ctx.defendingPokemon->GetStatus() != Status::Normal && isImmune) ||
 			(ctx.defendingPokemon->GetStatus() == Status::Normal && isImmune))
 		{
-			std::cout << "It doesn't affect " << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << "...\n";
+			deps.statusUI.DisplayDoesntAffectMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() == Status::Poisoned)
 		{
-			std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is already poisoned!\n";
+			deps.statusUI.DisplayAlreadyPoisonedMsg();
 		}
 		else if (ctx.defendingPokemon->GetStatus() != Status::Poisoned && ctx.defendingPokemon->GetStatus() != Status::Normal)
 		{
@@ -3817,7 +3769,6 @@ void SkyAttack::DoMove(MoveEffectsDependencies& deps)
 			std::uniform_int_distribution<int> randomModDistributor(1, 101);
 			int randomMod = randomModDistributor(deps.rng.GetGenerator());
 
-			// Using your original secondTurnPlayer logic:
 			if (randomMod <= 30 &&
 				!ctx.defendingPlayer->IsFirst() &&
 				ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No &&
@@ -3844,7 +3795,7 @@ void SkyAttack::DoMove(MoveEffectsDependencies& deps)
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " became cloaked in a harsh light!\n";
+		deps.resultsUI.DisplaySkyAttackChargeMsg();
 
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
@@ -3861,7 +3812,7 @@ void Transform::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.attackingPokemon->IsTransformed() || ctx.defendingPokemon->IsTransformed() || ctx.defendingPokemon->HasSubstitute())
 	{
-		std::cout << "But it failed!\n";
+		deps.resultsUI.DisplayFailedTextDialog();
 		return;
 	}
 
@@ -3875,7 +3826,7 @@ void Transform::DoMove(MoveEffectsDependencies& deps)
 	if (ctx.flags.hit)
 	{
 		ctx.attackingPokemon->SetTransformation(ctx.defendingPokemon);
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " transformed into " << ctx.defendingPokemon->GetNameView() << "!\n";
+		deps.statusUI.DisplayTransformMsg();
 	}
 	else
 	{
@@ -3912,7 +3863,7 @@ void ConfuseHit20::DoMove(MoveEffectsDependencies& deps)
 
 			if (randomNumber <= 20 && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 			{
-				std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " became confused!\n";
+				deps.statusUI.DisplayBecameConfuseMsg();
 
 				ctx.defendingPokemon->SetConfusedStatus(true);
 
@@ -3977,7 +3928,6 @@ void Psywave::DoMove(MoveEffectsDependencies& deps)
 				ctx.defendingPokemon->DamageCurrentHP(static_cast<int>(psywaveDamage));
 			}
 
-			std::cout << psywaveDamage << " damage inflicted.\n";
 		}
 	}
 	else
@@ -4000,7 +3950,7 @@ void Splash::DoMove(MoveEffectsDependencies& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	std::cout << "But nothing happened!\n";
+	deps.resultsUI.DisplaySplashMsg();
 
 	ctx.currentMove->m_currentPP -= 1;
 
@@ -4018,7 +3968,7 @@ void Rest::DoMove(MoveEffectsDependencies& deps)
 	if (ctx.attackingPokemon->GetStatus() != Status::Sleeping &&
 		ctx.attackingPokemon->GetCurrentHP() < ctx.attackingPokemon->GetMaxHP())
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " slept and became healthy!\n";
+		deps.resultsUI.DisplayRestMsg();
 
 		ctx.attackingPokemon->ChangeStatus(Status::Sleeping);
 
@@ -4030,7 +3980,7 @@ void Rest::DoMove(MoveEffectsDependencies& deps)
 	}
 	else if (ctx.attackingPokemon->GetCurrentHP() >= ctx.attackingPokemon->GetMaxHP())
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " HP is full!\n";
+		deps.resultsUI.DisplayHPFullMsg();
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -4056,8 +4006,7 @@ void Conversion::DoMove(MoveEffectsDependencies& deps)
 	{
 		ctx.attackingPokemon->SetConversion(ctx.currentMove);
 
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView()
-			<< "'s type changed to " << ctx.attackingPokemon->GetTypeOne() << "!\n";
+		deps.statusUI.DisplayConversionMsg();
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -4094,33 +4043,15 @@ void TriAttack::DoMove(MoveEffectsDependencies& deps)
 			switch (randomStatus)
 			{
 			case 1:
-				if (ctx.defendingPokemon->GetStatus() == Status::Normal &&
-					ctx.defendingPokemon->GetTypeOneEnum() != PokemonType::Fire &&
-					ctx.defendingPokemon->GetTypeTwoEnum() != PokemonType::Fire)
-				{
-					ctx.defendingPokemon->ChangeStatus(Status::Burned);
-					std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is burned!\n";
-				}
+				InflictNVStatus(Status::Burned, 100, deps);
 				break;
 
 			case 2:
-				if (ctx.defendingPokemon->GetStatus() == Status::Normal &&
-					ctx.defendingPokemon->GetTypeOneEnum() != PokemonType::Ice &&
-					ctx.defendingPokemon->GetTypeTwoEnum() != PokemonType::Ice)
-				{
-					ctx.defendingPokemon->ChangeStatus(Status::Frozen);
-					std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is frozen solid!\n";
-				}
+				InflictNVStatus(Status::Frozen, 100, deps);
 				break;
 
 			case 3:
-				if (ctx.defendingPokemon->GetStatus() == Status::Normal &&
-					ctx.defendingPokemon->GetTypeOneEnum() != PokemonType::Electric &&
-					ctx.defendingPokemon->GetTypeTwoEnum() != PokemonType::Electric)
-				{
-					ctx.defendingPokemon->ChangeStatus(Status::Paralyzed);
-					std::cout << ctx.defendingPlayer->GetPlayerNameView() << "'s " << ctx.defendingPokemon->GetNameView() << " is paralyzed! It may be unable to move!\n";
-				}
+				InflictNVStatus(Status::Paralyzed, 100, deps);
 				break;
 
 			default:
@@ -4183,8 +4114,6 @@ void SuperFang::DoMove(MoveEffectsDependencies& deps)
 		ctx.defendingPokemon->DamageCurrentHP(static_cast<int>(superFangDamage));
 	}
 
-	std::cout << superFangDamage << " damage inflicted\n";
-
 	ctx.damageTaken = superFangDamage;
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -4202,7 +4131,7 @@ void Substitute::DoMove(MoveEffectsDependencies& deps)
 
 	if (ctx.attackingPokemon->HasSubstitute())
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " already has a substitute!\n";
+		deps.statusUI.DisplayAlreadyHasSubstituteMsg();
 
 		ctx.currentMove->m_currentPP -= 1;
 
@@ -4217,11 +4146,11 @@ void Substitute::DoMove(MoveEffectsDependencies& deps)
 
 	if (substituteHP >= ctx.attackingPokemon->GetCurrentHP())
 	{
-		std::cout << "But it does not have enough HP left to make a substitute!\n";
+		deps.statusUI.DisplayNotEnoughHPSubstituteMsg();
 	}
 	else
 	{
-		std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " put in a substitute!\n";
+		deps.statusUI.DisplayPutInSubstituteMsg();
 		ctx.attackingPokemon->SetSubstitute(true);
 		ctx.attackingPokemon->SetSubstituteHP(static_cast<int>(substituteHP));
 		ctx.attackingPokemon->DamageCurrentHP(static_cast<int>(substituteHP));
@@ -4248,7 +4177,7 @@ void Struggle::DoMove(MoveEffectsDependencies& deps)
 		ctx.flags.hit = false;
 	}
 
-	std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " has no moves left!\n";
+	deps.statusUI.DisplayNoMovesLeftStruggleMsg();
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
@@ -4268,7 +4197,7 @@ void Struggle::DoMove(MoveEffectsDependencies& deps)
 
 		if (ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No)
 		{
-			std::cout << ctx.attackingPlayer->GetPlayerNameView() << "'s " << ctx.attackingPokemon->GetNameView() << " was damaged by the recoil!\n";
+			deps.resultsUI.DisplayRecoilMsg();
 
 			deps.statusManager.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 		}

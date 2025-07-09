@@ -50,9 +50,11 @@ public:
 	void ChangePlayerOneName();
 	void EditPlayerOnePokemon();
 	void ChangePlayerOneType();
+	void PrintPlayerOneType();
 	void ChangePlayerTwoName();
 	void EditPlayerTwoPokemon();
 	void ChangePlayerTwoType();
+	void PrintPlayerTwoType();
 
 	bool AddPokemon(Player*);
 	bool ChangePokemon(Player*);

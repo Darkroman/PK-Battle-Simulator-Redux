@@ -2,27 +2,67 @@
 
 #include "interfaces/IMoveResultsUI.h"
 
-struct MoveResultsText : public IMoveResultsUI
+struct BattleContext;
+
+class MoveResultsText : public IMoveResultsUI
 {
+public:
 	MoveResultsText(BattleContext&);
 
-	void UsedTextDialog(Player*, BattlePokemon::pokemonMove*, BattlePokemon*);
+	void UsedTextDialog(Player*, BattlePokemon::pokemonMove*, BattlePokemon*) override;
 
-	void DisplayCritTextDialog();
+	void DisplayCritTextDialog() override;
 
-	void DisplayEffectivenessTextDialog(Player*, BattlePokemon*);
+	void DisplayEffectivenessTextDialog(Player*, BattlePokemon*) override;
 
-	void DisplayAccuracyLoweredTextDialog(Player*, BattlePokemon*);
+	void DisplayAccuracyLoweredTextDialog(Player*, BattlePokemon*) override;
 
-	void DisplayAttackMissedTextDialog(Player*, BattlePokemon*);
+	void DisplayAttackMissedTextDialog(Player*, BattlePokemon*) override;
 
-	void DisplayAttackAvoidedTextDialog(Player*, BattlePokemon*);
+	void DisplayAttackAvoidedTextDialog(Player*, BattlePokemon*) override;
 
-	void DisplayFailedTextDialog();
+	void DisplayFailedTextDialog() override;
 
-	void DisplaySubstituteDamageTextDialog(Player*, BattlePokemon*);
+	void DisplaySubstituteDamageTextDialog(Player*, BattlePokemon*) override;
 
-	void BoundMoveText(Player*, Player*, BattlePokemon*, BattlePokemon*, BattlePokemon::pokemonMove*);
+	void BoundMoveText(Player*, Player*, BattlePokemon*, BattlePokemon*, BattlePokemon::pokemonMove*) override;
 
-	BattleContext& context;
+	void DisplayNoopMsg() override;
+
+	void DisplayMultiAttackMsg(int) override;
+
+	void DisplayRazorWindChargeMsg() override;
+
+	void DisplayEnemySwitchMsg(BattlePokemon&) override;
+
+	void DisplayFlyChargeMsg() override;
+
+	void DisplayJumpKickCrashMsg() override;
+
+	void DisplayRecoilMsg() override;
+
+	void DisplayDirectDamageInflictedMsg(double) override;
+
+	void DisplayRechargeMsg() override;
+
+	void DisplayEnergyDrainedMsg() override;
+
+	void DisplaySolarBeamChargeMsg() override;
+
+	void DisplayDigChargeMsg() override;
+
+	void DisplayRecoveredHPRestoredMsg(double) override;
+
+	void DisplayHPFullMsg() override;
+
+	void DisplaySkullBashChargeMsg() override;
+
+	void DisplaySkyAttackChargeMsg() override;
+
+	void DisplaySplashMsg() override;
+
+	void DisplayRestMsg() override;
+
+private:
+	BattleContext& m_context;
 };

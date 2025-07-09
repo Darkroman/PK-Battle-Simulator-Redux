@@ -5,10 +5,12 @@
 
 class RandomEngine
 {
-public:
+private:
 
 	unsigned int seed;
 	std::mt19937 generator;
+
+public:
 
 	RandomEngine();
 

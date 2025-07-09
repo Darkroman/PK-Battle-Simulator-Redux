@@ -2,19 +2,21 @@
 #include "WinChecker.h"
 
 #include "BattleContext.h"
-#include "BattleStatusManager.h"
 #include "RandomEngine.h"
+#include "../ui/interfaces/IStatusEffectUI.h"
+#include "BattleStatusManager.h"
 #include "../entities/Player.h"
 #include "../entities/BattlePokemon.h"
 #include <cmath>
 #include <iostream>
 
 
-PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, BattleStatusManager& statusManager, WinChecker& winChecker, RandomEngine& rng)
+PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, RandomEngine& rng, IStatusEffectUI& statusEffectUI, BattleStatusManager& statusManager, WinChecker& winChecker)
     : m_context(context)
+    , m_rng(rng)
+    , m_statusEffectUI(statusEffectUI)
     , m_statusManager(statusManager)
     , m_winChecker(winChecker)
-    , m_rng(rng)
 {}
 
 void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
@@ -64,7 +66,7 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
         m_context.attackingPokemon->DamageCurrentHP(static_cast<int>(leechedHealth));
         m_context.defendingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
 
-        std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s health is sapped by Leech Seed.\n";
+        m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.attackingPlayer, m_context.attackingPokemon);
 
         m_statusManager.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
     }
@@ -79,7 +81,7 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
     m_context.defendingPokemon->DamageCurrentHP(static_cast<int>(leechedHealth));
     m_context.attackingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
 
-    std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << "'s health is sapped by Leech Seed.\n";
+    m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.defendingPlayer, m_context.defendingPokemon);
 
     m_statusManager.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
 }
@@ -137,7 +139,7 @@ void PostTurnEffectProcessor::BurnedStatus(Player* player, BattlePokemon* pokemo
     double burnDamage = std::floor(pokemon->GetMaxHP() / 16.0);
     pokemon->DamageCurrentHP(static_cast<int>(burnDamage));
 
-    std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << " was damaged by burn.\n";
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("burn", player, pokemon);
 }
 
 void PostTurnEffectProcessor::PoisonedStatus(Player* player, BattlePokemon* pokemon)
@@ -145,7 +147,7 @@ void PostTurnEffectProcessor::PoisonedStatus(Player* player, BattlePokemon* poke
     double poisonDamage = std::floor(pokemon->GetMaxHP() / 8.0);
     pokemon->DamageCurrentHP(static_cast<int>(poisonDamage));
 
-    std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << " was damaged by poison.\n";
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player, pokemon);
 }
 
 void PostTurnEffectProcessor::BadlyPoisonedStatus(Player* player, BattlePokemon* pokemon)
@@ -153,7 +155,7 @@ void PostTurnEffectProcessor::BadlyPoisonedStatus(Player* player, BattlePokemon*
     double poisonDamage = std::floor(pokemon->GetMaxHP() / 16.0) * pokemon->GetBadlyPoisonCounter();
     pokemon->DamageCurrentHP(static_cast<int>(poisonDamage));
 
-    std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << " was damaged by poison.\n";
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player, pokemon);
 
     pokemon->IncrementBadlyPoisonCounter();
 }
@@ -176,9 +178,7 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
             m_context.attackingPokemon->ResetBoundCounter();
             m_context.attackingPokemon->SetBoundTurnCount(0);
 
-            std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s "
-                << m_context.attackingPokemon->GetNameView() << " was freed from "
-                << m_context.attackingPokemon->GetBoundMoveName() << "!\n";
+            m_statusEffectUI.DisplayFreedFromBoundMsg(m_context.attackingPlayer, m_context.attackingPokemon);
         }
         else
         {
@@ -187,9 +187,7 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
 
             m_context.attackingPokemon->DamageCurrentHP(static_cast<int>(boundDamage));
 
-            std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s "
-                << m_context.attackingPokemon->GetNameView() << " was hurt by "
-                << m_context.attackingPokemon->GetBoundMoveName() << "!\n";
+            m_statusEffectUI.DisplayHurtByBoundMsg(m_context.attackingPlayer, m_context.attackingPokemon);
 
             m_statusManager.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer,
                 m_context.attackingPokemon, m_context.defendingPokemon);
@@ -203,25 +201,23 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
 
     if (m_context.defendingPokemon->GetBoundCounter() >= m_context.defendingPokemon->GetBoundTurnCount())
     {
+
         m_context.defendingPokemon->SetBound(false);
         m_context.defendingPlayer->SetCanSwitch(true);
         m_context.defendingPokemon->ResetBoundCounter();
         m_context.defendingPokemon->SetBoundTurnCount(0);
 
-        std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s "
-            << m_context.defendingPokemon->GetNameView() << " was freed from "
-            << m_context.defendingPokemon->GetBoundMoveName() << "!\n";
+        m_statusEffectUI.DisplayFreedFromBoundMsg(m_context.defendingPlayer, m_context.defendingPokemon);
     }
     else
     {
+
         m_context.defendingPokemon->IncrementBoundCounter();
         boundDamage = std::floor(m_context.defendingPokemon->GetMaxHP() / 8.0);
 
         m_context.defendingPokemon->DamageCurrentHP(static_cast<int>(boundDamage));
 
-        std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s "
-            << m_context.defendingPokemon->GetNameView() << " was hurt by "
-            << m_context.defendingPokemon->GetBoundMoveName() << "!\n";
+        m_statusEffectUI.DisplayHurtByBoundMsg(m_context.defendingPlayer, m_context.defendingPokemon);
 
         m_statusManager.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer,
             m_context.defendingPokemon, m_context.attackingPokemon);
@@ -241,10 +237,7 @@ void PostTurnEffectProcessor::CheckDisabledStatus()
 
         if (m_context.attackingPokemon->GetDisabledCounter() == 4)
         {
-            std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s "
-                << m_context.attackingPokemon->GetNameView() << "'s "
-                << m_context.attackingPokemon->GetDisabledMove()->mp_move->GetName()
-                << " is no longer disabled!\n";
+            m_statusEffectUI.DisplayMoveNoLongerDisabledMsg(m_context.attackingPlayer, m_context.attackingPokemon);
             m_context.attackingPokemon->SetDisabledStatus(false);
         }
     }
@@ -255,10 +248,7 @@ void PostTurnEffectProcessor::CheckDisabledStatus()
 
         if (m_context.defendingPokemon->GetDisabledCounter() == 4)
         {
-            std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s "
-                << m_context.defendingPokemon->GetNameView() << "'s "
-                << m_context.defendingPokemon->GetDisabledMove()->mp_move->GetName()
-                << " is no longer disabled!\n";
+            m_statusEffectUI.DisplayMoveNoLongerDisabledMsg(m_context.defendingPlayer, m_context.defendingPokemon);
             m_context.defendingPokemon->SetDisabledStatus(false);
         }
     }
@@ -282,7 +272,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.defendingPlayer->GetReflectCounter() >= reflectTurnCount)
         {
-            std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s team's Reflect wore off!\n";
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.defendingPlayer, "reflect");
             m_context.defendingPlayer->SetReflect(false);
             m_context.defendingPlayer->ResetReflectCounter();
         }
@@ -296,7 +286,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.attackingPlayer->GetReflectCounter() >= reflectTurnCount)
         {
-            std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s team's Reflect wore off!\n";
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer, "reflect");
             m_context.attackingPlayer->SetReflect(false);
             m_context.attackingPlayer->ResetReflectCounter();
         }
@@ -311,7 +301,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.attackingPlayer->GetLightScreenCounter() >= lightscreenTurnCount)
         {
-            std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s team's Light Screen wore off!\n";
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer, "light screen");
             m_context.attackingPlayer->SetLightScreen(false);
             m_context.attackingPlayer->ResetLightScreenCounter();
         }
@@ -325,7 +315,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.defendingPlayer->GetLightScreenCounter() >= lightscreenTurnCount)
         {
-            std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s team's Light Screen wore off!\n";
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.defendingPlayer, "light screen");
             m_context.defendingPlayer->SetLightScreen(false);
             m_context.defendingPlayer->ResetLightScreenCounter();
         }
@@ -340,7 +330,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.attackingPlayer->GetMistCounter() >= mistTurnCount)
         {
-            std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s team is no longer protected by mist!\n";
+            m_statusEffectUI.DisplayNoLongerProtectedMist(m_context.attackingPlayer);
             m_context.attackingPlayer->SetMist(false);
             m_context.attackingPlayer->ResetMistCounter();
         }
@@ -354,7 +344,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.defendingPlayer->GetMistCounter() >= mistTurnCount)
         {
-            std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s team is no longer protected by mist!\n";
+            m_statusEffectUI.DisplayNoLongerProtectedMist(m_context.defendingPlayer);
             m_context.defendingPlayer->SetMist(false);
             m_context.defendingPlayer->ResetMistCounter();
         }

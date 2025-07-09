@@ -3,7 +3,8 @@
 struct BattleContext;
 class BattleCalculations;
 class RandomEngine;
-struct IMoveResultsUI;
+class IMoveResultsUI;
+class IStatusEffectUI;
 
 #include "BattleStatusManager.h"
 
@@ -14,7 +15,7 @@ class IBattleMenuUI;
 class TurnProcessor
 {
 public:
-	TurnProcessor(BattleContext&, BattleCalculations&, RandomEngine&, IBattleMenuUI&, IMoveResultsUI&);
+	TurnProcessor(BattleContext&, BattleCalculations&, RandomEngine&, IStatusEffectUI&, BattleStatusManager&, IBattleMenuUI&, IMoveResultsUI&, WinChecker&);
 
 	void DetermineWhoGoesFirst();
 	void DeterminePostTurnDamageOrder();
@@ -28,8 +29,10 @@ private:
 	BattleContext& m_context;
 	BattleCalculations& m_calculations;
 	RandomEngine& m_rng;
-	BattleStatusManager m_statusManager;
+	IStatusEffectUI& m_statusEffectUI;
+	BattleStatusManager& m_statusManager;
 	IBattleMenuUI& m_battleMenuUI;
-	WinChecker m_winChecker;
 	IMoveResultsUI& m_resultsUI;
+	WinChecker& m_winChecker;
+
 };

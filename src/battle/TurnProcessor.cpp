@@ -3,15 +3,17 @@
 #include "../ui/interfaces/IBattleMenuUI.h"
 #include "../moves/MoveEffects.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
+#include "../ui/interfaces/IStatusEffectUI.h"
 
-TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calculations, RandomEngine& rng, IBattleMenuUI& battleMenuUI, IMoveResultsUI& resultsUI)
+TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calculations, RandomEngine& rng, IStatusEffectUI& statusEffectUI, BattleStatusManager& statusManager, IBattleMenuUI& battleMenuUI, IMoveResultsUI& resultsUI, WinChecker& winChecker)
 	: m_context(context)
 	, m_calculations(calculations)
 	, m_rng(rng)
-	, m_statusManager(context, rng)
+	, m_statusEffectUI(statusEffectUI)
+	, m_statusManager(statusManager)
 	, m_battleMenuUI(battleMenuUI)
-	, m_winChecker(context, *this, m_battleMenuUI)
 	, m_resultsUI(resultsUI)
+	, m_winChecker(winChecker)
 	{}
 
 void TurnProcessor::DetermineWhoGoesFirst()
@@ -34,19 +36,16 @@ void TurnProcessor::DetermineWhoGoesFirst()
 	if (m_context.playerOne->IsSwitching() && !m_context.playerTwo->IsSwitching())
 	{
 		SetFirst(m_context.playerOne, m_context.playerTwo);
-		std::cout << m_context.playerOne->GetPlayerNameView() << " goes first.\n\n";
 		return;
 	}
 	if (m_context.playerTwo->IsSwitching() && !m_context.playerOne->IsSwitching())
 	{
 		SetFirst(m_context.playerTwo, m_context.playerOne);
-		std::cout << m_context.playerTwo->GetPlayerNameView() << " goes first.\n\n";
 		return;
 	}
 	if (m_context.playerOne->IsSwitching() && m_context.playerTwo->IsSwitching())
 	{
 		SetFirst(m_context.playerOne, m_context.playerTwo);
-		std::cout << m_context.playerOne->GetPlayerNameView() << " goes first.\n\n";
 		return;
 	}
 
@@ -56,26 +55,22 @@ void TurnProcessor::DetermineWhoGoesFirst()
 	if (moveOne->GetPriority() > moveTwo->GetPriority())
 	{
 		SetFirst(m_context.playerOne, m_context.playerTwo);
-		std::cout << m_context.playerOne->GetPlayerNameView() << " goes first.\n\n";
 		return;
 	}
 	if (moveTwo->GetPriority() > moveOne->GetPriority())
 	{
 		SetFirst(m_context.playerTwo, m_context.playerOne);
-		std::cout << m_context.playerTwo->GetPlayerNameView() << " goes first.\n\n";
 		return;
 	}
 
 	if (playerOneSpeed > playerTwoSpeed)
 	{
 		SetFirst(m_context.playerOne, m_context.playerTwo);
-		std::cout << m_context.playerOne->GetPlayerNameView() << " goes first.\n\n";
 		return;
 	}
 	if (playerTwoSpeed > playerOneSpeed)
 	{
 		SetFirst(m_context.playerTwo, m_context.playerOne);
-		std::cout << m_context.playerTwo->GetPlayerNameView() << " goes first.\n\n";
 		return;
 	}
 
@@ -85,12 +80,10 @@ void TurnProcessor::DetermineWhoGoesFirst()
 	if (firstMod == 2)
 	{
 		SetFirst(m_context.playerTwo, m_context.playerOne);
-		std::cout << m_context.playerTwo->GetPlayerNameView() << " goes first.\n\n";
 	}
 	else
 	{
 		SetFirst(m_context.playerOne, m_context.playerTwo);
-		std::cout << m_context.playerOne->GetPlayerNameView() << " goes first.\n\n";
 	}
 }
 
@@ -145,7 +138,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 
 	else if (!m_context.attackingPokemon->IsFainted())
 	{
-		if (!m_statusManager.CheckPerformativeStatus(m_context))
+		if (!m_statusManager.CheckPerformativeStatus())
 		{
 			return;
 		}
@@ -157,6 +150,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 			*this,
 			m_resultsUI,
 			m_battleMenuUI,
+			m_statusEffectUI,
 			m_rng
 		};
 
@@ -164,7 +158,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 		moveEffect->DoMove(deps);
 	}
 
-	m_statusManager.RageCheck(m_context);
+	m_statusManager.RageCheck();
 
 	winCondition = m_winChecker.CheckWinCondition(m_context.attackingPlayer, m_context.defendingPlayer);
 }
@@ -189,7 +183,7 @@ void TurnProcessor::SetFirst(Player* first, Player* second)
 
 void TurnProcessor::PerformSwitch(Player* player, BattlePokemon*& pokemon)
 {
-	std::cout << player->GetPlayerNameView() << " switches out " << pokemon->GetNameView() << "\n";
+	m_battleMenuUI.SwitchOutMsg(player, pokemon);
 	pokemon->ResetStatsOnSwitch();
 	pokemon = player->GetPokemonToSwitchTo();
 
@@ -203,5 +197,5 @@ void TurnProcessor::PerformSwitch(Player* player, BattlePokemon*& pokemon)
 	}
 
 	player->SetIsSwitching(false);
-	std::cout << player->GetPlayerNameView() << " chooses " << pokemon->GetNameView() << "\n";
+	m_battleMenuUI.PlayerChoosesMsg(player, pokemon);
 }

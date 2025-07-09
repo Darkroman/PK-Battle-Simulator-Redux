@@ -3,17 +3,19 @@
 #include "RandomEngine.h"
 #include "../ui/interfaces/IBattleMenuUI.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
+#include "../ui/interfaces/IStatusEffectUI.h"
 
-TurnManager::TurnManager(BattleContext& context, RandomEngine& rng, IBattleMenuUI& battleMenuUI, IMoveResultsUI& moveResultsUI)
+TurnManager::TurnManager(BattleContext& context, RandomEngine& rng, IStatusEffectUI& statusEffectUI, IBattleMenuUI& battleMenuUI, IMoveResultsUI& moveResultsUI)
 	: m_context(context)
 	, m_rng(rng)
 	, m_battleMenuUI(battleMenuUI)
-	, m_calculations(context, rng)
-	, m_statusManager(context, rng)
-	, m_turnProcessor(context, m_calculations, rng, battleMenuUI, moveResultsUI)
-	, m_winChecker(context, m_turnProcessor, battleMenuUI)
-	, m_postTurnProcessor(context, m_statusManager, m_winChecker, rng)
 	, m_moveResultsUI(moveResultsUI)
+	, m_statusEffectUI(statusEffectUI)
+	, m_statusManager(context, rng, statusEffectUI)
+	, m_winChecker(context, m_turnProcessor, battleMenuUI)
+	, m_calculations(context, rng)
+	, m_turnProcessor(context, m_calculations, rng, statusEffectUI, m_statusManager, battleMenuUI, moveResultsUI, m_winChecker)
+	, m_postTurnProcessor(context, rng, statusEffectUI, m_statusManager, m_winChecker)
 {}
 
 bool TurnManager::RunBattleLoop()
@@ -26,7 +28,7 @@ bool TurnManager::RunBattleLoop()
 	while (winCondition == false)
 	{
 		++turnCount;
-		std::cout << "TURN #" << turnCount << "\n\n";
+		m_battleMenuUI.DisplayTurnNumber(turnCount);
 
 		m_battleMenuUI.DisplayFightingPokemon();
 
@@ -51,16 +53,16 @@ bool TurnManager::RunBattleLoop()
 		m_turnProcessor.ExecuteTurn(winCondition);
 		if (winCondition) { continue; }
 
-		std::cout << '\n';
+		m_battleMenuUI.NewLine();
 
 		m_turnProcessor.SwapRoles();
 
 		m_turnProcessor.ExecuteTurn(winCondition);
 		if (winCondition) { continue; }
 
-		m_turnProcessor.DeterminePostTurnDamageOrder();
+		m_battleMenuUI.NewLine();
 
-		std::cout << '\n';
+		m_turnProcessor.DeterminePostTurnDamageOrder();
 
 		m_postTurnProcessor.ProcessAllPostTurnEffects(winCondition);
 		if (winCondition) { continue; }
@@ -69,7 +71,7 @@ bool TurnManager::RunBattleLoop()
 		m_context.playerTwo->SetHasSwitched(false);
 		m_context.damageTaken = 0;
 
-		std::cout << '\n';
+		m_battleMenuUI.NewLine();
 
 #if !defined NDEBUG
 		// ResetHPandPPForTesting();
@@ -77,7 +79,6 @@ bool TurnManager::RunBattleLoop()
 	}
 
 	turnCount = 0;
-	ResetValues();
 	return false;
 }
 

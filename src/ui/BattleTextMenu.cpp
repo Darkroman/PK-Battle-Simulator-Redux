@@ -274,6 +274,16 @@ bool BattleTextMenu::SwitchPokemonOption(Player* currentPlayer, BattlePokemon* c
     return exit;
 }
 
+void BattleTextMenu::SwitchOutMsg(Player* player, BattlePokemon* pokemon)
+{
+    std::cout << player->GetPlayerNameView() << " switches out " << pokemon->GetNameView() << "\n";
+}
+
+void BattleTextMenu::PlayerChoosesMsg(Player* player, BattlePokemon* pokemon)
+{
+    std::cout << player->GetPlayerNameView() << " chooses " << pokemon->GetNameView() << "\n";
+}
+
 void BattleTextMenu::Forfeit(Player* sourcePlayer)
 {
     std::cout << sourcePlayer->GetPlayerNameView() << " has forfeited!\n\n";
@@ -308,6 +318,7 @@ bool BattleTextMenu::CheckPPCountForStruggle(BattlePokemon* pokemon)
 
 bool BattleTextMenu::AnnounceWinner()
 {
+    /*
     if (m_context.playerOne->HasWon() && m_context.playerTwo->HasWon())
     {
         std::cout << "Both players Pokemon have fainted in the same turn!\n";
@@ -316,20 +327,31 @@ bool BattleTextMenu::AnnounceWinner()
         m_context.playerTwo->SetWinCondition(false);
         return false;
     }
+    */
 
     if (m_context.playerOne->HasWon())
     {
-        std::cout << m_context.playerOne->GetPlayerNameView() << " wins!\n\n";
+        std::cout << "\n" << m_context.playerOne->GetPlayerNameView() << " wins!\n\n";
         m_context.playerOne->SetWinCondition(false);
         return false;
     }
 
     if (m_context.playerTwo->HasWon())
     {
-        std::cout << m_context.playerTwo->GetPlayerNameView() << " wins!\n\n";
+        std::cout << "\n" << m_context.playerTwo->GetPlayerNameView() << " wins!\n\n";
         m_context.playerTwo->SetWinCondition(false);
         return false;
     }
 
     return false;
+}
+
+void BattleTextMenu::NewLine()
+{
+    std::cout << '\n';
+}
+
+void BattleTextMenu::DisplayTurnNumber(int turnCount)
+{
+    std::cout << "TURN #" << turnCount << "\n\n";
 }

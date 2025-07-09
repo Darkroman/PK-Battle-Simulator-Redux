@@ -1,19 +1,22 @@
 #pragma once
 
-#include "BattleContext.h"
-#include "RandomEngine.h"
+struct BattleContext;
+class RandomEngine;
+class IStatusEffectUI;
+class Player;
+class BattlePokemon;
 
 class BattleStatusManager
 {
 public:
-	BattleStatusManager(BattleContext&, RandomEngine&);
+	BattleStatusManager(BattleContext&, RandomEngine&, IStatusEffectUI&);
 
-	bool CheckPerformativeStatus(BattleContext&);
-	bool SleepStatus(BattlePokemon*);
-	bool FrozenStatus(BattlePokemon*);
-	bool FlinchStatus(BattleContext&);
-	bool ConfusedStatus(BattleContext&);
-	bool ParalysisStatus(BattleContext&);
+	bool CheckPerformativeStatus();
+	bool SleepStatus();
+	bool FrozenStatus();
+	bool FlinchStatus();
+	bool ConfusedStatus();
+	bool ParalysisStatus();
 
 	void ThrashStop();
 	void ThrashConfuse();
@@ -24,13 +27,14 @@ public:
 
 	void CheckSubstituteCondition(Player*, BattlePokemon*);
 
-	void RageCheck(BattleContext&);
+	void RageCheck();
 
-	void ResetPokemonTurnStatuses(BattleContext&);
+	void ResetPokemonTurnStatuses();
 
 	void CheckFaintCondition(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* sourcePokemon, BattlePokemon* targetPokemon);
 
 private:
 	BattleContext& m_context;
 	RandomEngine& m_rng;
+	IStatusEffectUI& m_statusEffectUI;
 };

@@ -1,58 +1,63 @@
+#include "BattleContext.h"
+#include "RandomEngine.h"
+#include "../ui/interfaces/IStatusEffectUI.h"
+
 #include "BattleStatusManager.h"
 
-BattleStatusManager::BattleStatusManager(BattleContext& context, RandomEngine& rng) : m_context(context), m_rng(rng) {}
+BattleStatusManager::BattleStatusManager(BattleContext& context, RandomEngine& rng, IStatusEffectUI& statusEffectUI)
+	: m_context(context), m_rng(rng), m_statusEffectUI(statusEffectUI) {}
 
-bool BattleStatusManager::CheckPerformativeStatus(BattleContext& context)
+bool BattleStatusManager::CheckPerformativeStatus()
 {
 	bool canPerform{ true };
 
-	if (context.attackingPokemon->IsRecharging())
+	if (m_context.attackingPokemon->IsRecharging())
 	{
 		return true;
 	}
 
-	switch (context.attackingPokemon->currentStatus)
+	switch (m_context.attackingPokemon->currentStatus)
 	{
 	case Status::Sleeping:
-		canPerform = SleepStatus(context.attackingPokemon);
+		canPerform = SleepStatus();
 		break;
 
 	case Status::Frozen:
-		canPerform = FrozenStatus(context.attackingPokemon);
+		canPerform = FrozenStatus();
 		break;
 	}
 
-	if (context.attackingPokemon->IsFlinched() && canPerform == true)
+	if (m_context.attackingPokemon->IsFlinched() && canPerform == true)
 	{
-		canPerform = FlinchStatus(context);
+		canPerform = FlinchStatus();
 	}
 
-	if (context.attackingPokemon->IsConfused() && canPerform == true)
+	if (m_context.attackingPokemon->IsConfused() && canPerform == true)
 	{
-		canPerform = ConfusedStatus(context);
+		canPerform = ConfusedStatus();
 	}
 
-	if (context.attackingPokemon->currentStatus == Status::Paralyzed && canPerform == true)
+	if (m_context.attackingPokemon->currentStatus == Status::Paralyzed && canPerform == true)
 	{
-		canPerform = ParalysisStatus(context);
+		canPerform = ParalysisStatus();
 	}
 
-	if (context.currentMove->b_isDisabled && canPerform == true)
+	if (m_context.currentMove->b_isDisabled && canPerform == true)
 	{
 		canPerform = false;
-		std::cout << context.attackingPlayer->GetPlayerNameView() << "'s " << context.attackingPokemon->GetNameView() << "'s " << context.currentMove->mp_move->GetName() << " is disabled!\n";
+		m_statusEffectUI.DisplayMoveIsDisabledMsg();
 	}
 
 	if (canPerform == false)
 	{
-		context.attackingPokemon->SetCharging(false);
+		m_context.attackingPokemon->SetCharging(false);
 	}
 
-	if (context.attackingPokemon->IsThrashing() && canPerform == false)
+	if (m_context.attackingPokemon->IsThrashing() && canPerform == false)
 	{
-		context.attackingPokemon->IncrementThrashCounter();
+		m_context.attackingPokemon->IncrementThrashCounter();
 
-		if (context.attackingPokemon->GetThrashCounter() == context.attackingPokemon->GetThrashTurnCount() && !context.attackingPokemon->IsConfused())
+		if (m_context.attackingPokemon->GetThrashCounter() == m_context.attackingPokemon->GetThrashTurnCount() && !m_context.attackingPokemon->IsConfused())
 		{
 			ThrashConfuse();
 		}
@@ -63,7 +68,7 @@ bool BattleStatusManager::CheckPerformativeStatus(BattleContext& context)
 
 	// Bulbapedia mentions only sleep fully disrupts bide, however on Showdown bide is fully disrupted after flinch, and a full paralysis as well
 	// If someone could test on a Gen 7 cart how bide interacts with certain status effects that would be greatly appreciated
-	if (context.attackingPokemon->IsBiding() && context.attackingPokemon->currentStatus == Status::Sleeping && canPerform == false)
+	if (m_context.attackingPokemon->IsBiding() && m_context.attackingPokemon->currentStatus == Status::Sleeping && canPerform == false)
 	{
 		BideStop();
 		BideReset();
@@ -72,66 +77,66 @@ bool BattleStatusManager::CheckPerformativeStatus(BattleContext& context)
 	return canPerform;
 }
 
-bool BattleStatusManager::SleepStatus(BattlePokemon* source)
+bool BattleStatusManager::SleepStatus()
 {
-	if (source->GetSleepCounter() >= source->GetSleepTurnCount())
+	if (m_context.attackingPokemon->GetSleepCounter() >= m_context.attackingPokemon->GetSleepTurnCount())
 	{
-		source->ChangeStatus(Status::Normal);
-		source->ResetSleepCounter();
-		source->SetSleepTurnCount(0);
+		m_context.attackingPokemon->ChangeStatus(Status::Normal);
+		m_context.attackingPokemon->ResetSleepCounter();
+		m_context.attackingPokemon->SetSleepTurnCount(0);
 
-		std::cout << source->GetNameView() << " has woken up!\n";
+		m_statusEffectUI.DisplayWokenUpMsg();
 		return true;
 	}
 	else
 	{
-		source->IncrementSleepCounter();
-		std::cout << source->GetNameView() << " is sleeping\n";
+		m_context.attackingPokemon->IncrementSleepCounter();
+		m_statusEffectUI.DisplayIsAsleepMsg();
 		return false;
 	}
 }
 
-bool BattleStatusManager::FrozenStatus(BattlePokemon* source)
+bool BattleStatusManager::FrozenStatus()
 {
 	std::uniform_int_distribution<int> randomModDistributor(1, 101);
 	int randomMod(randomModDistributor(m_rng.GetGenerator()));
 
 	if (randomMod <= 80)
 	{
-		std::cout << source->GetNameView() << " is frozen solid!\n";
+		m_statusEffectUI.DisplayFrozenSolidMsg();
 		return false;
 	}
 	else
 	{
-		source->ChangeStatus(Status::Normal);
-		std::cout << source->GetNameView() << " thawed out!\n";
+		m_context.attackingPokemon->ChangeStatus(Status::Normal);
+		m_statusEffectUI.DisplayThawedMsg();
 		return true;
 	}
 }
 
-bool BattleStatusManager::FlinchStatus(BattleContext& context)
+bool BattleStatusManager::FlinchStatus()
 {
-	std::cout << context.attackingPlayer->GetPlayerNameView() << "'s " << context.attackingPokemon->GetNameView() << " flinched and couldn't move!\n";
-	context.attackingPokemon->SetIsFlinched(false);
+	m_statusEffectUI.DisplayFlinchMsg();
+	m_context.attackingPokemon->SetIsFlinched(false);
 
 	return false;
 }
 
-bool BattleStatusManager::ConfusedStatus(BattleContext& context)
+bool BattleStatusManager::ConfusedStatus()
 {
-	if (context.attackingPokemon->GetConfusedCounter() >= context.attackingPokemon->GetConfusedTurnCount())
+	if (m_context.attackingPokemon->GetConfusedCounter() >= m_context.attackingPokemon->GetConfusedTurnCount())
 	{
-		context.attackingPokemon->SetConfusedStatus(false);
-		context.attackingPokemon->ResetConfusedCounter();
-		context.attackingPokemon->SetConfusedTurnCount(0);
+		m_context.attackingPokemon->SetConfusedStatus(false);
+		m_context.attackingPokemon->ResetConfusedCounter();
+		m_context.attackingPokemon->SetConfusedTurnCount(0);
 
-		std::cout << context.attackingPlayer->GetPlayerNameView() << "'s " << context.attackingPokemon->GetNameView() << " is no longer confused!\n";
+		m_statusEffectUI.DisplayNoLongerConfusedMsg();
 		return true;
 	}
 	else
 	{
-		context.attackingPokemon->IncrementConfusedCounter();
-		std::cout << context.attackingPlayer->GetPlayerNameView() << "'s " << context.attackingPokemon->GetNameView() << " is confused!\n";
+		m_context.attackingPokemon->IncrementConfusedCounter();
+		m_statusEffectUI.DisplayIsConfusedMsg();
 
 		std::uniform_int_distribution<int> randomModDistributor(1, 101);
 		int randomMod(randomModDistributor(m_rng.GetGenerator()));
@@ -142,38 +147,38 @@ bool BattleStatusManager::ConfusedStatus(BattleContext& context)
 		}
 		else
 		{
-			std::cout << "It hurt itself in its confusion!\n";
+			m_statusEffectUI.DisplayHurtItselfConfuseMsg();
 
 			std::uniform_int_distribution<int> damagemoddistributor(85, 100);
 			double damagemod{ static_cast<double>(damagemoddistributor(m_rng.GetGenerator())) };
 			double random{ (damagemod / 100.0) };
 
 			// Confused damage does not take into account Pokemon's stat boosts, burn status, stab, nor critical, and is a typeless physical move
-			double damage = floor(floor(floor(floor(2 * context.attackingPokemon->GetLevel() / 5 + 2) * 40 * (static_cast<double>(context.attackingPokemon->GetAttack()) / static_cast<double>(context.attackingPokemon->GetDefense())) / 50) + 2) * random);
+			double damage = floor(floor(floor(floor(2 * m_context.attackingPokemon->GetLevel() / 5 + 2) * 40 * (static_cast<double>(m_context.attackingPokemon->GetAttack()) / static_cast<double>(m_context.attackingPokemon->GetDefense())) / 50) + 2) * random);
 
-			context.attackingPokemon->DamageCurrentHP(static_cast<int>(damage));
+			m_context.attackingPokemon->DamageCurrentHP(static_cast<int>(damage));
 
-			if (context.attackingPokemon->IsBiding())
+			if (m_context.attackingPokemon->IsBiding())
 			{
-				context.attackingPokemon->AddBideDamage(static_cast<int>(damage));
+				m_context.attackingPokemon->AddBideDamage(static_cast<int>(damage));
 			}
 
-			ResetPokemonTurnStatuses(context);
+			ResetPokemonTurnStatuses();
 
 			return false;
 		}
 	}
 }
 
-bool BattleStatusManager::ParalysisStatus(BattleContext& context)
+bool BattleStatusManager::ParalysisStatus()
 {
 	std::uniform_int_distribution<int> randomModDistributor(1, 101);
 	int randomMod(randomModDistributor(m_rng.GetGenerator()));
 
 	if (randomMod <= 25)
 	{
-		std::cout << context.attackingPokemon->GetNameView() << " couldn't move because it's paralyzed!\n";
-		ResetPokemonTurnStatuses(context);
+		m_statusEffectUI.DisplayCantMoveParalysisMsg();
+		ResetPokemonTurnStatuses();
 		return false;
 	}
 	else
@@ -190,7 +195,7 @@ void BattleStatusManager::ThrashStop()
 
 void BattleStatusManager::ThrashConfuse()
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " became confused due to fatigue!\n";
+	m_statusEffectUI.DisplayThrashConfusionMsg();
 
 	m_context.attackingPokemon->SetConfusedStatus(true);
 
@@ -223,63 +228,63 @@ void BattleStatusManager::CheckSubstituteCondition(Player* targetPlayer, BattleP
 {
 	if (targetPokemon->GetSubstituteHP() <= 0 && targetPokemon->HasSubstitute())
 	{
-		std::cout << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << " substitute faded!\n";
+		m_statusEffectUI.DisplaySubstituteFadedMsg();
 		targetPokemon->SetSubstitute(false);
 	}
 }
 
-void BattleStatusManager::RageCheck(BattleContext& context)
+void BattleStatusManager::RageCheck()
 {
-	if (!context.attackingPokemon->IsRaging() && !context.defendingPokemon->IsRaging())
+	if (!m_context.attackingPokemon->IsRaging() && !m_context.defendingPokemon->IsRaging())
 	{
 		return;
 	}
 
-	if ((context.defendingPokemon->IsRaging() && (context.damageTaken > 0 && !context.defendingPokemon->HasSubstitute()))
-		|| context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Disable) // Target took damage or was targeted by Disable while raging
+	if ((m_context.defendingPokemon->IsRaging() && (m_context.damageTaken > 0 && !m_context.defendingPokemon->HasSubstitute()))
+		|| m_context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Disable) // Target took damage or was targeted by Disable while raging
 	{
-		int attackStage = context.defendingPokemon->GetAttackStage();
+		int attackStage = m_context.defendingPokemon->GetAttackStage();
 
 		if (attackStage >= 6)
 		{
-			std::cout << context.defendingPlayer->GetPlayerNameView() << "'s " << context.defendingPokemon->GetNameView() << " can't raise its attack any higher!\n";
+			m_statusEffectUI.DisplayStatRaiseFailMsg("attack");
 		}
 		else
 		{
 			++attackStage;
-			context.defendingPokemon->SetAttackStage(attackStage);
-			std::cout << context.defendingPlayer->GetPlayerNameView() << "'s " << context.defendingPokemon->GetNameView() << "'s attack rose!\n";
+			m_context.defendingPokemon->SetAttackStage(attackStage);
+			m_statusEffectUI.DisplayStatRaised1Msg("attack");
 		}
 	}
 
-	if (context.attackingPokemon->IsRaging() && context.currentMove->mp_move->GetMoveEffectEnum() != MoveEffect::Rage)
+	if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->mp_move->GetMoveEffectEnum() != MoveEffect::Rage)
 	{
-		context.attackingPokemon->SetRaging(false);
+		m_context.attackingPokemon->SetRaging(false);
 	}
-	else if (context.attackingPokemon->IsRaging() && context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Rage && context.currentMove->b_isDisabled)
+	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Rage && m_context.currentMove->b_isDisabled)
 	{
-		context.attackingPokemon->SetRaging(false);
+		m_context.attackingPokemon->SetRaging(false);
 	}
-	else if (context.attackingPokemon->IsRaging() && context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Rage && !context.currentMove->b_isDisabled)
+	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Rage && !m_context.currentMove->b_isDisabled)
 	{
-		std::cout << "(Rage started on " << context.attackingPlayer->GetPlayerNameView() << "'s " << context.attackingPokemon->GetNameView() << ")\n";
+		m_statusEffectUI.DisplayRageStartedMsg();
 	}
 }
 
 // If paralyze or confusion disrupts their charge (hyper beam, fly, dig, solar beam etc)
-void BattleStatusManager::ResetPokemonTurnStatuses(BattleContext& context)
+void BattleStatusManager::ResetPokemonTurnStatuses()
 {
-	if (context.attackingPlayer->CanSwitch() == true || context.attackingPokemon->IsCharging() == false || context.attackingPokemon->IsRecharging() == false || context.attackingPokemon->IsSemiInvulnerable() == false)
+	if (m_context.attackingPlayer->CanSwitch() == true || m_context.attackingPokemon->IsCharging() == false || m_context.attackingPokemon->IsRecharging() == false || m_context.attackingPokemon->IsSemiInvulnerable() == false)
 	{
 		return;
 	}
 
-	context.attackingPlayer->SetCanSwitch(true);
+	m_context.attackingPlayer->SetCanSwitch(true);
 
-	context.attackingPokemon->SetCharging(false);
-	context.attackingPokemon->SetRecharging(false);
-	context.attackingPokemon->SetSemiInvulnerableDig(false);
-	context.attackingPokemon->SetSemiInvulnerableFly(false);
+	m_context.attackingPokemon->SetCharging(false);
+	m_context.attackingPokemon->SetRecharging(false);
+	m_context.attackingPokemon->SetSemiInvulnerableDig(false);
+	m_context.attackingPokemon->SetSemiInvulnerableFly(false);
 }
 
 void BattleStatusManager::CheckFaintCondition(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* source, BattlePokemon* target)
@@ -287,14 +292,14 @@ void BattleStatusManager::CheckFaintCondition(Player* sourcePlayer, Player* targ
 	if ((target->GetCurrentHP() <= 0) && (!target->IsFainted()))
 	{
 		target->SetFainted(true);
-		std::cout << targetPlayer->GetPlayerNameView() << "'s " << target->GetNameView() << " has fainted!\n";
+		m_statusEffectUI.DisplayFaintedMsg(*targetPlayer, *target);
 		targetPlayer->IncrementFaintedCount();
 	}
 
 	if ((source->GetCurrentHP() <= 0) && (!source->IsFainted()))
 	{
 		source->SetFainted(true);
-		std::cout << sourcePlayer->GetPlayerNameView() << "'s " << source->GetNameView() << " has fainted!\n";
+		m_statusEffectUI.DisplayFaintedMsg(*sourcePlayer, *source);
 		sourcePlayer->IncrementFaintedCount();
 	}
 }

@@ -3,6 +3,24 @@
 Player::Player(std::string_view name) :
     m_name(name) {}
 
+std::array<BattlePokemon, 6> Player::CopyBelt()
+{
+    return belt;
+}
+
+void Player::AssignBelt(std::array<BattlePokemon, 6>& newBelt)
+{
+    belt = newBelt;
+
+    for (size_t i = 0; i < 6; ++i)
+    {
+        if (belt[i].HasPokemon())
+        {
+            IncrementPokemonCount();
+        }
+    }
+}
+
 BattlePokemon* Player::GetBelt(size_t beltslot)
 {
     --beltslot;

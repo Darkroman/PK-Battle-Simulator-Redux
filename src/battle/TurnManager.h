@@ -3,7 +3,8 @@
 struct BattleContext;
 class RandomEngine;
 class IBattleMenuUI;
-struct IMoveResultsUI;
+class IMoveResultsUI;
+class IStatusEffectUI;
 
 #include "BattleCalculations.h"
 #include "BattleStatusManager.h"
@@ -14,7 +15,7 @@ struct IMoveResultsUI;
 class TurnManager
 {
 public:
-	TurnManager(BattleContext&, RandomEngine&, IBattleMenuUI&, IMoveResultsUI&);
+	TurnManager(BattleContext&, RandomEngine&, IStatusEffectUI&, IBattleMenuUI&, IMoveResultsUI&);
 
 	bool RunBattleLoop();
 	void ResetValues();
@@ -23,10 +24,11 @@ private:
 	BattleContext& m_context;
 	RandomEngine& m_rng;
 	IBattleMenuUI& m_battleMenuUI;
-	BattleCalculations m_calculations;
-	BattleStatusManager m_statusManager;
-	TurnProcessor m_turnProcessor;
-	WinChecker m_winChecker;
-	PostTurnEffectProcessor m_postTurnProcessor;
 	IMoveResultsUI& m_moveResultsUI;
+	IStatusEffectUI& m_statusEffectUI;
+	BattleStatusManager m_statusManager;
+	WinChecker m_winChecker;
+	BattleCalculations m_calculations;
+	TurnProcessor m_turnProcessor;
+	PostTurnEffectProcessor m_postTurnProcessor;
 };

@@ -6,8 +6,9 @@ struct BattleContext;
 class BattleCalculations;
 class BattleStatusManager;
 class TurnProcessor;
-struct IMoveResultsUI;
+class IMoveResultsUI;
 class IBattleMenuUI;
+class IStatusEffectUI;
 class RandomEngine;
 
 enum class Status;
@@ -20,23 +21,26 @@ struct MoveEffectsDependencies {
 	TurnProcessor& turnProcessor;
 	IMoveResultsUI& resultsUI;
 	IBattleMenuUI& battleUI;
+	IStatusEffectUI& statusUI;
 	RandomEngine& rng;
 
 	MoveEffectsDependencies
 	(BattleContext& ctx,
 	BattleCalculations& calc,
-	BattleStatusManager& status,
+	BattleStatusManager& statusMgr,
 	TurnProcessor& turnProc,
 	IMoveResultsUI& results,
 	IBattleMenuUI& BUI,
+	IStatusEffectUI& statusUI,
 	RandomEngine& randomEngine)
 	
 	: context(ctx)
 	, calculations(calc)
-	, statusManager(status)
+	, statusManager(statusMgr)
 	, turnProcessor(turnProc)
 	, resultsUI(results)
 	, battleUI(BUI)
+	, statusUI(statusUI)
 	, rng(randomEngine)
 	{}
 };

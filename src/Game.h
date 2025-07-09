@@ -7,6 +7,7 @@
 #include "battle/TurnProcessor.h"
 #include "ui/MoveResultsText.h"
 #include "ui/BattleTextMenu.h"
+#include "ui/StatusEffectText.h"
 #include "entities/ai strategies/EasyAIStrategy.h"
 
 void RunGame()
@@ -47,11 +48,15 @@ void RunGame()
         IBattleMenuUI& battleMenuUI = battleMenu;
         MoveResultsText moveResultsText(context);
         IMoveResultsUI& moveResultsUI = moveResultsText;
+        StatusEffectText statusEffectText(context);
+        IStatusEffectUI& statusEffectUI = statusEffectText;
 
-        TurnManager turnManager(context, rng, battleMenu, moveResultsText);
+        TurnManager turnManager(context, rng, statusEffectText, battleMenu, moveResultsText);
 
         exit = turnManager.RunBattleLoop();
 
         exit = battleMenu.AnnounceWinner();
+
+        turnManager.ResetValues();
     }
 }

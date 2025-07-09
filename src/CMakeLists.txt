@@ -38,6 +38,7 @@ set(SOURCES
     ui/BattleTextMenu.cpp
     ui/Menu.cpp
     ui/MoveResultsText.cpp
+    ui/StatusEffectText.cpp
 
     # save
     save/LoadParty.cpp

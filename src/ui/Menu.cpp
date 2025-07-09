@@ -715,12 +715,11 @@ void Menu::ChangePlayerOneType()
 	while(exit == false)
 	{
 		std::cout << "---Change Player One's Controller Type---\n";
+		PrintPlayerOneType();
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
 		//std::cout << "3. Medium A.I.\n";
 		std::cout << "0. Go Back\n";
-
-		//players[0]->PrintType();
 
 		std::string input{};
 		std::cout << "Option: ";
@@ -750,9 +749,15 @@ void Menu::ChangePlayerOneType()
 
 			case 1:
 			{
-				auto newHuman = std::make_unique<HumanPlayer>("Player One");
+				std::array<BattlePokemon, 6> oldBelt = playerStorage[0]->CopyBelt();
+				std::string_view playerName = playerStorage[0]->GetPlayerNameView();
+
+				auto newHuman = std::make_unique<HumanPlayer>(playerName);
+
 				players[0] = newHuman.get();
 				playerStorage[0] = std::move(newHuman);
+
+				playerStorage[0]->AssignBelt(oldBelt);
 
 				std::cout << "Switched Player One to Human.\n\n";
 				break;
@@ -760,13 +765,18 @@ void Menu::ChangePlayerOneType()
 
 			case 2:
 			{
+				std::array<BattlePokemon, 6> oldBelt = playerStorage[0]->CopyBelt();
+				std::string_view playerName = playerStorage[0]->GetPlayerNameView();
+
 				auto strategy = std::make_unique<EasyAIStrategy>(m_rng);
 				auto* strategyPtr = strategy.get();
 				strategies.push_back(std::move(strategy));
 
-				auto newAI = std::make_unique<AIPlayer>("Player One", *strategyPtr);
+				auto newAI = std::make_unique<AIPlayer>(playerName, *strategyPtr);
 				players[0] = newAI.get();
 				playerStorage[0] = std::move(newAI);
+
+				playerStorage[0]->AssignBelt(oldBelt);
 
 				std::cout << "Switched Player One to Easy A.I.\n\n";
 				break;
@@ -782,6 +792,18 @@ void Menu::ChangePlayerOneType()
 				std::cout << "Invalid input!\n\n";
 				break;
 		}
+	}
+}
+
+void Menu::PrintPlayerOneType()
+{
+	if (players[0]->IsHuman())
+	{
+		std::cout << "---" << players[0]->GetPlayerNameView() << " is currently Human---\n";
+	}
+	else
+	{
+		std::cout << "---" << players[0]->GetPlayerNameView() << " is currently A.I.---\n";
 	}
 }
 
@@ -874,12 +896,11 @@ void Menu::ChangePlayerTwoType()
 	while (exit == false)
 	{
 		std::cout << "---Change Player Two's Controller Type---\n";
+		PrintPlayerTwoType();
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
 		//std::cout << "3. Medium A.I.\n";
 		std::cout << "0. Go Back\n";
-
-		//players[1]->PrintType();
 
 		std::string input{};
 		std::cout << "Option: ";
@@ -909,9 +930,14 @@ void Menu::ChangePlayerTwoType()
 
 		case 1:
 		{
-			auto newHuman = std::make_unique<HumanPlayer>("Player Two");
+			std::array<BattlePokemon, 6> oldBelt = playerStorage[1]->CopyBelt();
+			std::string_view playerName = playerStorage[1]->GetPlayerNameView();
+
+			auto newHuman = std::make_unique<HumanPlayer>(playerName);
 			players[1] = newHuman.get();
 			playerStorage[1] = std::move(newHuman);
+
+			playerStorage[1]->AssignBelt(oldBelt);
 
 			std::cout << "Switched Player Two to Human.\n\n";
 			break;
@@ -919,13 +945,18 @@ void Menu::ChangePlayerTwoType()
 
 		case 2:
 		{
+			std::array<BattlePokemon, 6> oldBelt = playerStorage[1]->CopyBelt();
+			std::string_view playerName = playerStorage[1]->GetPlayerNameView();
+
 			auto strategy = std::make_unique<EasyAIStrategy>(m_rng);
 			auto* strategyPtr = strategy.get();
 			strategies.push_back(std::move(strategy));
 
-			auto newAI = std::make_unique<AIPlayer>("Player Two", *strategyPtr);
+			auto newAI = std::make_unique<AIPlayer>(playerName, *strategyPtr);
 			players[1] = newAI.get();
 			playerStorage[1] = std::move(newAI);
+
+			playerStorage[1]->AssignBelt(oldBelt);
 
 			std::cout << "Switched Player Two to Easy A.I.\n\n";
 			break;
@@ -941,6 +972,18 @@ void Menu::ChangePlayerTwoType()
 			std::cout << "Invalid input!\n\n";
 			break;
 		}
+	}
+}
+
+void Menu::PrintPlayerTwoType()
+{
+	if (players[1]->IsHuman())
+	{
+		std::cout << "---" << players[1]->GetPlayerNameView() << " is currently Human---\n";
+	}
+	else
+	{
+		std::cout << "---" << players[1]->GetPlayerNameView() << " is currently A.I.---\n";
 	}
 }
 

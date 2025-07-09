@@ -13,6 +13,9 @@ public:
 
     virtual const bool IsHuman() const = 0;
 
+    virtual std::array<BattlePokemon, 6> CopyBelt();
+    virtual void AssignBelt(std::array<BattlePokemon, 6>&);
+
     virtual const std::string& GetPlayerName() const;
     virtual std::string_view GetPlayerNameView() const;
     virtual void SetName(std::string_view);
@@ -96,4 +99,5 @@ protected:
     int m_mistCounter{};
     int m_lightscreenCounter{};
     int m_reflectCounter{};
+
 };
