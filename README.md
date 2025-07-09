@@ -6,7 +6,7 @@
 ## BUILD NOTES
 
   </summary>
-This was coded in VS2022 Community, utilizing up to the C++20 standard features (std::filesystem, std::string_view and std::ranges). Uploaded in this repository is a simple CMake build, and releases come in a zip file containing the release executable build, the data text files and premade Pokemon parties if you just want to download and play. Only tested on Windows.
+This was coded in VS2022 Community, utilizing up to the C++20 standard features (std::filesystem, std::string_view and std::ranges). Uploaded in this repository is a simple CMake build. Only tested on Windows.
 </details>
 
 <details open>
