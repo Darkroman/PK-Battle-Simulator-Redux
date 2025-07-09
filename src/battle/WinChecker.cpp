@@ -1,15 +1,18 @@
 #include "WinChecker.h"
-#include "TurnProcessor.h"
-#include "../ui/interfaces/IBattleMenuUI.h"
+
 #include "BattleContext.h"
-#include "../entities/Player.h"
+#include "TurnUtils.h"
+#include "../ui/interfaces/IBattleMenuUI.h"
+#include "TurnProcessor.h"
+#include "../entities/HumanPlayer.h"
 #include "../entities/AIPlayer.h"
 #include "../entities/BattlePokemon.h"
+
 #include <iostream>
 
-WinChecker::WinChecker(BattleContext& context, TurnProcessor& turnProcessor, IBattleMenuUI& battleMenuUI)
+WinChecker::WinChecker(BattleContext& context, TurnUtils& turnUtils, IBattleMenuUI& battleMenuUI)
     : m_context(context)
-	, m_turnProcessor(turnProcessor)
+	, m_turnUtils(turnUtils)
 	, m_battleMenuUI(battleMenuUI)
 	{}
 
@@ -55,14 +58,14 @@ bool WinChecker::CheckWinOrSwitch(Player* sourcePlayer, Player* targetPlayer, Ba
 
 		if (targetPokemon == m_context.playerOneCurrentPokemon)
 		{
-			m_turnProcessor.PerformSwitch(m_context.playerOne, m_context.playerOneCurrentPokemon);
+			m_turnUtils.PerformSwitch(m_context.playerOne, m_context.playerOneCurrentPokemon);
 			targetPlayer->SetHasSwitched(true);
 			return false;
 		}
 
 		if (targetPokemon == m_context.playerTwoCurrentPokemon)
 		{
-			m_turnProcessor.PerformSwitch(m_context.playerTwo, m_context.playerTwoCurrentPokemon);
+			m_turnUtils.PerformSwitch(m_context.playerTwo, m_context.playerTwoCurrentPokemon);
 			targetPlayer->SetHasSwitched(true);
 			return false;
 		}

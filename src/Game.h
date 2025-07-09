@@ -5,10 +5,13 @@
 #include "battle/BattleContext.h"
 #include "battle/TurnManager.h"
 #include "battle/TurnProcessor.h"
+#include "battle/PostTurnEffectProcessor.h"
 #include "ui/MoveResultsText.h"
 #include "ui/BattleTextMenu.h"
 #include "ui/StatusEffectText.h"
 #include "entities/ai strategies/EasyAIStrategy.h"
+#include "battle/TurnUtils.h"
+#include "battle/MoveExecutor.h"
 
 void RunGame()
 {
@@ -31,6 +34,23 @@ void RunGame()
     players.push_back(std::make_unique<HumanPlayer>("Player One"));
     players.push_back(std::make_unique<AIPlayer>("Player Two", aiStrat));
 
+    BattleContext context(players);
+    BattleCalculations calculations(context, rng);
+
+    BattleTextMenu battleMenu(context);
+    IBattleMenuUI& battleMenuUI = battleMenu;
+    MoveResultsText moveResultsText(context);
+    IMoveResultsUI& moveResultsUI = moveResultsText;
+    StatusEffectText statusEffectText(context);
+    IStatusEffectUI& statusEffectUI = statusEffectText;
+
+    BattleStatusManager statusManager(context, rng, statusEffectText);
+    TurnUtils turnUtils(context, battleMenu);
+    WinChecker winChecker(context, turnUtils, battleMenu);
+    MoveExecutor moveExecutor(context, calculations, statusManager, moveResultsText, battleMenu, statusEffectText, rng, turnUtils);
+    TurnProcessor turnProcessor(context, calculations, rng, statusManager, winChecker, turnUtils, moveExecutor);
+    PostTurnEffectProcessor postTurn(context, statusEffectText, statusManager, winChecker);
+
     Menu menu(players, rng);
 
     bool exit = false;
@@ -43,15 +63,10 @@ void RunGame()
             return;
         }
 
-        BattleContext context(players);
-        BattleTextMenu battleMenu(context);
-        IBattleMenuUI& battleMenuUI = battleMenu;
-        MoveResultsText moveResultsText(context);
-        IMoveResultsUI& moveResultsUI = moveResultsText;
-        StatusEffectText statusEffectText(context);
-        IStatusEffectUI& statusEffectUI = statusEffectText;
+        context.playerOne = players[0].get();
+        context.playerTwo = players[1].get();
 
-        TurnManager turnManager(context, rng, statusEffectText, battleMenu, moveResultsText);
+        TurnManager turnManager(context, battleMenu, winChecker, turnProcessor, postTurn);
 
         exit = turnManager.RunBattleLoop();
 

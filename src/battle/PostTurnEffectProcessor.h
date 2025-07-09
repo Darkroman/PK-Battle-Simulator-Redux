@@ -1,7 +1,6 @@
 #pragma once
 
 struct BattleContext;
-class RandomEngine;
 class IStatusEffectUI;
 class BattleStatusManager;
 class WinChecker;
@@ -11,7 +10,7 @@ class BattlePokemon;
 class PostTurnEffectProcessor
 {
 public:
-    explicit PostTurnEffectProcessor(BattleContext&, RandomEngine&, IStatusEffectUI&, BattleStatusManager&, WinChecker&);
+    explicit PostTurnEffectProcessor(BattleContext&, IStatusEffectUI&, BattleStatusManager&, WinChecker&);
 
     void ProcessAllPostTurnEffects(bool&);
 
@@ -26,7 +25,6 @@ private:
     void CheckFieldEffects();
 
     BattleContext& m_context;
-    RandomEngine& m_rng;
     IStatusEffectUI& m_statusEffectUI;
     BattleStatusManager& m_statusManager;
     WinChecker& m_winChecker;

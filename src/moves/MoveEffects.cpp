@@ -3,11 +3,11 @@
 #include "../battle/BattleContext.h"
 #include "../battle/BattleCalculations.h"
 #include "../battle/BattleStatusManager.h"
-#include "../battle/TurnProcessor.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../ui/interfaces/IBattleMenuUI.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
 #include "../battle/RandomEngine.h"
+#include "../battle/TurnUtils.h"
 #include <deque>
 
 void IMoveEffects::InflictNVStatus(Status status, int chance, MoveEffectsDependencies& deps)
@@ -2837,7 +2837,7 @@ void Teleport::DoMove(MoveEffectsDependencies& deps)
 
 	deps.battleUI.SwitchPokemonOption(ctx.attackingPlayer, ctx.attackingPokemon);
 
-	deps.turnProcessor.PerformSwitch(ctx.attackingPlayer, ctx.attackingPokemon);
+	deps.utils.PerformSwitch(ctx.attackingPlayer, ctx.attackingPokemon);
 
 	deps.statusManager.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 

@@ -10,6 +10,7 @@ class IMoveResultsUI;
 class IBattleMenuUI;
 class IStatusEffectUI;
 class RandomEngine;
+class TurnUtils;
 
 enum class Status;
 enum class MoveEffect;
@@ -18,30 +19,30 @@ struct MoveEffectsDependencies {
 	BattleContext& context;
 	BattleCalculations& calculations;
 	BattleStatusManager& statusManager;
-	TurnProcessor& turnProcessor;
 	IMoveResultsUI& resultsUI;
 	IBattleMenuUI& battleUI;
 	IStatusEffectUI& statusUI;
 	RandomEngine& rng;
+	TurnUtils& utils;
 
 	MoveEffectsDependencies
 	(BattleContext& ctx,
 	BattleCalculations& calc,
 	BattleStatusManager& statusMgr,
-	TurnProcessor& turnProc,
 	IMoveResultsUI& results,
 	IBattleMenuUI& BUI,
 	IStatusEffectUI& statusUI,
-	RandomEngine& randomEngine)
+	RandomEngine& randomEngine,
+	TurnUtils& turnUtils)
 	
 	: context(ctx)
 	, calculations(calc)
 	, statusManager(statusMgr)
-	, turnProcessor(turnProc)
 	, resultsUI(results)
 	, battleUI(BUI)
 	, statusUI(statusUI)
 	, rng(randomEngine)
+	, utils(turnUtils)
 	{}
 };
 

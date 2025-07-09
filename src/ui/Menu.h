@@ -8,7 +8,6 @@
 #include "../data/InputValidation.h"
 
 class RandomEngine;
-struct BattleContext;
 
 class Menu
 {

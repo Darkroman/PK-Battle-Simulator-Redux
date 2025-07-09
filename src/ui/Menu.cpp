@@ -1,4 +1,3 @@
-#include "../battle/BattleContext.h"
 #include "Menu.h"
 #include "../data/InputValidation.h"
 #include "../battle/RandomEngine.h"

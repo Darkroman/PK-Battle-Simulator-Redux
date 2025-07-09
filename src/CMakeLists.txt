@@ -25,10 +25,12 @@ set(SOURCES
     # battle
     battle/BattleCalculations.cpp
     battle/BattleStatusManager.cpp
+    battle/MoveExecutor.cpp
     battle/PostTurnEffectProcessor.cpp
     battle/RandomEngine.cpp
     battle/TurnManager.cpp
     battle/TurnProcessor.cpp
+    battle/TurnUtils.cpp
     battle/WinChecker.cpp
 
     # moves

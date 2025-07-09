@@ -1,19 +1,19 @@
 #include "TurnProcessor.h"
+#include "BattleContext.h"
 #include "BattleCalculations.h"
-#include "../ui/interfaces/IBattleMenuUI.h"
-#include "../moves/MoveEffects.h"
-#include "../ui/interfaces/IMoveResultsUI.h"
-#include "../ui/interfaces/IStatusEffectUI.h"
+#include "RandomEngine.h"
+#include "WinChecker.h"
+#include "TurnUtils.h"
+#include "MoveExecutor.h"
 
-TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calculations, RandomEngine& rng, IStatusEffectUI& statusEffectUI, BattleStatusManager& statusManager, IBattleMenuUI& battleMenuUI, IMoveResultsUI& resultsUI, WinChecker& winChecker)
+TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calculations, RandomEngine& rng, BattleStatusManager& statusManager, WinChecker& winChecker, TurnUtils& turnUtils, MoveExecutor& moveExecutor)
 	: m_context(context)
 	, m_calculations(calculations)
 	, m_rng(rng)
-	, m_statusEffectUI(statusEffectUI)
 	, m_statusManager(statusManager)
-	, m_battleMenuUI(battleMenuUI)
-	, m_resultsUI(resultsUI)
 	, m_winChecker(winChecker)
+	, m_turnUtils(turnUtils)
+	, m_moveExecutor(moveExecutor)
 	{}
 
 void TurnProcessor::DetermineWhoGoesFirst()
@@ -123,7 +123,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 {
 	if (m_context.attackingPlayer->IsSwitching())
 	{
-		PerformSwitch(m_context.attackingPlayer, m_context.attackingPokemon);
+		m_turnUtils.PerformSwitch(m_context.attackingPlayer, m_context.attackingPokemon);
 		if (m_context.defendingPokemon->IsBound())
 		{
 			m_context.defendingPokemon->SetBoundTurnCount(m_context.defendingPokemon->GetBoundCounter());
@@ -143,19 +143,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 			return;
 		}
 
-		MoveEffectsDependencies deps{
-			m_context,
-			m_calculations,
-			m_statusManager,
-			*this,
-			m_resultsUI,
-			m_battleMenuUI,
-			m_statusEffectUI,
-			m_rng
-		};
-
-		std::unique_ptr<IMoveEffects> moveEffect = MoveEffectsFactory::Call(m_context.currentMove->mp_move->GetMoveEffectEnum());
-		moveEffect->DoMove(deps);
+		m_moveExecutor.ExecuteMove();
 	}
 
 	m_statusManager.RageCheck();
@@ -179,23 +167,4 @@ void TurnProcessor::SetFirst(Player* first, Player* second)
 	m_context.attackingPokemon = (first == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
 	m_context.defendingPokemon = (second == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
 	m_context.currentMove = (first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
-}
-
-void TurnProcessor::PerformSwitch(Player* player, BattlePokemon*& pokemon)
-{
-	m_battleMenuUI.SwitchOutMsg(player, pokemon);
-	pokemon->ResetStatsOnSwitch();
-	pokemon = player->GetPokemonToSwitchTo();
-
-	if (player == m_context.playerOne)
-	{
-		m_context.playerOneCurrentPokemon = pokemon;
-	}
-	else if (player == m_context.playerTwo)
-	{
-		m_context.playerTwoCurrentPokemon = pokemon;
-	}
-
-	player->SetIsSwitching(false);
-	m_battleMenuUI.PlayerChoosesMsg(player, pokemon);
 }

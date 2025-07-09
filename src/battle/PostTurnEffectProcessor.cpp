@@ -1,19 +1,18 @@
 #include "PostTurnEffectProcessor.h"
-#include "WinChecker.h"
 
 #include "BattleContext.h"
-#include "RandomEngine.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
 #include "BattleStatusManager.h"
+#include "WinChecker.h"
+
 #include "../entities/Player.h"
 #include "../entities/BattlePokemon.h"
-#include <cmath>
+
 #include <iostream>
 
 
-PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, RandomEngine& rng, IStatusEffectUI& statusEffectUI, BattleStatusManager& statusManager, WinChecker& winChecker)
+PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, IStatusEffectUI& statusEffectUI, BattleStatusManager& statusManager, WinChecker& winChecker)
     : m_context(context)
-    , m_rng(rng)
     , m_statusEffectUI(statusEffectUI)
     , m_statusManager(statusManager)
     , m_winChecker(winChecker)
