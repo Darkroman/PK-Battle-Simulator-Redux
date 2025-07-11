@@ -381,6 +381,9 @@ private:
     bool b_isTransformed{ false };
     bool b_isConverted{ false };
 
+    bool b_transformBurnPenalty{ false };
+    bool b_transformParalysisPenalty{ false };
+
     std::string m_boundMove{};
 
     int m_sleepCounter{ 0 };

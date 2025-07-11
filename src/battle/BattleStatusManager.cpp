@@ -66,19 +66,19 @@ bool BattleStatusManager::CheckPerformativeStatus()
 		ThrashReset();
 	}
 
-	// Bulbapedia mentions only sleep fully disrupts bide, however on Showdown bide is fully disrupted after flinch, and a full paralysis as well
-	// If someone could test on a Gen 7 cart how bide interacts with certain status effects that would be greatly appreciated
-	if (m_context.attackingPokemon->IsBiding() && m_context.attackingPokemon->currentStatus == Status::Sleeping && canPerform == false)
-	{
-		BideStop();
-		BideReset();
-	}
-
 	return canPerform;
 }
 
 bool BattleStatusManager::SleepStatus()
 {
+	// Bulbapedia mentions only sleep fully disrupts bide, however on Showdown bide is fully disrupted after flinch, and a full paralysis as well
+	// If someone could test on a Gen 7 cart how bide interacts with certain status effects that would be greatly appreciated
+	if (m_context.attackingPokemon->IsBiding())
+	{
+		BideStop();
+		BideReset();
+	}
+
 	if (m_context.attackingPokemon->GetSleepCounter() >= m_context.attackingPokemon->GetSleepTurnCount())
 	{
 		m_context.attackingPokemon->ChangeStatus(Status::Normal);
@@ -98,7 +98,7 @@ bool BattleStatusManager::SleepStatus()
 
 bool BattleStatusManager::FrozenStatus()
 {
-	std::uniform_int_distribution<int> randomModDistributor(1, 101);
+	std::uniform_int_distribution<int> randomModDistributor(1, 100);
 	int randomMod(randomModDistributor(m_rng.GetGenerator()));
 
 	if (randomMod <= 80)
@@ -138,7 +138,7 @@ bool BattleStatusManager::ConfusedStatus()
 		m_context.attackingPokemon->IncrementConfusedCounter();
 		m_statusEffectUI.DisplayIsConfusedMsg();
 
-		std::uniform_int_distribution<int> randomModDistributor(1, 101);
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
 		int randomMod(randomModDistributor(m_rng.GetGenerator()));
 
 		if (randomMod > 33)
@@ -172,19 +172,35 @@ bool BattleStatusManager::ConfusedStatus()
 
 bool BattleStatusManager::ParalysisStatus()
 {
-	std::uniform_int_distribution<int> randomModDistributor(1, 101);
+	std::uniform_int_distribution<int> randomModDistributor(1, 100);
 	int randomMod(randomModDistributor(m_rng.GetGenerator()));
 
 	if (randomMod <= 25)
 	{
 		m_statusEffectUI.DisplayCantMoveParalysisMsg();
 		ResetPokemonTurnStatuses();
+
+		if (m_context.attackingPokemon->IsBiding())
+		{
+			if (m_context.attackingPokemon->GetBideCounter() < 2)
+			{
+				m_context.attackingPokemon->IncrementBideCounter();
+			}
+			else
+			{
+				BideStop();
+				BideReset();
+			}
+			
+		}
+
 		return false;
 	}
 	else
 	{
 		return true;
 	}
+
 }
 
 void BattleStatusManager::ThrashStop()

@@ -117,25 +117,17 @@ bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentM
 		accuracyMod = (source->GetLevel() - target->GetLevel()) + 30; // for OHKO moves
 	}
 
-	double randomMod{ 0.0 };
-	double finalMod{ 0.0 };
-
 	if (accuracyMod >= 100.0)
 	{
 		return true;
 	}
+
 	else
 	{
-		std::uniform_int_distribution<int> randomModDistributor(1, 100);
-		double randomMod{ static_cast<double>(randomModDistributor(m_rng.GetGenerator())) };
-		finalMod = 100.0 - randomMod;
-
-		if (finalMod < accuracyMod)
-		{
-			return true;
-		}
-
-		return false;
+		std::uniform_real_distribution<double> randomModDistributor(0.0, 100.0);
+		double roll{ randomModDistributor(m_rng.GetGenerator()) };
+		
+		return (roll < accuracyMod);
 	}
 }
 

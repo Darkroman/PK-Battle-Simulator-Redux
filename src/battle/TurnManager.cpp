@@ -1,16 +1,24 @@
-#include "TurnManager.h"
 #include "BattleContext.h"
+#include "RandomEngine.h"
 #include "../ui/interfaces/IBattleMenuUI.h"
-#include "WinChecker.h"
-#include "TurnProcessor.h"
-#include "PostTurnEffectProcessor.h"
+#include "../ui/interfaces/IMoveResultsUI.h"
+#include "../ui/interfaces/IStatusEffectUI.h"
 
-TurnManager::TurnManager(BattleContext& context, IBattleMenuUI& battleMenuUI, WinChecker& winChecker, TurnProcessor& turnProcessor, PostTurnEffectProcessor& postTurnEffectProcessor)
+#include "TurnManager.h"
+
+TurnManager::TurnManager(BattleContext& context, RandomEngine& rng, IBattleMenuUI& battleMenuUI, IMoveResultsUI& moveResultsUI, IStatusEffectUI& statusEffectUI)
 	: m_context(context)
+	, m_rng(rng)
 	, m_battleMenuUI(battleMenuUI)
-	, m_winChecker(winChecker)
-	, m_turnProcessor(turnProcessor)
-	, m_postTurnProcessor(postTurnEffectProcessor)
+	, m_moveResultsUI(moveResultsUI)
+	, m_statusEffectUI(statusEffectUI)
+	, m_calculations(context, rng)
+	, m_turnUtils(context, battleMenuUI)
+	, m_winChecker(context, m_turnUtils, battleMenuUI)
+	, m_statusManager(context, rng, statusEffectUI)
+	, m_moveExecutor(context, m_calculations, m_statusManager, moveResultsUI, battleMenuUI, statusEffectUI, rng, m_turnUtils)
+	, m_turnProcessor(context, m_calculations, rng, m_statusManager, m_winChecker, m_turnUtils, m_moveExecutor)
+	, m_postTurnProcessor(context, statusEffectUI, m_statusManager, m_winChecker)
 {}
 
 bool TurnManager::RunBattleLoop()

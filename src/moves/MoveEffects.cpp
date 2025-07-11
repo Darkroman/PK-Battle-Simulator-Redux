@@ -40,8 +40,8 @@ void IMoveEffects::InflictNVStatus(Status status, int chance, MoveEffectsDepende
 		return;
 	}
 
-	std::uniform_int_distribution<int> rngDist(1, 100);
-	int randomNumber{ rngDist(deps.rng.GetGenerator()) };
+	std::uniform_int_distribution<int> randomModDistributor(1, 100);
+	int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
 	if (randomNumber > chance)
 	{
@@ -449,8 +449,8 @@ void MultiAttack::DoMove(MoveEffectsDependencies& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	std::uniform_int_distribution<int> rngDist(1, 100);
-	int randomNumber = rngDist(deps.rng.GetGenerator());
+	std::uniform_int_distribution<int> randomModDistributor(1, 100);
+	int randomNumber = randomModDistributor(deps.rng.GetGenerator());
 
 	int turnCount = 0;
 
@@ -930,10 +930,10 @@ void Stomp::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
 	}
 
-	std::uniform_int_distribution<int> randomModDistributor(1, 101);
+	std::uniform_int_distribution<int> randomModDistributor(1, 100);
 	int randomMod = randomModDistributor(deps.rng.GetGenerator());
 
-	if (randomMod < 30 && (!ctx.defendingPlayer->IsFirst()) && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No && ctx.defendingPokemon->GetCurrentHP() != 0)
+	if (randomMod <= 30 && (!ctx.defendingPlayer->IsFirst()) && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No && ctx.defendingPokemon->GetCurrentHP() != 0)
 	{
 		ctx.defendingPokemon->SetIsFlinched(true);
 	}
@@ -1040,10 +1040,10 @@ void FlinchHit::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> randomModDistributor(1, 101);
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
 		int randomMod = randomModDistributor(deps.rng.GetGenerator());
 
-		if (randomMod < 30 && !ctx.defendingPlayer->IsFirst() && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No &&
+		if (randomMod <= 30 && !ctx.defendingPlayer->IsFirst() && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No &&
 			!ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 		{
 			ctx.defendingPokemon->SetIsFlinched(true);
@@ -1706,8 +1706,8 @@ void SpecialDefenseDownHit::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> rngDist(1, 100);
-		int randomNumber{ rngDist(deps.rng.GetGenerator()) };
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
+		int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
 		if (randomNumber <= 10 &&
 			!ctx.defendingPlayer->HasMist() &&
@@ -1777,8 +1777,8 @@ void ConfuseHit::DoMove(MoveEffectsDependencies& deps)
 
 		if (!ctx.defendingPokemon->IsConfused())
 		{
-			std::uniform_int_distribution<int> rngDist(1, 101);
-			int randomNumber{ rngDist(deps.rng.GetGenerator()) };
+			std::uniform_int_distribution<int> randomModDistributor(1, 100);
+			int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
 			if (randomNumber <= 10 && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 			{
@@ -1822,8 +1822,8 @@ void SpeedDownHit::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> rngDist(1, 101);
-		int randomNumber{ rngDist(deps.rng.GetGenerator()) };
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
+		int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
 		if (randomNumber <= 10 && !ctx.defendingPlayer->HasMist() && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 		{
@@ -1864,8 +1864,8 @@ void AttackDownHit::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> rngDist(1, 101);
-		int randomNumber{ rngDist(deps.rng.GetGenerator()) };
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
+		int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
 		if (randomNumber <= 10 && !ctx.defendingPlayer->HasMist() && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 		{
@@ -3251,13 +3251,13 @@ void Bide::DoMove(MoveEffectsDependencies& deps)
 
 		if (ctx.attackingPokemon->GetBideCounter() >= ctx.attackingPokemon->GetBideTurnCount())
 		{
-			bool hit = !ctx.defendingPokemon->IsSemiInvulnerable();
-
+			ctx.flags.hit = !ctx.defendingPokemon->IsSemiInvulnerable();
+			
 			deps.statusUI.DisplayBideUnleashedMsg();
 
 			int bideDamage = ctx.attackingPokemon->GetBideDamage() * 2;
 
-			if (hit)
+			if (ctx.flags.hit)
 			{
 				if (ctx.defendingPokemon->GetTypeOneEnum() == PokemonType::Ghost ||
 					ctx.defendingPokemon->GetTypeTwoEnum() == PokemonType::Ghost)
@@ -3465,10 +3465,10 @@ void FlinchHit10::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> randomModDistributor(1, 101);
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
 		int randomMod{ randomModDistributor(deps.rng.GetGenerator()) };
 
-		if (randomMod < 10 && (!ctx.defendingPlayer->IsFirst()) && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
+		if (randomMod <= 10 && (!ctx.defendingPlayer->IsFirst()) && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 		{
 			ctx.defendingPokemon->SetIsFlinched(true);
 		}
@@ -3501,10 +3501,10 @@ void FlinchHit20::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> randomModDistributor(1, 101);
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
 		int randomMod{ randomModDistributor(deps.rng.GetGenerator()) };
 
-		if (randomMod < 20 && (!ctx.defendingPlayer->IsFirst()) &&
+		if (randomMod <= 20 && (!ctx.defendingPlayer->IsFirst()) &&
 			ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No &&
 			!ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 		{
@@ -3766,7 +3766,7 @@ void SkyAttack::DoMove(MoveEffectsDependencies& deps)
 			deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 			deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-			std::uniform_int_distribution<int> randomModDistributor(1, 101);
+			std::uniform_int_distribution<int> randomModDistributor(1, 100);
 			int randomMod = randomModDistributor(deps.rng.GetGenerator());
 
 			if (randomMod <= 30 &&
@@ -3858,8 +3858,8 @@ void ConfuseHit20::DoMove(MoveEffectsDependencies& deps)
 
 		if (!ctx.defendingPokemon->IsConfused())
 		{
-			std::uniform_int_distribution<int> rngDist(1, 101);
-			int randomNumber{ rngDist(deps.rng.GetGenerator()) };
+			std::uniform_int_distribution<int> randomModDistributor(1, 100);
+			int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
 			if (randomNumber <= 20 && !ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)
 			{
@@ -4031,8 +4031,8 @@ void TriAttack::DoMove(MoveEffectsDependencies& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		std::uniform_int_distribution<int> rngDist(1, 101);
-		int randomNumber{ rngDist(deps.rng.GetGenerator()) };
+		std::uniform_int_distribution<int> randomModDistributor(1, 100);
+		int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
 		if (randomNumber <= 20 && ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No &&
 			!ctx.defendingPokemon->HasSubstitute() && ctx.defendingPokemon->GetCurrentHP() != 0)

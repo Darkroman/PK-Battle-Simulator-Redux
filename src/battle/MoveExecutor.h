@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../moves/MoveEffects.h"
 
 class MoveExecutor

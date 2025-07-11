@@ -35,7 +35,6 @@ void RunGame()
     players.push_back(std::make_unique<AIPlayer>("Player Two", aiStrat));
 
     BattleContext context(players);
-    BattleCalculations calculations(context, rng);
 
     BattleTextMenu battleMenu(context);
     IBattleMenuUI& battleMenuUI = battleMenu;
@@ -43,13 +42,6 @@ void RunGame()
     IMoveResultsUI& moveResultsUI = moveResultsText;
     StatusEffectText statusEffectText(context);
     IStatusEffectUI& statusEffectUI = statusEffectText;
-
-    BattleStatusManager statusManager(context, rng, statusEffectText);
-    TurnUtils turnUtils(context, battleMenu);
-    WinChecker winChecker(context, turnUtils, battleMenu);
-    MoveExecutor moveExecutor(context, calculations, statusManager, moveResultsText, battleMenu, statusEffectText, rng, turnUtils);
-    TurnProcessor turnProcessor(context, calculations, rng, statusManager, winChecker, turnUtils, moveExecutor);
-    PostTurnEffectProcessor postTurn(context, statusEffectText, statusManager, winChecker);
 
     Menu menu(players, rng);
 
@@ -66,7 +58,7 @@ void RunGame()
         context.playerOne = players[0].get();
         context.playerTwo = players[1].get();
 
-        TurnManager turnManager(context, battleMenu, winChecker, turnProcessor, postTurn);
+        TurnManager turnManager(context, rng, battleMenu, moveResultsText, statusEffectText);
 
         exit = turnManager.RunBattleLoop();
 

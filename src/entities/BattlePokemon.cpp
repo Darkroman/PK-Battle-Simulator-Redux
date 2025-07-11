@@ -793,6 +793,11 @@ const int BattlePokemon::GetMaxHP() const
 
 const int BattlePokemon::GetAttack() const
 {
+    if (b_isTransformed && b_transformBurnPenalty && currentStatus != Status::Burned)
+    {
+        return (((m_attack_iv + 2 * mp_pokemon->GetBaseAttack() + (m_attack_ev / 4)) * m_level / 100) + 5) / 2;
+    }
+
     return (((m_attack_iv + 2 * mp_pokemon->GetBaseAttack() + (m_attack_ev / 4)) * m_level / 100) + 5);
 }
 
@@ -813,6 +818,11 @@ const int BattlePokemon::GetSpecialDefense() const
 
 const int BattlePokemon::GetSpeed() const
 {
+    if (b_isTransformed && b_transformParalysisPenalty && currentStatus != Status::Paralyzed)
+    {
+        return (((m_speed_iv + 2 * mp_pokemon->GetBaseSpeed() + (m_speed_ev / 4)) * m_level / 100) + 5) / 2;
+    }
+
     return (((m_speed_iv + 2 * mp_pokemon->GetBaseSpeed() + (m_speed_ev / 4)) * m_level / 100) + 5);
 }
 
@@ -1382,6 +1392,9 @@ void BattlePokemon::SetTransformation(BattlePokemon* pokemon)
     m_accuracystage = pokemon->GetAccuracyStage();
     m_criticalhitstage = pokemon->GetCriticalHitStage();
 
+    b_transformBurnPenalty = (GetStatus() == Status::Burned);
+    b_transformParalysisPenalty = (GetStatus() == Status::Paralyzed);
+
     m_moveCount = pokemon->GetMoveCount();
 
     for (size_t i = 0; i < m_array_moves.size(); ++i)
@@ -1427,6 +1440,9 @@ void BattlePokemon::Detransform()
     m_evasionstage = m_detransformData.m_evasionstage;
     m_accuracystage = m_detransformData.m_accuracystage;
     m_criticalhitstage = m_detransformData.m_criticalhitstage;
+
+    b_transformBurnPenalty = false;
+    b_transformParalysisPenalty = false;
 
     m_moveCount = m_detransformData.m_moveCount;
 
