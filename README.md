@@ -54,6 +54,13 @@ This is just a small console based Pokemon battle simulator program. I started t
 
    </summary>
 
+### 7/11/2025
+- Made it so TurnManager correctly exhibits ownership of other classes and what it borrows (many of the battle related classes it should instantiate rather than Game.h itself).
+- Fixed up some inconsistencies having to do with random rolls (should all be 1-100 now instead of some being 1-101).
+- Fixed CalculateHitChance to actually use a real distribution of a roll (0.0, 100.0) for more correct statistical outcomes when chance to hit is calculated lower than 100%.
+- Added correct Bide behavior based on Bulbapedia info. Sleep should disrupt it no matter what, and a full paralyze on a turn neither pauses nor disrupts Bide.
+- Added correct behavior for a transform quirk. Transform now copies over the attack stat penalty if burned, and speed stat penalty if paralyzed, but not the status itself. If transformed pokemon is then burned or paralyzed, it does NOT stack.
+
 ### 7/9/2025
 - Fixed the erasing Pokemon team on switching player controller type issue.
 - Some more software architectural changes and code cleanup. Moved most console text output to separate classes.
