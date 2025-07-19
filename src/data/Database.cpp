@@ -6,12 +6,14 @@ Database::Database()
     movedex.reserve(165); //Number of moves
 
     //auto m_futures = std::async(std::launch::async, [&] { LoadPokemon(); });
-    auto m_futures = std::async(std::launch::async, [&] { LoadEmbedPokemon(); });
 
     //LoadPokemon();
 
     //auto m_futures2 = std::async(std::launch::async, [&] { LoadMoves(); });
-    auto m_futures2 = std::async(std::launch::async, [&] { LoadEmbedMoves(); });
+    
+    LoadEmbedPokemon();
+    LoadEmbedLearnset();
+    LoadEmbedMoves();
 
     //LoadMoves();
 
@@ -27,12 +29,6 @@ Database::Database()
     }
     */
     
-    m_futures.wait();
-    LoadEmbedLearnset();
-    
-
-    m_futures2.wait();
-
     //TestPokemonCPPOutputFile();
     //TestMoveCPPOutputFile();
     //TestLearnSetCPPOutputFile();
