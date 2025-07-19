@@ -18,6 +18,19 @@ This was coded in VS2022 Community, utilizing up to the C++20 standard features 
 This is just a small console based Pokemon battle simulator program. I started this project a long time ago and have been working on it off and on while also learning C++. I wanted to put what I've learned to practice, and Pokemon is one of my most cherished gaming series of all time. I don't plan on making this into a full graphical game (as there are also some copyright issues with that in any case). Just something to put out there to show what I've learned so far. Along with future updates I hope to be more proficient at architectural/code organization design.
 </details>
 
+<details open>
+  <summary>
+
+## Screenshots
+![Setup Menu](https://github.com/user-attachments/assets/3da09c41-9d3a-4c50-83ef-82a5c438c40e) ![Changing Move](https://github.com/user-attachments/assets/77723cef-5437-4dc4-93e6-b8546e79a299) 
+
+![Battle 1](https://github.com/user-attachments/assets/7055fbcb-7391-4854-a01e-c61975625706) ![Battle 2](https://github.com/user-attachments/assets/8fc46a2e-2637-40db-abdd-06c234c1d162)
+
+
+   </summary>
+
+</details>
+
 
 <details>
    <summary>  
