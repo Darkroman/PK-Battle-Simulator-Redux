@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "StatusEffectText.h"
 #include "../entities/Player.h"
 #include "../entities/BattlePokemon.h"
@@ -196,7 +198,7 @@ void StatusEffectText::DisplayFreedFromBoundMsg(Player* player, BattlePokemon* p
 		<< pokemon->GetBoundMoveName() << "!\n";
 }
 
-// Rage / thrash
+// Thrash
 void StatusEffectText::DisplayThrashDisabledMsg() 
 {
 	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s Thrash is disabled!\n";
@@ -207,6 +209,7 @@ void StatusEffectText::DisplayThrashConfusionMsg()
 	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " became confused due to fatigue!\n";
 }
 
+// Rage
 void StatusEffectText::DisplayRageStartedMsg() 
 {
 	std::cout << "(Rage started on " << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << ")\n";

@@ -5,10 +5,10 @@ class BattleCalculations;
 class RandomEngine;
 class IMoveResultsUI;
 class IStatusEffectUI;
-class TurnUtils;
+class SwitchExecutor;
 class MoveExecutor;
 
-#include "BattleStatusManager.h"
+#include "StatusEffectProcessor.h"
 
 class IBattleMenuUI;
 
@@ -17,20 +17,19 @@ class IBattleMenuUI;
 class TurnProcessor
 {
 public:
-	TurnProcessor(BattleContext&, BattleCalculations&, RandomEngine&, BattleStatusManager&, WinChecker&, TurnUtils&, MoveExecutor&);
+	TurnProcessor(BattleContext&, BattleCalculations&, RandomEngine&, StatusEffectProcessor&, WinChecker&, SwitchExecutor&, MoveExecutor&);
 
 	void DetermineWhoGoesFirst();
-	void DeterminePostTurnDamageOrder();
+	void SetFirst(Player*, Player*);
 	void ExecuteTurn(bool&);
 	void SwapRoles();
-	void SetFirst(Player*, Player*);
 
 private:
 	BattleContext& m_context;
 	BattleCalculations& m_calculations;
 	RandomEngine& m_rng;
-	BattleStatusManager& m_statusManager;
+	StatusEffectProcessor& m_statusProcessor;
 	WinChecker& m_winChecker;
-	TurnUtils& m_turnUtils;
+	SwitchExecutor& m_switchExecutor;
 	MoveExecutor& m_moveExecutor;
 };

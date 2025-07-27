@@ -5,7 +5,8 @@ class BattlePokemon;
 struct BattlePokemon::pokemonMove;
 class Player;
 
-class IAIStrategy {
+class IAIStrategy 
+{
 
 public:
 	virtual ~IAIStrategy() = default;

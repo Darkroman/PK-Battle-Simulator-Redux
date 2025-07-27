@@ -24,17 +24,17 @@ set(SOURCES
 
     # battle
     battle/BattleCalculations.cpp
-    battle/BattleStatusManager.cpp
+    battle/BattleManager.cpp
     battle/MoveExecutor.cpp
     battle/PostTurnEffectProcessor.cpp
     battle/RandomEngine.cpp
-    battle/TurnManager.cpp
+    battle/StatusEffectProcessor.cpp
+    battle/SwitchExecutor.cpp
     battle/TurnProcessor.cpp
-    battle/TurnUtils.cpp
     battle/WinChecker.cpp
 
     # moves
-    moves/MoveEffects.cpp
+    moves/MoveRoutines.cpp
 
     # UI
     ui/BattleTextMenu.cpp

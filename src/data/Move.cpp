@@ -1,9 +1,11 @@
 #include "Move.h"
 
+#include "StringToTypes.h"
+
 Move::Move
 (size_t movenum, std::string_view name,
     std::string_view type, PokemonType typee, std::string_view category, Category categorye,
-    int priority, MoveEffect moveEffectEnum, 
+    int priority, MoveEffect moveEffectEnum, int effectChance,
     int pp, int maxpp, int power, int accuracy,
     bool contact, bool protect, bool magicCoat,
     bool snatch, bool mirrorMove, bool kingRock, bool soundBased, bool bypassSubstitute)
@@ -53,6 +55,11 @@ const int Move::GetPriority() const
 const MoveEffect Move::GetMoveEffectEnum() const
 {
     return m_moveEffectEnum;
+}
+
+const int Move::GetEffectChance() const
+{
+    return m_effectChance;
 }
 
 const int Move::GetPP() const

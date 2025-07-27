@@ -1,3 +1,10 @@
+#include <iostream>
+
+#include "../data/Pokemon.h"
+#include "../data/Move.h"
+#include "../moves/MoveEffectEnums.h"
+#include "../data/StringToTypes.h"
+
 #include "BattleCalculations.h"
 
 BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng) : m_context(context), m_rng(rng) {}
@@ -133,9 +140,9 @@ bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentM
 
 void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
 {
-	double damage{ 0 };
-
 	m_context.damageTaken = 0;
+
+	double damage{ 0 };
 
 	double effectiveness = CalculateTypeEffectiveness(currentMove, target);
 
@@ -294,7 +301,11 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		target->DamageCurrentHP(static_cast<int>(damage));
 	}
 
-	if (target->IsBiding())
+	bool isMultiStrike = currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::MultiAttack ||
+						 currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::DoubleHit ||
+						 currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Twineedle;
+
+	if (target->IsBiding() && !isMultiStrike)
 	{
 		target->AddBideDamage(static_cast<int>(damage));
 	}

@@ -1,6 +1,10 @@
+#include <iostream>
+
 #include "../battle/BattleContext.h"
 
 #include "MoveResultsText.h"
+
+#include "../data/Move.h"
 
 MoveResultsText::MoveResultsText(BattleContext& context) : m_context(context) {}
 
@@ -38,11 +42,6 @@ void MoveResultsText::DisplayEffectivenessTextDialog(Player* targetPlayer, Battl
 	{
 		std::cout << "It was a one-hit KO!\n";
 	}
-}
-
-void MoveResultsText::DisplayAccuracyLoweredTextDialog(Player* player, BattlePokemon* pokemon)
-{
-	std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "'s accuracy fell!\n";
 }
 
 void MoveResultsText::DisplayAttackMissedTextDialog(Player* player, BattlePokemon* pokemon)

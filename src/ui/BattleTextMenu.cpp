@@ -2,6 +2,8 @@
 #include "../battle/BattleContext.h"
 #include "../data/InputValidation.h"
 #include "../entities/AIPlayer.h"
+#include "../data/Move.h"
+
 #include <iostream>
 #include <limits>
 #include <string>

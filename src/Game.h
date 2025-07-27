@@ -1,17 +1,19 @@
 #pragma once
 
+#include "data/Database.h"
+#include "entities/AIPlayer.h"
+#include "entities/HumanPlayer.h"
+
 #include "ui/Menu.h"
 #include "battle/RandomEngine.h"
 #include "battle/BattleContext.h"
-#include "battle/TurnManager.h"
-#include "battle/TurnProcessor.h"
-#include "battle/PostTurnEffectProcessor.h"
+#include "battle/BattleManager.h"
 #include "ui/MoveResultsText.h"
 #include "ui/BattleTextMenu.h"
 #include "ui/StatusEffectText.h"
 #include "entities/ai strategies/EasyAIStrategy.h"
-#include "battle/TurnUtils.h"
-#include "battle/MoveExecutor.h"
+
+#include <iostream>
 
 void RunGame()
 {
@@ -58,12 +60,12 @@ void RunGame()
         context.playerOne = players[0].get();
         context.playerTwo = players[1].get();
 
-        TurnManager turnManager(context, rng, battleMenu, moveResultsText, statusEffectText);
+        BattleManager battleManager(context, rng, battleMenu, moveResultsText, statusEffectText);
 
-        exit = turnManager.RunBattleLoop();
+        exit = battleManager.RunBattleLoop();
 
         exit = battleMenu.AnnounceWinner();
 
-        turnManager.ResetValues();
+        battleManager.ResetValues();
     }
 }

@@ -1,3 +1,7 @@
+#include <iostream>
+#include <sstream>
+#include <algorithm>
+
 #include "LoadParty.h"
 
 LoadParty::LoadParty(std::array<Player*, 2> players, int numPlayer) : num(numPlayer)

@@ -1,4 +1,7 @@
-#include "../data/Database.h"
+#include "Database.h"
+
+#include "Pokemon.h"
+#include "StringToTypes.h"
 
 void Database::LoadEmbedPokemon()
 {

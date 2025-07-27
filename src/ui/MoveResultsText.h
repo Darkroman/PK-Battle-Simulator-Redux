@@ -15,8 +15,6 @@ public:
 
 	void DisplayEffectivenessTextDialog(Player*, BattlePokemon*) override;
 
-	void DisplayAccuracyLoweredTextDialog(Player*, BattlePokemon*) override;
-
 	void DisplayAttackMissedTextDialog(Player*, BattlePokemon*) override;
 
 	void DisplayAttackAvoidedTextDialog(Player*, BattlePokemon*) override;

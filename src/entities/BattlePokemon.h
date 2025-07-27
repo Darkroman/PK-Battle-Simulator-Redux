@@ -1,7 +1,12 @@
 #pragma once
+
 #include <array>
 #include <ranges>
-#include "../data/Database.h"
+#include <string>
+
+class Pokemon;
+class Move;
+enum class PokemonType;
 
 enum struct Status { Normal = 0, Burned, Frozen, Paralyzed, Poisoned, Badly_Poisoned, Sleeping };
 

@@ -1,11 +1,9 @@
 #pragma once
 
-#include <iostream>
-#include <limits>
-#include <fstream>
 #include <vector>
+#include <string>
 
-#include "StringToTypes.h"
+enum class PokemonType;
 
 class Pokemon
 {

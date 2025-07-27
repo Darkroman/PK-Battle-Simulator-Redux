@@ -1,4 +1,8 @@
 #pragma once
+
+#include <vector>
+#include <memory>
+
 #include "../entities/Player.h"
 #include "../entities/BattlePokemon.h"
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fstream>
+
 #include "../entities/Player.h"
 
 class LoadParty

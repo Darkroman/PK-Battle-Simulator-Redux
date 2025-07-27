@@ -13,8 +13,6 @@ public:
 
 	virtual void DisplayEffectivenessTextDialog(Player*, BattlePokemon*) = 0;
 
-	virtual void DisplayAccuracyLoweredTextDialog(Player*, BattlePokemon*) = 0;
-
 	virtual void DisplayAttackMissedTextDialog(Player*, BattlePokemon*) = 0;
 
 	virtual void DisplayAttackAvoidedTextDialog(Player*, BattlePokemon*) = 0;

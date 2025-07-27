@@ -7,7 +7,7 @@ enum class MoveEffect
 	MultiAttack,
 	BurnHit,
 	FreezeHit,
-	ParalyzeHit10,
+	ParalyzeHit,
 	OHKO,
 	RazorWind,
 	AttackUp2,
@@ -51,7 +51,6 @@ enum class MoveEffect
 	SpeedDown2,
 	DragonRage,
 	Paralyze,
-	ParalyzeHit30,
 	Earthquake,
 	Dig,
 	Toxic,
@@ -76,9 +75,6 @@ enum class MoveEffect
 	Metronome,
 	MirrorMove,
 	Explosion,
-	PoisonHit40,
-	FlinchHit10,
-	FlinchHit20,
 	Swift,
 	SkullBash,
 	SpecialDefenseUp2,
@@ -86,7 +82,6 @@ enum class MoveEffect
 	PoisonGas,
 	SkyAttack,
 	Transform,
-	ConfuseHit20,
 	Psywave,
 	Splash,
 	Rest,
@@ -96,8 +91,3 @@ enum class MoveEffect
 	Substitute,
 	Struggle
 };
-
-static MoveEffect StringToMoveEffect(const std::string& moveEffectString)
-{
-	return static_cast<MoveEffect>(std::stoi(moveEffectString));
-}

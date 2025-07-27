@@ -1,3 +1,12 @@
+#include <iostream>
+
+
+#include "../entities/Player.h"
+#include "../entities/HumanPlayer.h"
+#include "../entities/AIPlayer.h"
+#include "../save/SaveParty.h"
+#include "../save/LoadParty.h"
+
 #include "Menu.h"
 #include "../data/InputValidation.h"
 #include "../battle/RandomEngine.h"
@@ -1702,19 +1711,19 @@ void Menu::SetDefaultPokemon()
 		players[0]->GetBelt(1)->SetLevel(100);
 		players[1]->GetBelt(1)->SetLevel(100);
 
-		players[0]->GetBelt(1)->SetHPEV(252);
+		players[0]->GetBelt(1)->SetHPEV(0);
 		//players[0]->GetBelt(1)->SetAttackEV(252);
-		players[0]->GetBelt(1)->SetDefenseEV(252);
-		players[0]->GetBelt(1)->SetHPIV(31);
-		players[0]->GetBelt(1)->SetAttackIV(31);
-		players[0]->GetBelt(1)->SetDefenseIV(31);
-		players[0]->GetBelt(1)->SetSpeedIV(30);
-		players[1]->GetBelt(1)->SetHPEV(252);
+		players[0]->GetBelt(1)->SetDefenseEV(0);
+		players[0]->GetBelt(1)->SetHPIV(0);
+		players[0]->GetBelt(1)->SetAttackIV(0);
+		players[0]->GetBelt(1)->SetDefenseIV(0);
+		players[0]->GetBelt(1)->SetSpeedIV(0);
+		players[1]->GetBelt(1)->SetHPEV(0);
 		//players[1]->GetBelt(1)->SetAttackEV(252);
-		players[1]->GetBelt(1)->SetDefenseEV(252);
-		players[1]->GetBelt(1)->SetHPIV(31);
-		players[1]->GetBelt(1)->SetDefenseIV(31);
-		players[1]->GetBelt(1)->SetSpeedIV(31);
+		players[1]->GetBelt(1)->SetDefenseEV(0);
+		players[1]->GetBelt(1)->SetHPIV(0);
+		players[1]->GetBelt(1)->SetDefenseIV(0);
+		players[1]->GetBelt(1)->SetSpeedIV(0);
 	}
 	else
 	{

@@ -1,6 +1,9 @@
 #pragma once
 
-#include "../entities/Player.h"
+#include <fstream>
+#include <array>
+
+class Player;
 
 class SaveParty
 {

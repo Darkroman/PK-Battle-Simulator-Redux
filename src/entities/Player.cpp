@@ -1,4 +1,9 @@
+#include "../data/Move.h"
+#include "../data/Database.h"
+
 #include "Player.h"
+
+#include <iostream>
 
 Player::Player(std::string_view name) :
     m_name(name) {}

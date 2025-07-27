@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../moves/MoveEffects.h"
+#include "../moves/MoveRoutines.h"
 
 class MoveExecutor
 {
@@ -8,16 +8,16 @@ public:
     MoveExecutor(
         BattleContext& context,
         BattleCalculations& calculations,
-        BattleStatusManager& statusManager,
+        StatusEffectProcessor& statusProcessor,
         IMoveResultsUI& resultsUI,
         IBattleMenuUI& battleMenuUI,
         IStatusEffectUI& statusEffectUI,
         RandomEngine& rng,
-        TurnUtils& turnUtils
+        SwitchExecutor& switchExecutor
     );
 
     void ExecuteMove();
 
 private:
-    MoveEffectsDependencies m_deps;
+    MoveRoutineDeps m_deps;
 };

@@ -1,4 +1,6 @@
-#include "../data/Database.h"
+#include "Database.h"
+
+#include "Pokemon.h"
 
 void Database::LoadEmbedLearnset()
 {

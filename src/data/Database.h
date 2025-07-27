@@ -1,12 +1,10 @@
 #pragma once
 
-#include <algorithm>
-#include <future>
-#include <iomanip>
-#include <filesystem>
+#include <string>
+#include <vector>
 
-#include "Pokemon.h"
-#include "Move.h"
+class Pokemon;
+class Move;
 
 class Database
 {
@@ -41,18 +39,12 @@ public:
 
 private:
 
-    void LoadPokemon();
-    void LoadMoves();
-    void SetPokemonMoveList(std::vector<std::vector<size_t>>&);
     void TestingPokemonAndMoves();
 
-    void TestPokemonCPPOutputFile();
     void LoadEmbedPokemon();
 
-    void TestMoveCPPOutputFile();
     void LoadEmbedMoves();
 
-    void TestLearnSetCPPOutputFile();
     void LoadEmbedLearnset();
 
 private:

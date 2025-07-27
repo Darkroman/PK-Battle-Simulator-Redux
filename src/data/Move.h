@@ -1,12 +1,15 @@
 // Move data layout in movedex.txt is as follows:
-// Index number, name, type, category, priority, secondary flag, pp, max pp, power, accuracy.
+// Index number, name, type, category, priority, secondary effect flag, pp, max pp, power, accuracy.
 // Each bool corresponds with whether it:
 // Makes contact, affected by Protect, affected by Magic Coat, affected by Snatch, affected by Mirror Move, affected by King's Rock, sound based, bypasses substitute
 
 #pragma once
 
-#include "StringToTypes.h"
-#include "../moves/MoveEffectEnums.h"
+#include <string>
+
+enum class PokemonType;
+enum class Category;
+enum class MoveEffect;
 
 class Move
 {
@@ -14,7 +17,7 @@ public:
     Move
     (size_t, std::string_view,
      std::string_view, PokemonType, std::string_view, Category,
-     int, MoveEffect,
+     int, MoveEffect, int,
      int, int, int, int,
      bool, bool, bool,
      bool, bool, bool, bool, bool);
@@ -27,8 +30,9 @@ public:
     std::string_view      GetMoveType() const;
     const PokemonType GetMoveTypeEnum() const;
     
-    const int            GetPriority() const;
+    const int              GetPriority() const;
     const MoveEffect GetMoveEffectEnum() const;
+    const int          GetEffectChance() const;
     
     const int       GetPP() const;
     const int    GetMaxPP() const;
@@ -54,8 +58,9 @@ private:
     std::string m_category;
     Category   m_categorye;
 
-    int      m_priority;
+    int              m_priority;
     MoveEffect m_moveEffectEnum;
+    int          m_effectChance;
 
     int       m_pp;
     int    m_maxpp;

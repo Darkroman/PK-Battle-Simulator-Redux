@@ -1,8 +1,9 @@
 #include "PostTurnEffectProcessor.h"
 
 #include "BattleContext.h"
+#include "BattleCalculations.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
-#include "BattleStatusManager.h"
+#include "StatusEffectProcessor.h"
 #include "WinChecker.h"
 
 #include "../entities/Player.h"
@@ -11,12 +12,45 @@
 #include <iostream>
 
 
-PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, IStatusEffectUI& statusEffectUI, BattleStatusManager& statusManager, WinChecker& winChecker)
+PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, BattleCalculations& calculations, IStatusEffectUI& statusEffectUI, StatusEffectProcessor& statusProcessor, WinChecker& winChecker)
     : m_context(context)
+    , m_calculations(calculations)
     , m_statusEffectUI(statusEffectUI)
-    , m_statusManager(statusManager)
+    , m_statusProcessor(statusProcessor)
     , m_winChecker(winChecker)
 {}
+
+void PostTurnEffectProcessor::DeterminePostTurnDamageOrder()
+{
+    double playerOneSpeed = std::floor(m_context.playerOneCurrentPokemon->GetSpeed() * m_calculations.CalculateStageModifier(m_context.playerOneCurrentPokemon->GetSpeedStage()));
+
+    double playerTwoSpeed = std::floor(m_context.playerTwoCurrentPokemon->GetSpeed() * m_calculations.CalculateStageModifier(m_context.playerTwoCurrentPokemon->GetSpeedStage()));
+
+    if (m_context.playerOneCurrentPokemon->GetStatus() == Status::Paralyzed)
+    {
+        playerOneSpeed /= 2;
+    }
+
+    if (m_context.playerTwoCurrentPokemon->GetStatus() == Status::Paralyzed)
+    {
+        playerTwoSpeed /= 2;
+    }
+
+    if ((playerOneSpeed > playerTwoSpeed) && (m_context.attackingPlayer != m_context.playerOne))
+    {
+        m_context.attackingPlayer = m_context.playerOne;
+        m_context.defendingPlayer = m_context.playerTwo;
+        m_context.attackingPokemon = m_context.playerOneCurrentPokemon;
+        m_context.defendingPokemon = m_context.playerTwoCurrentPokemon;
+    }
+    else if ((playerTwoSpeed > playerOneSpeed) && (m_context.attackingPlayer == m_context.playerOne))
+    {
+        m_context.attackingPlayer = m_context.playerTwo;
+        m_context.defendingPlayer = m_context.playerOne;
+        m_context.attackingPokemon = m_context.playerTwoCurrentPokemon;
+        m_context.defendingPokemon = m_context.playerOneCurrentPokemon;
+    }
+}
 
 void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
 {
@@ -67,7 +101,7 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
 
         m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.attackingPlayer, m_context.attackingPokemon);
 
-        m_statusManager.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
+        m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
     }
 
     if (!m_context.defendingPokemon->IsSeeded() || m_context.defendingPokemon->IsFainted() || m_context.defendingPokemon->GetCurrentHP() <= 0)
@@ -82,7 +116,7 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
 
     m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.defendingPlayer, m_context.defendingPokemon);
 
-    m_statusManager.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
+    m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
 }
 
 void PostTurnEffectProcessor::CheckDamagingStatuses()
@@ -108,7 +142,7 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
         }
     }
 
-    m_statusManager.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
+    m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
 
     if (!m_context.defendingPokemon->IsFainted() || m_context.defendingPokemon->GetCurrentHP() > 0)
     {
@@ -130,7 +164,7 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
             return;
         }
     }
-    m_statusManager.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
+    m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
 }
 
 void PostTurnEffectProcessor::BurnedStatus(Player* player, BattlePokemon* pokemon)
@@ -188,7 +222,7 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
 
             m_statusEffectUI.DisplayHurtByBoundMsg(m_context.attackingPlayer, m_context.attackingPokemon);
 
-            m_statusManager.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer,
+            m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer,
                 m_context.attackingPokemon, m_context.defendingPokemon);
         }
     }
@@ -218,7 +252,7 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
 
         m_statusEffectUI.DisplayHurtByBoundMsg(m_context.defendingPlayer, m_context.defendingPokemon);
 
-        m_statusManager.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer,
+        m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer,
             m_context.defendingPokemon, m_context.attackingPokemon);
     }
 }

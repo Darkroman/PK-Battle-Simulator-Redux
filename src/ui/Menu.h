@@ -1,13 +1,12 @@
 #pragma once
 
-#include "../entities/Player.h"
-#include "../entities/HumanPlayer.h"
-#include "../entities/AIPlayer.h"
-#include "../save/SaveParty.h"
-#include "../save/LoadParty.h"
-#include "../data/InputValidation.h"
+#include <vector>
+#include <array>
+#include <memory>
 
+class Player;
 class RandomEngine;
+class IAIStrategy;
 
 class Menu
 {

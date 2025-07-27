@@ -1,3 +1,8 @@
+#include <iostream>
+
+#include "../entities/Player.h"
+#include "../data/Move.h"
+
 #include "SaveParty.h"
 
 SaveParty::SaveParty(std::array<Player*, 2> players, int numPlayer) : num(numPlayer)

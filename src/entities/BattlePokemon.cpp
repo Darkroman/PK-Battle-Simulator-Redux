@@ -1,3 +1,10 @@
+#include <iostream>
+#include <iomanip>
+
+#include "../data/Pokemon.h"
+#include "../data/Move.h"
+#include "../data/Database.h"
+
 #include "BattlePokemon.h"
 
 //BattlePokemon::BattlePokemon() {}

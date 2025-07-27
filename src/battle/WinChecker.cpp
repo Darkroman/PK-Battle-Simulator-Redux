@@ -1,7 +1,7 @@
 #include "WinChecker.h"
 
 #include "BattleContext.h"
-#include "TurnUtils.h"
+#include "SwitchExecutor.h"
 #include "../ui/interfaces/IBattleMenuUI.h"
 #include "TurnProcessor.h"
 #include "../entities/HumanPlayer.h"
@@ -10,9 +10,9 @@
 
 #include <iostream>
 
-WinChecker::WinChecker(BattleContext& context, TurnUtils& turnUtils, IBattleMenuUI& battleMenuUI)
+WinChecker::WinChecker(BattleContext& context, SwitchExecutor& switchExecutor, IBattleMenuUI& battleMenuUI)
     : m_context(context)
-	, m_turnUtils(turnUtils)
+	, m_switchExecutor(switchExecutor)
 	, m_battleMenuUI(battleMenuUI)
 	{}
 
@@ -58,14 +58,14 @@ bool WinChecker::CheckWinOrSwitch(Player* sourcePlayer, Player* targetPlayer, Ba
 
 		if (targetPokemon == m_context.playerOneCurrentPokemon)
 		{
-			m_turnUtils.PerformSwitch(m_context.playerOne, m_context.playerOneCurrentPokemon);
+			m_switchExecutor.ExecuteSwitch(m_context.playerOne, m_context.playerOneCurrentPokemon);
 			targetPlayer->SetHasSwitched(true);
 			return false;
 		}
 
 		if (targetPokemon == m_context.playerTwoCurrentPokemon)
 		{
-			m_turnUtils.PerformSwitch(m_context.playerTwo, m_context.playerTwoCurrentPokemon);
+			m_switchExecutor.ExecuteSwitch(m_context.playerTwo, m_context.playerTwoCurrentPokemon);
 			targetPlayer->SetHasSwitched(true);
 			return false;
 		}
