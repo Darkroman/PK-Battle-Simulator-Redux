@@ -7,6 +7,24 @@
 
    </summary>
 
+### 7/27/2025
+A few more architectural changes and a few bug fixes:
+Changed names of some classes and updated their file names:
+- TurnManager -> BattleManager
+- BattleStatusManager -> StatusEffectProcessor
+- TurnUtils -> SwitchExecutor
+- IMoveEffect -> IMoveRoutine
+
+- Added the secondary effect chance to the Move objects themselves. This allows me to
+consolidate a few of the chance to inflict status MoveRoutines into one. Also updated the secondary effect enums appropriately (e.g ParalyzeHit10 and ParalyzeHit30 are just ParalyzeHit now)
+- Updated DoMove routines that inflict a non-volatile status using the currentMove EffectChance object member
+
+Bug fixes:
+- Lick now appropriately uses ParalyzeHit MoveEffect instead of Earthquake
+- On MultiAttack, DoubleHit and Twineedle moves, Bide now correctly takes into account only the very last hit's damage
+- Fixed Stomp bugs: No longer has chance to flinch if defending Pokemon has a substitute or on same turn substitute goes down
+- Added or modified HasSubstitute and BypassSubstitute logic checks to many status effect and stat stage affecting moves
+
 ### 7/11/2025
 - Made it so TurnManager correctly exhibits ownership of other classes and what it borrows (many of the battle related classes it should instantiate rather than Game.h itself).
 - Fixed up some inconsistencies having to do with random rolls (should all be 1-100 now instead of some being 1-101).
