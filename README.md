@@ -9,7 +9,7 @@
 
 ### 7/27/2025
 A few more architectural changes and a few bug fixes:
-Changed names of some classes and updated their file names:
+- Changed names of some classes and updated their file names:
 - TurnManager -> BattleManager
 - BattleStatusManager -> StatusEffectProcessor
 - TurnUtils -> SwitchExecutor
