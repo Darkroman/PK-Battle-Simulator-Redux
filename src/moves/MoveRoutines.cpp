@@ -168,8 +168,8 @@ std::unique_ptr<IMoveRoutine> MoveRoutineFactory::Call(MoveEffect ID)
 	case MoveEffect::AttackDown:
 		return std::make_unique<AttackDown>();
 
-	case MoveEffect::BypassSubSleep:
-		return std::make_unique<BypassSubSleep>();
+	case MoveEffect::SleepMove:
+		return std::make_unique<SleepMove>();
 
 	case MoveEffect::Confuse:
 		return std::make_unique<Confuse>();
@@ -245,9 +245,6 @@ std::unique_ptr<IMoveRoutine> MoveRoutineFactory::Call(MoveEffect ID)
 
 	case MoveEffect::Toxic:
 		return std::make_unique<Toxic>();
-
-	case MoveEffect::SleepMove:
-		return std::make_unique<SleepMove>();
 
 	case MoveEffect::AttackUp:
 		return std::make_unique<AttackUp>();
@@ -1525,7 +1522,7 @@ void AttackDown::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 }
 
-void BypassSubSleep::DoMove(MoveRoutineDeps& deps)
+void SleepMove::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -1533,31 +1530,21 @@ void BypassSubSleep::DoMove(MoveRoutineDeps& deps)
 
 	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
-	if (ctx.flags.hit)
+	if (!ctx.flags.hit)
 	{
-		if (ctx.defendingPokemon->GetStatus() == Status::Normal)
-		{
-			deps.statusUI.DisplayFellAsleepMsg();
-
-			ctx.defendingPokemon->ChangeStatus(Status::Sleeping);
-
-			std::uniform_int_distribution<int> randomModDistributor(1, 3);
-			int randomMod(randomModDistributor(deps.rng.GetGenerator()));
-			ctx.defendingPokemon->SetSleepTurnCount(randomMod);
-			ctx.defendingPokemon->ResetSleepCounter();
-		}
-		else if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
-		{
-			deps.statusUI.DisplayAlreadyAsleepMsg();
-		}
-		else
-		{
-			deps.resultsUI.DisplayFailedTextDialog();
-		}
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	}
+	else if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
+	{
+		deps.statusUI.DisplayAlreadyAsleepMsg();
+	}
+	else if (ctx.defendingPokemon->GetStatus() != Status::Normal || (ctx.defendingPokemon->HasSubstitute() && !ctx.currentMove->mp_move->CanBypassSubstitute()))
+	{
+		deps.resultsUI.DisplayFailedTextDialog();
 	}
 	else
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		InflictNVStatus(Status::Sleeping, 100, deps);
 	}
 
 	ctx.currentMove->m_currentPP -= 1;
@@ -2657,38 +2644,6 @@ void Toxic::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 }
 
-void SleepMove::DoMove(MoveRoutineDeps& deps)
-{
-	auto& ctx = deps.context;
-
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
-
-	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
-	if (!ctx.flags.hit)
-	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	}
-	else if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
-	{
-		deps.statusUI.DisplayAlreadyAsleepMsg();
-	}
-	else if (ctx.defendingPokemon->GetStatus() != Status::Normal || (ctx.defendingPokemon->HasSubstitute() && !ctx.currentMove->mp_move->CanBypassSubstitute()))
-	{
-		deps.resultsUI.DisplayFailedTextDialog();
-	}
-	else
-	{
-		InflictNVStatus(Status::Sleeping, 100, deps);
-	}
-	
-	ctx.currentMove->m_currentPP -= 1;
-
-	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
-
-	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
-}
-
 void AttackUp::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
@@ -3622,11 +3577,11 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 			std::uniform_int_distribution<int> randomModDistributor(1, 100);
 			int randomMod = randomModDistributor(deps.rng.GetGenerator());
 
-			if (randomMod <= 30 &&
+			if ((!ctx.defendingPokemon->HasSubstitute() || ctx.currentMove->mp_move->CanBypassSubstitute()) &&
+				ctx.defendingPokemon->GetCurrentHP() != 0 &&
 				!ctx.defendingPlayer->IsFirst() &&
 				ctx.flags.currentEffectiveness != BattleStateFlags::Effectiveness::No &&
-				!ctx.defendingPokemon->HasSubstitute() &&
-				ctx.defendingPokemon->GetCurrentHP() != 0)
+				randomMod <= ctx.currentMove->mp_move->GetEffectChance())
 			{
 				ctx.defendingPokemon->SetIsFlinched(true);
 			}

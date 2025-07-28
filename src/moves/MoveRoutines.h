@@ -223,7 +223,7 @@ public:
 	void DoMove(MoveRoutineDeps&) override;
 };
 
-class BypassSubSleep : public IMoveRoutine
+class SleepMove : public IMoveRoutine
 {
 public:
 	void DoMove(MoveRoutineDeps&) override;
@@ -374,12 +374,6 @@ public:
 };
 
 class Toxic : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SleepMove : public IMoveRoutine
 {
 public:
 	void DoMove(MoveRoutineDeps&) override;

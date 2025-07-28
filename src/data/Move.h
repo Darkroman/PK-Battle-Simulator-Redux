@@ -1,5 +1,5 @@
 // Move data layout in movedex.txt is as follows:
-// Index number, name, type, category, priority, secondary effect flag, pp, max pp, power, accuracy.
+// Index number, name, type, category, priority, secondary effect flag, secondary effect chance, pp, max pp, power, accuracy.
 // Each bool corresponds with whether it:
 // Makes contact, affected by Protect, affected by Magic Coat, affected by Snatch, affected by Mirror Move, affected by King's Rock, sound based, bypasses substitute
 

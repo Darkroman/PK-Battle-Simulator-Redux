@@ -4,6 +4,9 @@
 #include "../moves/MoveEffectEnums.h"
 #include "StringToTypes.h"
 
+// Index number, name, type string, type enum, category string, category enum, priority, secondary effect flag, secondary effect chance, pp, max pp, power, accuracy
+// Makes contact, affected by Protect, affected by Magic Coat, affected by Snatch, affected by Mirror Move, affected by King's Rock, sound based, bypasses substitute
+
 void Database::LoadEmbedMoves()
 {
 	movedex.emplace_back(1, "Pound", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::NormalHit, 0, 35, 56, 40, 100, 1, 1, 0, 0, 1, 1, 0, 0);
@@ -98,7 +101,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(46, "Roar", "Normal", PokemonType::Normal, "Status", Category::Status, -6, MoveEffect::MakeEnemySwitch, 0, 20, 32, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1);
 
-	movedex.emplace_back(47, "Sing", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::BypassSubSleep, 0, 15, 24, 0, 55, 0, 1, 1, 0, 1, 0, 1, 1);
+	movedex.emplace_back(47, "Sing", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::SleepMove, 0, 15, 24, 0, 55, 0, 1, 1, 0, 1, 0, 1, 1);
 
 	movedex.emplace_back(48, "Supersonic", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::Confuse, 0, 20, 32, 0, 55, 0, 1, 1, 0, 1, 0, 1, 1);
 
@@ -335,4 +338,5 @@ void Database::LoadEmbedMoves()
 	movedex.emplace_back(164, "Substitute", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::Substitute, 0, 10, 16, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0);
 
 	movedex.emplace_back(165, "Struggle", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::Struggle, 0, 1, 1, 50, 0, 1, 1, 0, 0, 0, 1, 0, 0);
+
 }

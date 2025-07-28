@@ -1,6 +1,5 @@
 #include <iostream>
 
-
 #include "../entities/Player.h"
 #include "../entities/HumanPlayer.h"
 #include "../entities/AIPlayer.h"
@@ -1690,11 +1689,11 @@ void Menu::SetDefaultPokemon()
 		players[0]->IncrementPokemonCount();
 		players[1]->IncrementPokemonCount();
 
-		players[0]->GetBelt(1)->SetMove(1, "Tackle");
+		players[0]->GetBelt(1)->SetMove(1, "Hypnosis");
 		players[0]->GetBelt(1)->SetMove(2, "Karate Chop");
 		players[0]->GetBelt(1)->SetMove(3, "Fury Attack");
 		players[0]->GetBelt(1)->SetMove(4, "Fire Punch");
-		players[1]->GetBelt(1)->SetMove(1, "Ice Punch");
+		players[1]->GetBelt(1)->SetMove(1, "Substitute");
 		players[1]->GetBelt(1)->SetMove(2, "Thunder Punch");
 		players[1]->GetBelt(1)->SetMove(3, "Pound");
 		players[1]->GetBelt(1)->SetMove(4, "Slash");
@@ -1723,7 +1722,7 @@ void Menu::SetDefaultPokemon()
 		players[1]->GetBelt(1)->SetDefenseEV(0);
 		players[1]->GetBelt(1)->SetHPIV(0);
 		players[1]->GetBelt(1)->SetDefenseIV(0);
-		players[1]->GetBelt(1)->SetSpeedIV(0);
+		players[1]->GetBelt(1)->SetSpeedIV(31);
 	}
 	else
 	{
