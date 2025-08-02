@@ -1,8 +1,6 @@
 #include <iostream>
 
 #include "StatusEffectText.h"
-#include "../entities/Player.h"
-#include "../entities/BattlePokemon.h"
 #include "../battle/BattleContext.h"
 #include "../data/Move.h"
 
@@ -210,7 +208,7 @@ void StatusEffectText::DisplayThrashConfusionMsg()
 }
 
 // Rage
-void StatusEffectText::DisplayRageStartedMsg() 
+void StatusEffectText::DisplayRageStartedMsg()
 {
 	std::cout << "(Rage started on " << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << ")\n";
 }
@@ -219,19 +217,19 @@ void StatusEffectText::DisplayRageStartedMsg()
 void StatusEffectText::DisplayMoveDisabledMsg() 
 {
 	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView()
-		<< "'s " << m_context.defendingPokemon->GetLastUsedMove()->mp_move->GetName() << " was disabled!\n";
+		<< "'s " << m_context.defendingPokemon->GetLastUsedMove()->GetName() << " was disabled!\n";
 }
 
 void StatusEffectText::DisplayMoveIsDisabledMsg()
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s " << m_context.currentMove->mp_move->GetName() << " is disabled!\n";
+	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s " << m_context.currentMove->GetName() << " is disabled!\n";
 }
 
 void StatusEffectText::DisplayMoveNoLongerDisabledMsg(Player*, BattlePokemon*) 
 {
 	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s "
 		<< m_context.attackingPokemon->GetNameView() << "'s "
-		<< m_context.attackingPokemon->GetDisabledMove()->mp_move->GetName()
+		<< m_context.attackingPokemon->GetDisabledMove()->GetName()
 		<< " is no longer disabled!\n";
 }
 
@@ -253,7 +251,7 @@ void StatusEffectText::DisplayPutInSubstituteMsg()
 
 void StatusEffectText::DisplaySubstituteFadedMsg() 
 {
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " substitute faded!\n";
+	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << "'s substitute faded!\n";
 }
 
 void StatusEffectText::DisplaySeededMsg() 
@@ -264,7 +262,7 @@ void StatusEffectText::DisplaySeededMsg()
 void StatusEffectText::DisplayLearnedMimicMoveMsg() 
 {
 	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< " learned " << m_context.defendingPokemon->GetLastUsedMove()->mp_move->GetName() << "!\n";
+		<< " learned " << m_context.defendingPokemon->GetLastUsedMove()->GetName() << "!\n";
 }
 
 void StatusEffectText::DisplayTransformMsg() 

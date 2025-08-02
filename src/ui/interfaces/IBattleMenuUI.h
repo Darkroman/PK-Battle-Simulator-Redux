@@ -1,8 +1,7 @@
 #pragma once
 
-#include <string>
-#include "../../entities/Player.h"
-#include "../../entities/BattlePokemon.h"
+class Player;
+class BattlePokemon;
 
 class IBattleMenuUI
 {

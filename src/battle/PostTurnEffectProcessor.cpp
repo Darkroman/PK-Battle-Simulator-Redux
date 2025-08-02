@@ -6,11 +6,7 @@
 #include "StatusEffectProcessor.h"
 #include "WinChecker.h"
 
-#include "../entities/Player.h"
-#include "../entities/BattlePokemon.h"
-
-#include <iostream>
-
+#include <cmath>
 
 PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, BattleCalculations& calculations, IStatusEffectUI& statusEffectUI, StatusEffectProcessor& statusProcessor, WinChecker& winChecker)
     : m_context(context)

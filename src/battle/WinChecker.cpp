@@ -3,10 +3,7 @@
 #include "BattleContext.h"
 #include "SwitchExecutor.h"
 #include "../ui/interfaces/IBattleMenuUI.h"
-#include "TurnProcessor.h"
-#include "../entities/HumanPlayer.h"
 #include "../entities/AIPlayer.h"
-#include "../entities/BattlePokemon.h"
 
 #include <iostream>
 

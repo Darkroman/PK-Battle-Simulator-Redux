@@ -8,7 +8,8 @@ enum class Category // Used in Moves
 {
     Physical,
     Special,
-    Status
+    Status,
+    None
 };
 
 using mapOfStringsToCategories = std::map<std::string_view, Category>;

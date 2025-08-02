@@ -1,13 +1,15 @@
-#include <iostream>
-
+#include "../ui/interfaces/IMoveResultsUI.h"
 #include "../data/Pokemon.h"
-#include "../data/Move.h"
 #include "../moves/MoveEffectEnums.h"
 #include "../data/StringToTypes.h"
+#include "../battle/RandomEngine.h"
+#include "../battle/BattleContext.h"
 
 #include "BattleCalculations.h"
 
-BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng) : m_context(context), m_rng(rng) {}
+#include <cmath>
+
+BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng, IMoveResultsUI& resultsUI) : m_context(context), m_rng(rng), m_resultsUI(resultsUI) {}
 
 int BattleCalculations::CalculateCriticalHitStageModifier(size_t element)
 {
@@ -48,7 +50,7 @@ double BattleCalculations::CalculateStageModifier(size_t element)
 
 double BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* currentMove, BattlePokemon* target)
 {
-	size_t moveType = static_cast<size_t>(currentMove->mp_move->GetMoveTypeEnum());
+	size_t moveType = static_cast<size_t>(currentMove->GetMoveTypeEnum());
 	size_t defensiveTypeOne = static_cast<size_t>(target->GetTypeOneEnum());
 	size_t defensiveTypeTwo = static_cast<size_t>(target->GetTypeTwoEnum());
 
@@ -76,7 +78,7 @@ double BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove
 		m_context.flags.currentEffectiveness = Effectiveness::Normal;
 	}
 
-	if (currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::OHKO && moveEffectiveness != 0.0)
+	if (currentMove->GetMoveEffectEnum() == MoveEffect::OHKO && moveEffectiveness != 0.0)
 	{
 		m_context.flags.currentEffectiveness = Effectiveness::OHKO;
 	}
@@ -93,8 +95,8 @@ double BattleCalculations::CalculateAccuracyModifiers(int element)
 bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
 {
 	if (
-		(target->IsSemiInvulnerableFromFly() && (currentMove->mp_move->GetMoveEffectEnum() != MoveEffect::Gust && currentMove->mp_move->GetName() != "Thunder")) ||
-		(target->IsSemiInvulnerableFromDig() && (currentMove->mp_move->GetMoveEffectEnum() != MoveEffect::Earthquake && currentMove->mp_move->GetName() != "Fissure"))
+		(target->IsSemiInvulnerableFromFly() && (currentMove->GetMoveEffectEnum() != MoveEffect::Gust && currentMove->GetName() != "Thunder")) ||
+		(target->IsSemiInvulnerableFromDig() && (currentMove->GetMoveEffectEnum() != MoveEffect::Earthquake && currentMove->GetName() != "Fissure"))
 		)
 	{
 		return false;
@@ -111,11 +113,11 @@ bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentM
 		adjustedStages = 6;
 	}
 
-	double moveAccuracy = static_cast<double>(currentMove->mp_move->GetAccuracy());
+	double moveAccuracy = static_cast<double>(currentMove->GetAccuracy());
 
 	double accuracyMod{ 0 };
 
-	if (currentMove->mp_move->GetMoveEffectEnum() != MoveEffect::OHKO)
+	if (currentMove->GetMoveEffectEnum() != MoveEffect::OHKO)
 	{
 		accuracyMod = moveAccuracy * CalculateAccuracyModifiers(adjustedStages);
 	}
@@ -146,12 +148,12 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 
 	double effectiveness = CalculateTypeEffectiveness(currentMove, target);
 
-	if (currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Struggle)
+	if (currentMove->GetMoveEffectEnum() == MoveEffect::Struggle)
 	{
 		effectiveness = 1;
 	}
 
-	if ((currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::OHKO) && effectiveness != 0)
+	if ((currentMove->GetMoveEffectEnum() == MoveEffect::OHKO) && effectiveness != 0)
 	{
 		damage = target->GetCurrentHP();
 		target->DamageCurrentHP(static_cast<int>(damage));
@@ -171,7 +173,7 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 
 	double stagemultiplier{ 0.0 };
 
-	if (currentMove->mp_move->GetCategoryEnum() == Category::Physical)
+	if (currentMove->GetCategoryEnum() == Category::Physical)
 	{
 		if (m_context.flags.isCriticalHit && (source->GetAttackStage() < 0))
 		{
@@ -196,7 +198,7 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		}
 	}
 
-	else if (currentMove->mp_move->GetCategoryEnum() == Category::Special)
+	else if (currentMove->GetCategoryEnum() == Category::Special)
 	{
 		if (m_context.flags.isCriticalHit && (source->GetSpecialAttackStage() < 0))
 		{
@@ -223,8 +225,8 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 
 	double stab{};
 
-	if ((currentMove->mp_move->GetMoveTypeEnum() == source->GetTypeOneEnum()) || (currentMove->mp_move->GetMoveTypeEnum() == source->GetTypeTwoEnum())
-		&& currentMove->mp_move->GetMoveEffectEnum() != MoveEffect::Struggle)
+	if ((currentMove->GetMoveTypeEnum() == source->GetTypeOneEnum()) || (currentMove->GetMoveTypeEnum() == source->GetTypeTwoEnum())
+		&& currentMove->GetMoveEffectEnum() != MoveEffect::Struggle)
 	{
 		stab = 1.5;
 	}
@@ -247,36 +249,38 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 
 	double powerModifier{ 1 };
 
-	if (target->IsSemiInvulnerableFromFly() && (currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Gust))
+	if (target->IsSemiInvulnerableFromFly() && (currentMove->GetMoveEffectEnum() == MoveEffect::Gust))
 	{
 		powerModifier = 2;
 	}
 
-	int currentMovePower{ currentMove->mp_move->GetPower() };
+	int currentMovePower{ currentMove->GetPower() };
 
-	if (currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::LowKick)
+	if (currentMove->GetMoveEffectEnum() == MoveEffect::LowKick)
 	{
 		currentMovePower = CalculateLowKickPower(target);
 	}
 
+	using std::floor;
+
 	damage = floor(floor(floor(floor(floor(floor(floor(floor(floor(2 * source->GetLevel() / 5 + 2) * (currentMovePower * powerModifier) * (static_cast<double>(sourceAttack) / static_cast<double>(targetDefense)) / 50) + 2) * critical) * random) * stab) * effectiveness) * burn));
 
-	if ((currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Stomp || currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::BodySlam) && target->HasUsedMinimize())
+	if ((currentMove->GetMoveEffectEnum() == MoveEffect::Stomp || currentMove->GetMoveEffectEnum() == MoveEffect::BodySlam) && target->HasUsedMinimize())
 	{
 		damage *= 2;
 	}
 
-	if (currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Earthquake && target->IsSemiInvulnerableFromDig())
+	if (currentMove->GetMoveEffectEnum() == MoveEffect::Earthquake && target->IsSemiInvulnerableFromDig())
 	{
 		damage *= 2;
 	}
 
-	if (targetPlayer->HasReflect() && !m_context.flags.isCriticalHit && currentMove->mp_move->GetCategoryEnum() == Category::Physical)
+	if (targetPlayer->HasReflect() && !m_context.flags.isCriticalHit && currentMove->GetCategoryEnum() == Category::Physical)
 	{
 		damage = floor(damage / 2);
 	}
 
-	if (targetPlayer->HasLightScreen() && !m_context.flags.isCriticalHit && currentMove->mp_move->GetCategoryEnum() == Category::Special)
+	if (targetPlayer->HasLightScreen() && !m_context.flags.isCriticalHit && currentMove->GetCategoryEnum() == Category::Special)
 	{
 		damage = floor(damage / 2);
 	}
@@ -291,28 +295,30 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		damage = target->GetCurrentHP();
 	}
 
-	if (target->HasSubstitute() && !currentMove->mp_move->CanBypassSubstitute())
+	if (target->HasSubstitute() && !currentMove->CanBypassSubstitute())
 	{
 		target->DamageSubstitute(static_cast<int>(damage));
+		m_context.flags.hitSubstitute = true;
 	}
 
 	else
 	{
 		target->DamageCurrentHP(static_cast<int>(damage));
+		m_context.flags.hitSubstitute = false;
 	}
 
-	bool isMultiStrike = currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::MultiAttack ||
-						 currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::DoubleHit ||
-						 currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Twineedle;
+	bool isMultiStrike = currentMove->GetMoveEffectEnum() == MoveEffect::MultiAttack ||
+						 currentMove->GetMoveEffectEnum() == MoveEffect::DoubleHit ||
+						 currentMove->GetMoveEffectEnum() == MoveEffect::Twineedle;
 
-	if (target->IsBiding() && !isMultiStrike)
+	if (target->IsBiding() && !isMultiStrike && !target->HasSubstitute())
 	{
 		target->AddBideDamage(static_cast<int>(damage));
 	}
 
 	m_context.damageTaken = damage;
 
-	std::cout << damage << " damage inflicted.\n";
+	m_resultsUI.DisplayDirectDamageInflictedMsg(damage);
 }
 
 // Calculate power of low kick based on target Pokemon's weight (in kg)

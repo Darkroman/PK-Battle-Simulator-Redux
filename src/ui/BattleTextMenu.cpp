@@ -5,8 +5,6 @@
 #include "../data/Move.h"
 
 #include <iostream>
-#include <limits>
-#include <string>
 
 BattleTextMenu::BattleTextMenu(BattleContext& context) : m_context(context) {}
 
@@ -177,7 +175,7 @@ bool BattleTextMenu::Fight(Player* player, BattlePokemon* currentPokemon)
             return true;
         }
 
-        if (currentPokemon->GetMove(choice)->mp_move == nullptr)
+        if (!currentPokemon->GetMove(choice)->IsActive())
         {
             std::cout << "There is no move there!\n\n";
             continue;
@@ -195,10 +193,10 @@ bool BattleTextMenu::Fight(Player* player, BattlePokemon* currentPokemon)
             continue;
         }
 
-        if (currentPokemon->GetMove(choice)->mp_move != nullptr)
+        if (currentPokemon->GetMove(choice)->IsActive())
         {
             m_context.selectedMove = currentPokemon->GetMove(choice);
-            std::cout << player->GetPlayerNameView() << " has chosen " << m_context.selectedMove->mp_move->GetName() << "\n\n";
+            std::cout << player->GetPlayerNameView() << " has chosen " << m_context.selectedMove->GetName() << "\n\n";
             return true;
         }
     }
@@ -298,7 +296,7 @@ bool BattleTextMenu::CheckPPCountForStruggle(BattlePokemon* pokemon)
 
     for (size_t i = 0; i < 4; ++i)
     {
-        if (pokemon->GetMove(i + 1)->mp_move != nullptr)
+        if (pokemon->GetMove(i + 1)->IsActive())
         {
             if (pokemon->GetMove(i + 1)->m_currentPP == 0)
             {

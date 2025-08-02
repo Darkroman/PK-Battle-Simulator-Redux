@@ -48,7 +48,6 @@ public:
     const bool           IsSoundBased() const;
     const bool    CanBypassSubstitute() const;
 
-
 private:
     size_t      m_movenum;
     std::string m_name;

@@ -30,4 +30,3 @@ public:
 	void SavePokemonMoves(std::ofstream&, int);
 	void Save();
 };
-

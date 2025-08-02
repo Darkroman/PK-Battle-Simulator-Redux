@@ -1,13 +1,9 @@
+#include <iostream>
+#include <iomanip>
+
 #include "Pokemon.h"
 #include "Move.h"
-
 #include "StringToTypes.h"
-#include "../moves/MoveEffectEnums.h"
-
-#include <iomanip>
-#include <filesystem>
-#include <iostream>
-#include <fstream>
 
 #include "Database.h"
 

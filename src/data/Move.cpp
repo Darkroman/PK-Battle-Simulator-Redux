@@ -1,7 +1,5 @@
 #include "Move.h"
 
-#include "StringToTypes.h"
-
 Move::Move
 (size_t movenum, std::string_view name,
     std::string_view type, PokemonType typee, std::string_view category, Category categorye,
@@ -11,7 +9,7 @@ Move::Move
     bool snatch, bool mirrorMove, bool kingRock, bool soundBased, bool bypassSubstitute)
     : m_movenum{ movenum }, m_name{ name },
     m_type{ type }, m_typee{ typee }, m_category{ category }, m_categorye{ categorye },
-    m_priority{ priority }, m_moveEffectEnum{ moveEffectEnum },
+    m_priority{ priority }, m_moveEffectEnum{ moveEffectEnum }, m_effectChance{effectChance},
     m_pp{ pp }, m_maxpp{ maxpp }, m_power{ power }, m_accuracy{ accuracy },
     b_DoesMakeContact{ contact }, b_IsAffectedByProtect{ protect }, b_IsAffectedByMagicCoat{ magicCoat },
     b_IsAffectedBySnatch{ snatch }, b_IsAffectedByMirrorMove{ mirrorMove }, b_IsAffectedByKingRock{ kingRock }, b_isSoundBased{ soundBased }, b_bypassSubstitute{ bypassSubstitute }

@@ -3,16 +3,12 @@
 struct BattleContext;
 class BattleCalculations;
 class RandomEngine;
-class IMoveResultsUI;
-class IStatusEffectUI;
+class StatusEffectProcessor;
+class WinChecker;
 class SwitchExecutor;
 class MoveExecutor;
 
-#include "StatusEffectProcessor.h"
-
-class IBattleMenuUI;
-
-#include "WinChecker.h"
+class Player;
 
 class TurnProcessor
 {

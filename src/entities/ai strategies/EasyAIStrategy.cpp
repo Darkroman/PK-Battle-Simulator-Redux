@@ -1,5 +1,4 @@
 #include "../../battle/RandomEngine.h"
-#include "../BattlePokemon.h"
 #include "../Player.h"
 #include "EasyAIStrategy.h"
 
@@ -15,7 +14,7 @@ BattlePokemon::pokemonMove* EasyAIStrategy::ChooseMove(Player& self, BattlePokem
     for (size_t i = 1; i <= 4; ++i)
     {
         auto* move = selfMon.GetMove(i);
-        if (move->mp_move && !move->b_isDisabled && move->m_currentPP > 0)
+        if (move->IsActive() && !move->b_isDisabled && move->m_currentPP > 0)
         {
             viableMoves.push_back(move);
         }

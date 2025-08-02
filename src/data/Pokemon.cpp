@@ -1,7 +1,5 @@
 #include "Pokemon.h"
 
-#include "StringToTypes.h"
-
 Pokemon::Pokemon
 (int nationalDexNumber, std::string_view name,
     int basehp, int baseattack, int basedefense,

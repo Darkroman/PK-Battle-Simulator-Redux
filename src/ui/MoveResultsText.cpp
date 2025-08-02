@@ -4,13 +4,11 @@
 
 #include "MoveResultsText.h"
 
-#include "../data/Move.h"
-
 MoveResultsText::MoveResultsText(BattleContext& context) : m_context(context) {}
 
 void MoveResultsText::UsedTextDialog(Player* currentPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source)
 {
-	std::cout << currentPlayer->GetPlayerNameView() << "'s " << source->GetNameView() << " used " << currentMove->mp_move->GetName() << "\n";
+	std::cout << currentPlayer->GetPlayerNameView() << "'s " << source->GetNameView() << " used " << currentMove->GetName() << "\n";
 }
 
 void MoveResultsText::DisplayCritTextDialog()
@@ -61,30 +59,30 @@ void MoveResultsText::DisplayFailedTextDialog()
 
 void MoveResultsText::DisplaySubstituteDamageTextDialog(Player* player, BattlePokemon* pokemon)
 {
-	if (pokemon->GetSubstituteHP() > 0)
+	if (pokemon->GetSubstituteHP() > 0 && m_context.flags.hitSubstitute)
 	{
-		std::cout << "The substitute took damage for " << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << '!\n';
+		std::cout << "The substitute took damage for " << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "!\n";
 	}
 }
 
 void MoveResultsText::BoundMoveText(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* sourcePokemon, BattlePokemon* targetPokemon, BattlePokemon::pokemonMove* currentMove)
 {
-	if (currentMove->mp_move->GetMoveIndex() == 20)
+	if (currentMove->GetMoveIndex() == 20)
 	{
 		std::cout << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << " was squeezed by " << sourcePlayer->GetPlayerNameView() << "'s " << sourcePokemon->GetNameView() << "!\n";
 	}
 
-	else if (currentMove->mp_move->GetMoveIndex() == 35)
+	else if (currentMove->GetMoveIndex() == 35)
 	{
 		std::cout << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << " was wrapped by " << sourcePlayer->GetPlayerNameView() << "'s " << sourcePokemon->GetNameView() << "!\n";
 	}
 
-	else if (currentMove->mp_move->GetMoveIndex() == 83)
+	else if (currentMove->GetMoveIndex() == 83)
 	{
 		std::cout << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << " became trapped in the fiery vortex!\n";
 	}
 
-	else if (currentMove->mp_move->GetMoveIndex() == 128)
+	else if (currentMove->GetMoveIndex() == 128)
 	{
 		std::cout << sourcePlayer->GetPlayerNameView() << "'s " << sourcePokemon->GetNameView() << " clamped down on " << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << "!\n";
 	}
@@ -93,6 +91,11 @@ void MoveResultsText::BoundMoveText(Player* sourcePlayer, Player* targetPlayer, 
 void MoveResultsText::DisplayNoopMsg()
 {
 	std::cout << "This isn't implemented yet!\n\n";
+}
+
+void MoveResultsText::DisplayDirectDamageInflictedMsg(double damage)
+{
+	std::cout << static_cast<int>(damage) << " damage inflicted.\n";
 }
 
 void MoveResultsText::DisplayMultiAttackMsg(int timesHit)
@@ -123,11 +126,6 @@ void MoveResultsText::DisplayJumpKickCrashMsg()
 void MoveResultsText::DisplayRecoilMsg()
 {
 	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " was damaged by the recoil!\n";
-}
-
-void MoveResultsText::DisplayDirectDamageInflictedMsg(double damage)
-{
-	std::cout << damage << " damage inflicted.\n";
 }
 
 void MoveResultsText::DisplayRechargeMsg()

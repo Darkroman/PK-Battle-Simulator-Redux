@@ -1,8 +1,9 @@
 #pragma once
 
 #include <fstream>
+#include <array>
 
-#include "../entities/Player.h"
+class Player;
 
 class LoadParty
 {

@@ -1,6 +1,8 @@
 #pragma once
 
-#include "../../battle/BattleCalculations.h"
+#include "../../entities/BattlePokemon.h"
+
+class Player;
 
 class IMoveResultsUI
 {
@@ -25,6 +27,8 @@ public:
 
 	virtual void DisplayNoopMsg() = 0;
 
+	virtual void DisplayDirectDamageInflictedMsg(double) = 0;
+
 	virtual void DisplayMultiAttackMsg(int) = 0;
 
 	virtual void DisplayRazorWindChargeMsg() = 0;
@@ -36,8 +40,6 @@ public:
 	virtual void DisplayJumpKickCrashMsg() = 0;
 
 	virtual void DisplayRecoilMsg() = 0;
-
-	virtual void DisplayDirectDamageInflictedMsg(double) = 0;
 
 	virtual void DisplayRechargeMsg() = 0;
 

@@ -4,11 +4,11 @@
 #include <memory>
 
 #include "../entities/Player.h"
-#include "../entities/BattlePokemon.h"
 
 struct BattleStateFlags
 {
     bool hit{ false };
+    bool hitSubstitute{ false };
     bool isCriticalHit{ false };
 
     enum class Effectiveness { Normal, Less, Super, No, OHKO };
@@ -18,6 +18,7 @@ struct BattleStateFlags
     void ResetBattleFlags()
     {
         hit = false;
+        hitSubstitute = false;
         isCriticalHit = false;
         currentEffectiveness = Effectiveness::Normal;
     }

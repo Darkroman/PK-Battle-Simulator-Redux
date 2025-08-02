@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "../entities/Player.h"
-#include "../data/Move.h"
 
 #include "SaveParty.h"
 
@@ -105,7 +104,7 @@ void SaveParty::SavePokemonMoves(std::ofstream& outFile, int i)
 
 		if (players[num]->GetBelt(i)->HasMove(j))
 		{
-			outFile << "- " << players[num]->GetBelt(i)->GetMove(j)->mp_move->GetName() << '\n';
+			outFile << "- " << players[num]->GetBelt(i)->GetMove(j)->GetName() << '\n';
 			if (j == numberOfMoves && i != numberOfPokemon)
 			{
 				outFile << '\n';

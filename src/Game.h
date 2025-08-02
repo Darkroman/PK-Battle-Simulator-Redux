@@ -3,6 +3,7 @@
 #include "data/Database.h"
 #include "entities/AIPlayer.h"
 #include "entities/HumanPlayer.h"
+#include "entities/ai strategies/EasyAIStrategy.h"
 
 #include "ui/Menu.h"
 #include "battle/RandomEngine.h"
@@ -11,7 +12,6 @@
 #include "ui/MoveResultsText.h"
 #include "ui/BattleTextMenu.h"
 #include "ui/StatusEffectText.h"
-#include "entities/ai strategies/EasyAIStrategy.h"
 
 #include <iostream>
 

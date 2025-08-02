@@ -12,7 +12,7 @@ BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleM
 	, m_battleMenuUI(battleMenuUI)
 	, m_moveResultsUI(moveResultsUI)
 	, m_statusEffectUI(statusEffectUI)
-	, m_calculations(context, rng)
+	, m_calculations(context, rng, moveResultsUI)
 	, m_switchExecutor(context, battleMenuUI)
 	, m_winChecker(context, m_switchExecutor, battleMenuUI)
 	, m_statusEffectProcessor(context, rng, statusEffectUI)
@@ -73,7 +73,8 @@ bool BattleManager::RunBattleLoop()
 
 		m_context.playerOne->SetHasSwitched(false);
 		m_context.playerTwo->SetHasSwitched(false);
-		m_context.damageTaken = 0;
+
+		m_context.flags.ResetBattleFlags();
 
 		m_battleMenuUI.NewLine();
 

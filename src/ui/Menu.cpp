@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "../entities/Player.h"
 #include "../entities/HumanPlayer.h"
 #include "../entities/AIPlayer.h"
 #include "../save/SaveParty.h"
@@ -1690,7 +1689,7 @@ void Menu::SetDefaultPokemon()
 		players[1]->IncrementPokemonCount();
 
 		players[0]->GetBelt(1)->SetMove(1, "Hypnosis");
-		players[0]->GetBelt(1)->SetMove(2, "Karate Chop");
+		players[0]->GetBelt(1)->SetMove(2, "Poison Gas");
 		players[0]->GetBelt(1)->SetMove(3, "Fury Attack");
 		players[0]->GetBelt(1)->SetMove(4, "Fire Punch");
 		players[1]->GetBelt(1)->SetMove(1, "Substitute");

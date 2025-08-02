@@ -4,6 +4,8 @@
 
 #include "LoadParty.h"
 
+#include "../entities/Player.h"
+
 LoadParty::LoadParty(std::array<Player*, 2> players, int numPlayer) : num(numPlayer)
 {
 	LoadParty::players = players;

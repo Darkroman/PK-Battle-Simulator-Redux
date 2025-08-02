@@ -1,15 +1,15 @@
 #pragma once
-#include <random>
-#include <chrono>
-#include <deque>
-#include <memory>
-#include "BattleContext.h"
-#include "RandomEngine.h"
+
+class RandomEngine;
+struct BattleContext;
+class Player;
+class BattlePokemon;
+class IMoveResultsUI;
 
 class BattleCalculations
 {
 public:
-	BattleCalculations(BattleContext&, RandomEngine&);
+	BattleCalculations(BattleContext&, RandomEngine&, IMoveResultsUI&);
 
 	int CalculateCriticalHitStageModifier(size_t);
 
@@ -30,6 +30,7 @@ public:
 private:
 	RandomEngine& m_rng;
 	BattleContext& m_context;
+	IMoveResultsUI& m_resultsUI;
 
 public:
 

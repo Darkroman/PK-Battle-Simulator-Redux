@@ -53,6 +53,7 @@ public:
 	virtual ~IMoveRoutine() = default;
 
 	void InflictNVStatus(Status, int, MoveRoutineDeps&);
+	void BasicDamageRoutine(MoveRoutineDeps&);
 };
 
 class MoveRoutineFactory

@@ -27,6 +27,8 @@ public:
 
 	void DisplayNoopMsg() override;
 
+	void DisplayDirectDamageInflictedMsg(double) override;
+
 	void DisplayMultiAttackMsg(int) override;
 
 	void DisplayRazorWindChargeMsg() override;
@@ -38,8 +40,6 @@ public:
 	void DisplayJumpKickCrashMsg() override;
 
 	void DisplayRecoilMsg() override;
-
-	void DisplayDirectDamageInflictedMsg(double) override;
 
 	void DisplayRechargeMsg() override;
 

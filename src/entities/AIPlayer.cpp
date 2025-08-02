@@ -2,8 +2,6 @@
 #include "AIPlayer.h"
 #include "ai strategies/IAIStrategy.h"
 
-class BattlePokemon;
-
 AIPlayer::AIPlayer(std::string_view name, IAIStrategy& strat) :
 	Player(name), m_aiStrategy(strat) {}
 

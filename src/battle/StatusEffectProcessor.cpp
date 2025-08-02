@@ -1,10 +1,11 @@
 #include "BattleContext.h"
 #include "RandomEngine.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
-#include "../data/Move.h"
 #include "../moves/MoveEffectEnums.h"
 
 #include "StatusEffectProcessor.h"
+
+#include <cmath>
 
 StatusEffectProcessor::StatusEffectProcessor(BattleContext& context, RandomEngine& rng, IStatusEffectUI& statusEffectUI)
 	: m_context(context), m_rng(rng), m_statusEffectUI(statusEffectUI) {}
@@ -156,6 +157,7 @@ bool StatusEffectProcessor::ConfusedStatus()
 			double random{ (damagemod / 100.0) };
 
 			// Confused damage does not take into account Pokemon's stat boosts, burn status, stab, nor critical, and is a typeless physical move
+			using std::floor;
 			double damage = floor(floor(floor(floor(2 * m_context.attackingPokemon->GetLevel() / 5 + 2) * 40 * (static_cast<double>(m_context.attackingPokemon->GetAttack()) / static_cast<double>(m_context.attackingPokemon->GetDefense())) / 50) + 2) * random);
 
 			m_context.attackingPokemon->DamageCurrentHP(static_cast<int>(damage));
@@ -259,7 +261,7 @@ void StatusEffectProcessor::RageCheck()
 	}
 
 	if ((m_context.defendingPokemon->IsRaging() && (m_context.damageTaken > 0 && !m_context.defendingPokemon->HasSubstitute()))
-		|| m_context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Disable) // Target took damage or was targeted by Disable while raging
+		|| m_context.currentMove->GetMoveEffectEnum() == MoveEffect::Disable) // Target took damage or was targeted by Disable while raging
 	{
 		int attackStage = m_context.defendingPokemon->GetAttackStage();
 
@@ -275,15 +277,15 @@ void StatusEffectProcessor::RageCheck()
 		}
 	}
 
-	if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->mp_move->GetMoveEffectEnum() != MoveEffect::Rage)
+	if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->GetMoveEffectEnum() != MoveEffect::Rage)
 	{
 		m_context.attackingPokemon->SetRaging(false);
 	}
-	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Rage && m_context.currentMove->b_isDisabled)
+	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->GetMoveEffectEnum() == MoveEffect::Rage && m_context.currentMove->b_isDisabled)
 	{
 		m_context.attackingPokemon->SetRaging(false);
 	}
-	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->mp_move->GetMoveEffectEnum() == MoveEffect::Rage && !m_context.currentMove->b_isDisabled)
+	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->GetMoveEffectEnum() == MoveEffect::Rage && !m_context.currentMove->b_isDisabled)
 	{
 		m_statusEffectUI.DisplayRageStartedMsg();
 	}
@@ -312,6 +314,16 @@ void StatusEffectProcessor::CheckFaintCondition(Player* sourcePlayer, Player* ta
 		target->SetFainted(true);
 		m_statusEffectUI.DisplayFaintedMsg(*targetPlayer, *target);
 		targetPlayer->IncrementFaintedCount();
+
+		if (source->IsBound())
+		{
+			source->SetBound(false);
+			sourcePlayer->SetCanSwitch(true);
+			source->ResetBoundCounter();
+			source->SetBoundTurnCount(0);
+
+			m_statusEffectUI.DisplayFreedFromBoundMsg(sourcePlayer, source);
+		}
 	}
 
 	if ((source->GetCurrentHP() <= 0) && (!source->IsFainted()))
@@ -319,5 +331,15 @@ void StatusEffectProcessor::CheckFaintCondition(Player* sourcePlayer, Player* ta
 		source->SetFainted(true);
 		m_statusEffectUI.DisplayFaintedMsg(*sourcePlayer, *source);
 		sourcePlayer->IncrementFaintedCount();
+
+		if (target->IsBound())
+		{
+			target->SetBound(false);
+			targetPlayer->SetCanSwitch(true);
+			target->ResetBoundCounter();
+			target->SetBoundTurnCount(0);
+
+			m_statusEffectUI.DisplayFreedFromBoundMsg(targetPlayer, target);
+		}
 	}
 }

@@ -1,11 +1,12 @@
 #include "TurnProcessor.h"
+
 #include "BattleContext.h"
 #include "BattleCalculations.h"
 #include "RandomEngine.h"
+#include "StatusEffectProcessor.h"
 #include "WinChecker.h"
 #include "SwitchExecutor.h"
 #include "MoveExecutor.h"
-#include "../data/Move.h"
 
 TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calculations, RandomEngine& rng, StatusEffectProcessor& statusProcessor, WinChecker& winChecker, SwitchExecutor& switchExecutor, MoveExecutor& moveExecutor)
 	: m_context(context)
@@ -50,8 +51,8 @@ void TurnProcessor::DetermineWhoGoesFirst()
 		return;
 	}
 
-	const auto* moveOne = m_context.playerOneCurrentMove->mp_move;
-	const auto* moveTwo = m_context.playerTwoCurrentMove->mp_move;
+	const auto* moveOne = m_context.playerOneCurrentMove;
+	const auto* moveTwo = m_context.playerTwoCurrentMove;
 
 	if (moveOne->GetPriority() > moveTwo->GetPriority())
 	{

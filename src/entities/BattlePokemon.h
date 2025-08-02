@@ -7,6 +7,8 @@
 class Pokemon;
 class Move;
 enum class PokemonType;
+enum class Category;
+enum class MoveEffect;
 
 enum struct Status { Normal = 0, Burned, Frozen, Paralyzed, Poisoned, Badly_Poisoned, Sleeping };
 
@@ -17,7 +19,41 @@ public:
     {
         pokemonMove();
 
+        bool IsActive() const;
+
+        void SetMovePointer(Move*);
+        Move* GetMovePointer() const;
+
+        const size_t   GetMoveIndex() const;
+        std::string_view    GetName() const;
+
+        std::string_view      GetCategory() const;
+        const Category    GetCategoryEnum() const;
+        std::string_view      GetMoveType() const;
+        const PokemonType GetMoveTypeEnum() const;
+
+        const int              GetPriority() const;
+        const MoveEffect GetMoveEffectEnum() const;
+        const int          GetEffectChance() const;
+
+        const int       GetPP() const;
+        const int    GetMaxPP() const;
+        const int    GetPower() const;
+        const int GetAccuracy() const;
+
+        const bool        DoesMakeContact() const;
+        const bool    IsAffectedByProtect() const;
+        const bool  IsAffectedByMagicCoat() const;
+        const bool     IsAffectedBySnatch() const;
+        const bool IsAffectedByMirrorMove() const;
+        const bool   IsAffectedByKingRock() const;
+        const bool           IsSoundBased() const;
+        const bool    CanBypassSubstitute() const;
+
+    private:
         Move* mp_move{ nullptr };
+
+    public:
         int m_currentPP{ 0 };
         int m_maxPP{ 0 };
 
@@ -73,7 +109,7 @@ public:
     void SetPokemon(size_t);
     void SetPokemon(std::string_view);
     void ReleasePokemon();
-    
+
     void SetMove(size_t, size_t);
     void SetMove(size_t, std::string_view);
 
@@ -113,7 +149,7 @@ public:
 
 private:
     bool ExceedsMaxAllowedEVs(int);
-    
+
     void UpdateStats();
 
 public:
@@ -321,7 +357,7 @@ private:
     pokemonMove m_struggle;
 
     int m_level{ 50 };
-    int m_currentHP{0};
+    int m_currentHP{ 0 };
     //int m_maxHP{0};
     //int m_attack{0};
     //int m_defense{0};
@@ -329,19 +365,19 @@ private:
     //int m_specialdefense{0};
     //int m_speed{0};
 
-    int m_hp_iv{0};
-    int m_attack_iv{0};
-    int m_defense_iv{0};
-    int m_specialattack_iv{0};
-    int m_specialdefense_iv{0};
-    int m_speed_iv{0};
+    int m_hp_iv{ 0 };
+    int m_attack_iv{ 0 };
+    int m_defense_iv{ 0 };
+    int m_specialattack_iv{ 0 };
+    int m_specialdefense_iv{ 0 };
+    int m_speed_iv{ 0 };
 
-    int m_hp_ev{0};
-    int m_attack_ev{0};
-    int m_defense_ev{0};
-    int m_specialattack_ev{0};
-    int m_specialdefense_ev{0};
-    int m_speed_ev{0};
+    int m_hp_ev{ 0 };
+    int m_attack_ev{ 0 };
+    int m_defense_ev{ 0 };
+    int m_specialattack_ev{ 0 };
+    int m_specialdefense_ev{ 0 };
+    int m_speed_ev{ 0 };
 
     int m_ev_total{ 0 };
 
@@ -351,19 +387,19 @@ private:
     PokemonType m_type2e{};
 
     // backup of original type before using conversion
-    std::string m_beforeConversionType{}; 
+    std::string m_beforeConversionType{};
     PokemonType m_beforeConversionType_e{};
 
-    int m_attackstage{0};
-    int m_defensestage{0};
-    int m_specialattackstage{0};
-    int m_specialdefensestage{0};
-    int m_speedstage{0};
-    int m_evasionstage{0};
-    int m_accuracystage{0};
-    int m_criticalhitstage{0};
+    int m_attackstage{ 0 };
+    int m_defensestage{ 0 };
+    int m_specialattackstage{ 0 };
+    int m_specialdefensestage{ 0 };
+    int m_speedstage{ 0 };
+    int m_evasionstage{ 0 };
+    int m_accuracystage{ 0 };
+    int m_criticalhitstage{ 0 };
 
-    int m_moveCount{0};
+    int m_moveCount{ 0 };
 
     bool b_isFainted{ false };
 
