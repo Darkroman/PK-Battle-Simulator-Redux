@@ -8,6 +8,7 @@
    </summary>
 
 ### 8/2/2025
+- Move objects now have secondary effect chance included, allowed me to reduce the number of move routines down from 92 to 86
 - Added forwarding methods to pokemonMove struct so no need to call currentMove->mp_move->... now can just call currentMove->...
 - Redid logic for all my move routines so they're all more consistent with the official games for the most part and the code is more consistent across multiple move routines
 - Fixed bugs with partial trapping moves. Now correctly ends with a "pokemon freed" message upon user of move fainting and no longer lingers, or if user of move switches out it ends silently but no message
