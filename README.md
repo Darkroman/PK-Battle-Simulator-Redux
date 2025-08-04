@@ -7,6 +7,13 @@
 
    </summary>
 
+### 8/4/2025
+- Made damage calculations more in line with the official games which use fixed point math using 4096 scale, rather than floating point math
+- Fixed type effectiveness bugs where it wouldn't display "doesn't affect" message and gives incorrect values
+- Changed how Substitute damage message is outputted. Will only say either "sub took damage" or "sub faded".
+- Fixed burn penalty also applying to special moves
+- No more double types, no more needless static_cast<int> and static_cast<double> since all calculations are either floored through int truncation or rounded using half divisor addition.
+
 ### 8/2/2025
 - Move objects now have secondary effect chance included, allowed me to reduce the number of move routines down from 92 to 87
 - Added forwarding methods to pokemonMove struct so no need to call currentMove->mp_move->... now can just call currentMove->...
