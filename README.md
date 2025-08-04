@@ -12,7 +12,7 @@
 - Fixed type effectiveness bugs where it wouldn't display "doesn't affect" message and gives incorrect values
 - Changed how Substitute damage message is outputted. Will only say either "sub took damage" or "sub faded".
 - Fixed burn penalty also applying to special moves
-- No more double types, no more needless static_cast<int> and static_cast<double> since all calculations are either floored through int truncation or rounded using half divisor addition.
+- No more double types, no more needless static_casting int and static_casting double since all calculations are either floored through int truncation or rounded using half divisor addition.
 
 ### 8/2/2025
 - Move objects now have secondary effect chance included, allowed me to reduce the number of move routines down from 92 to 87
