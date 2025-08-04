@@ -27,7 +27,7 @@ public:
 
 	virtual void DisplayNoopMsg() = 0;
 
-	virtual void DisplayDirectDamageInflictedMsg(double) = 0;
+	virtual void DisplayDirectDamageInflictedMsg(int) = 0;
 
 	virtual void DisplayMultiAttackMsg(int) = 0;
 
@@ -49,7 +49,7 @@ public:
 
 	virtual void DisplayDigChargeMsg() = 0;
 
-	virtual void DisplayRecoveredHPRestoredMsg(double) = 0;
+	virtual void DisplayRecoveredHPRestoredMsg(int) = 0;
 
 	virtual void DisplayHPFullMsg() = 0;
 

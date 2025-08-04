@@ -7,69 +7,51 @@
 
 #include "BattleCalculations.h"
 
-#include <cmath>
+#include <iostream>
 
 BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng, IMoveResultsUI& resultsUI) : m_context(context), m_rng(rng), m_resultsUI(resultsUI) {}
 
-int BattleCalculations::CalculateCriticalHitStageModifier(size_t element)
+void BattleCalculations::CalculateCriticalHit(BattlePokemon* source)
 {
-	if (element > 3)
-	{
-		element = 3;
-	}
+	size_t stage = source->GetCriticalHitStage();
+	if (stage > 3) stage = 3;
 
-	return m_arr_CriticalHitStageMultiplier[element];
+	int threshold = m_arr_CriticalHitStageThresholds[stage];
+
+	std::uniform_int_distribution<int> critmoddistributor(0, 23);
+	int roll{ critmoddistributor(m_rng.GetGenerator()) };
+
+	m_context.flags.isCriticalHit = (roll < threshold);
 }
 
-double BattleCalculations::CalculateCriticalHit(BattlePokemon* source)
+std::pair<int, int> BattleCalculations::GetStageRatio(int stage)
 {
-	int critModNumber = CalculateCriticalHitStageModifier(source->GetCriticalHitStage());
-
-	std::uniform_int_distribution<int> critmoddistributor(0, 10000);
-
-	double randomNumber{ static_cast<double>(critmoddistributor(m_rng.GetGenerator())) };
-
-	if (randomNumber >= critModNumber)
-	{
-		m_context.flags.isCriticalHit = false;
-		
-		return 1;
-	}
-	else
-	{
-		m_context.flags.isCriticalHit = true;
-		return 1.5;
-	}
+	stage = std::clamp(stage, -6, 6);
+	return m_arr_StageRatio[static_cast<size_t>(stage + 6)];
 }
 
-double BattleCalculations::CalculateStageModifier(size_t element)
-{
-	element += 6;
-	return m_arr_StageMultiplier[element];
-}
-
-double BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* currentMove, BattlePokemon* target)
+int BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* currentMove, BattlePokemon* target)
 {
 	size_t moveType = static_cast<size_t>(currentMove->GetMoveTypeEnum());
 	size_t defensiveTypeOne = static_cast<size_t>(target->GetTypeOneEnum());
 	size_t defensiveTypeTwo = static_cast<size_t>(target->GetTypeTwoEnum());
 
-	TypeEffect effect1 = typeEffectivenessChart[moveType][defensiveTypeOne];
-	TypeEffect effect2 = (defensiveTypeTwo == 18) ? TypeEffect::Normal : typeEffectivenessChart[moveType][defensiveTypeTwo];
+	uint16_t effect1 = typeChart[moveType][defensiveTypeOne];
+	uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
 
-	double moveEffectiveness = MultiplyEffectiveness(effect1, effect2);
+	int moveEffectiveness = MultiplyEffectiveness(effect1, effect2);
 
 	using Effectiveness = BattleStateFlags::Effectiveness;
 
-	if (moveEffectiveness == 0.0)
+	if (moveEffectiveness == 0)
 	{
 		m_context.flags.currentEffectiveness = Effectiveness::No;
 	}
-	else if (moveEffectiveness > 0.0 && moveEffectiveness < 1.0)
+	else if (moveEffectiveness > 0 && moveEffectiveness < 4096)
 	{
 		m_context.flags.currentEffectiveness = Effectiveness::Less;
 	}
-	else if (moveEffectiveness > 1.0)
+	else if (moveEffectiveness > 4096)
 	{
 		m_context.flags.currentEffectiveness = Effectiveness::Super;
 	}
@@ -78,18 +60,12 @@ double BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove
 		m_context.flags.currentEffectiveness = Effectiveness::Normal;
 	}
 
-	if (currentMove->GetMoveEffectEnum() == MoveEffect::OHKO && moveEffectiveness != 0.0)
+	if (currentMove->GetMoveEffectEnum() == MoveEffect::OHKO && moveEffectiveness != 0)
 	{
 		m_context.flags.currentEffectiveness = Effectiveness::OHKO;
 	}
 
 	return moveEffectiveness;
-}
-
-double BattleCalculations::CalculateAccuracyModifiers(int element)
-{
-	element += 6;
-	return m_arr_AccuracyStageMultiplier[element];
 }
 
 bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
@@ -104,60 +80,57 @@ bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentM
 
 	int adjustedStages = (source->GetAccuracyStage() - target->GetEvasionStage());
 
-	if (adjustedStages < -6)
-	{
-		adjustedStages = -6;
-	}
-	else if (adjustedStages > 6)
-	{
-		adjustedStages = 6;
-	}
+	adjustedStages = std::clamp(adjustedStages, -6, 6);
+	const auto& [numerator, denominator] = m_arr_accuracyStageRatio[static_cast<size_t>(adjustedStages + 6)];
 
-	double moveAccuracy = static_cast<double>(currentMove->GetAccuracy());
+	int moveAccuracy = currentMove->GetAccuracy();
 
-	double accuracyMod{ 0 };
+	int accuracyMod{};
 
 	if (currentMove->GetMoveEffectEnum() != MoveEffect::OHKO)
 	{
-		accuracyMod = moveAccuracy * CalculateAccuracyModifiers(adjustedStages);
+		accuracyMod = (moveAccuracy * numerator) / denominator;
+
 	}
 	else
 	{
 		accuracyMod = (source->GetLevel() - target->GetLevel()) + 30; // for OHKO moves
 	}
 
-	if (accuracyMod >= 100.0)
+	if (accuracyMod >= 100)
 	{
 		return true;
 	}
 
 	else
 	{
-		std::uniform_real_distribution<double> randomModDistributor(0.0, 100.0);
-		double roll{ randomModDistributor(m_rng.GetGenerator()) };
-		
-		return (roll < accuracyMod);
+		std::uniform_int_distribution<int> roll(0, 99);
+		int rollOutcome{ roll(m_rng.GetGenerator()) };
+
+		return rollOutcome < accuracyMod;
 	}
 }
 
 void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
 {
+	m_context.flags.hitSubstitute = false;
+
 	m_context.damageTaken = 0;
 
-	double damage{ 0 };
+	int baseDamage{ 0 };
 
-	double effectiveness = CalculateTypeEffectiveness(currentMove, target);
+	int effectiveness = CalculateTypeEffectiveness(currentMove, target);
 
 	if (currentMove->GetMoveEffectEnum() == MoveEffect::Struggle)
 	{
-		effectiveness = 1;
+		effectiveness = 4096;
 	}
 
 	if ((currentMove->GetMoveEffectEnum() == MoveEffect::OHKO) && effectiveness != 0)
 	{
-		damage = target->GetCurrentHP();
-		target->DamageCurrentHP(static_cast<int>(damage));
-		m_context.damageTaken = damage;
+		baseDamage = target->GetCurrentHP();
+		target->DamageCurrentHP(baseDamage);
+		m_context.damageTaken = baseDamage;
 		return;
 	}
 
@@ -166,35 +139,31 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		return;
 	}
 
-	double critical = CalculateCriticalHit(source);
-
-	double sourceAttack{ 0.0 };
-	double targetDefense{ 0.0 };
-
-	double stagemultiplier{ 0.0 };
+	int sourceAttack{ 0 };
+	int targetDefense{ 0 };
 
 	if (currentMove->GetCategoryEnum() == Category::Physical)
 	{
 		if (m_context.flags.isCriticalHit && (source->GetAttackStage() < 0))
 		{
-			stagemultiplier = CalculateStageModifier(0);
-			sourceAttack = source->GetAttack() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(0);
+			sourceAttack = source->GetAttack() * numerator / denominator;
 		}
 		else
 		{
-			stagemultiplier = CalculateStageModifier(source->GetAttackStage());
-			sourceAttack = source->GetAttack() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(source->GetAttackStage());
+			sourceAttack = source->GetAttack() * numerator / denominator;
 		}
 
-		if (m_context.flags.isCriticalHit && (source->GetDefenseStage() > 0))
+		if (m_context.flags.isCriticalHit && (target->GetDefenseStage() > 0))
 		{
-			stagemultiplier = CalculateStageModifier(0);
-			targetDefense = target->GetDefense() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(0);
+			targetDefense = target->GetDefense() * numerator / denominator;
 		}
 		else
 		{
-			stagemultiplier = CalculateStageModifier(target->GetDefenseStage());
-			targetDefense = target->GetDefense() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(target->GetDefenseStage());
+			targetDefense = target->GetDefense() * numerator / denominator;
 		}
 	}
 
@@ -202,56 +171,25 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 	{
 		if (m_context.flags.isCriticalHit && (source->GetSpecialAttackStage() < 0))
 		{
-			stagemultiplier = CalculateStageModifier(0);
-			sourceAttack = source->GetSpecialAttack() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(0);
+			sourceAttack = source->GetSpecialAttack() * numerator / denominator;
 		}
 		else
 		{
-			stagemultiplier = CalculateStageModifier(source->GetSpecialAttackStage());
-			sourceAttack = source->GetSpecialAttack() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(source->GetSpecialAttackStage());
+			sourceAttack = source->GetSpecialAttack() * numerator / denominator;
 		}
 
-		if (m_context.flags.isCriticalHit && (source->GetSpecialDefenseStage() > 0))
+		if (m_context.flags.isCriticalHit && (target->GetSpecialDefenseStage() > 0))
 		{
-			stagemultiplier = CalculateStageModifier(0);
-			targetDefense = target->GetSpecialDefense() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(0);
+			targetDefense = target->GetSpecialDefense() * numerator / denominator;
 		}
 		else
 		{
-			stagemultiplier = CalculateStageModifier(target->GetSpecialDefenseStage());
-			targetDefense = target->GetSpecialDefense() * stagemultiplier;
+			auto [numerator, denominator] = GetStageRatio(target->GetSpecialDefenseStage());
+			targetDefense = target->GetSpecialDefense() * numerator / denominator;
 		}
-	}
-
-	double stab{};
-
-	if ((currentMove->GetMoveTypeEnum() == source->GetTypeOneEnum()) || (currentMove->GetMoveTypeEnum() == source->GetTypeTwoEnum())
-		&& currentMove->GetMoveEffectEnum() != MoveEffect::Struggle)
-	{
-		stab = 1.5;
-	}
-	else
-	{
-		stab = 1;
-	}
-
-	double burn{ 1 };
-
-	if (source->GetStatus() == Status::Burned)
-	{
-		burn = 0.5;
-	}
-
-	std::uniform_int_distribution<int> damagemoddistributor(85, 100);
-	double damagemod{ static_cast<double>(damagemoddistributor(m_rng.GetGenerator())) };
-
-	double random{ (damagemod / 100.0) };
-
-	double powerModifier{ 1 };
-
-	if (target->IsSemiInvulnerableFromFly() && (currentMove->GetMoveEffectEnum() == MoveEffect::Gust))
-	{
-		powerModifier = 2;
 	}
 
 	int currentMovePower{ currentMove->GetPower() };
@@ -261,49 +199,85 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		currentMovePower = CalculateLowKickPower(target);
 	}
 
-	using std::floor;
+	int powerModifier{ 1 };
 
-	damage = floor(floor(floor(floor(floor(floor(floor(floor(floor(2 * source->GetLevel() / 5 + 2) * (currentMovePower * powerModifier) * (static_cast<double>(sourceAttack) / static_cast<double>(targetDefense)) / 50) + 2) * critical) * random) * stab) * effectiveness) * burn));
+	if (target->IsSemiInvulnerableFromFly() && (currentMove->GetMoveEffectEnum() == MoveEffect::Gust))
+	{
+		powerModifier = 2;
+	}
+
+	int level = source->GetLevel();
+
+	baseDamage = (((((2 * level / 5) + 2) * currentMovePower * powerModifier * sourceAttack) / targetDefense) / 50) + 2;
+
+	CalculateCriticalHit(source);
+
+	if (m_context.flags.isCriticalHit)
+	{
+		baseDamage = (baseDamage * 6144) >> 12;
+	}
+
+	// From my research it seems the random damage roll is handled like this in the actual games Gen 5+
+	std::uniform_int_distribution<int> dist(0, 255);
+	int roll = dist(m_rng.GetGenerator());
+	int randPercent = 100 - (roll % 16);
+	int finalDamage = (baseDamage * randPercent) / 100;
+
+	bool hasStab = (currentMove->GetMoveTypeEnum() == source->GetTypeOneEnum() ||
+		currentMove->GetMoveTypeEnum() == source->GetTypeTwoEnum())
+		&& currentMove->GetMoveEffectEnum() != MoveEffect::Struggle;
+
+	if (hasStab)
+	{
+		finalDamage = (finalDamage * 6144) >> 12;
+	}
+
+	finalDamage = (finalDamage * effectiveness) >> 12;
+
+	if (source->GetStatus() == Status::Burned && currentMove->GetCategoryEnum() == Category::Physical)
+	{
+		finalDamage = (finalDamage * 2048) >> 12;
+	}
 
 	if ((currentMove->GetMoveEffectEnum() == MoveEffect::Stomp || currentMove->GetMoveEffectEnum() == MoveEffect::BodySlam) && target->HasUsedMinimize())
 	{
-		damage *= 2;
+		finalDamage *= 2;
 	}
 
 	if (currentMove->GetMoveEffectEnum() == MoveEffect::Earthquake && target->IsSemiInvulnerableFromDig())
 	{
-		damage *= 2;
+		finalDamage *= 2;
 	}
 
 	if (targetPlayer->HasReflect() && !m_context.flags.isCriticalHit && currentMove->GetCategoryEnum() == Category::Physical)
 	{
-		damage = floor(damage / 2);
+		baseDamage = (baseDamage * 2048) >> 12;
 	}
 
 	if (targetPlayer->HasLightScreen() && !m_context.flags.isCriticalHit && currentMove->GetCategoryEnum() == Category::Special)
 	{
-		damage = floor(damage / 2);
+		baseDamage = (baseDamage * 2048) >> 12;
 	}
 
-	if (damage == 0 && effectiveness != 0)
+	if (finalDamage < 1 && effectiveness != 0)
 	{
-		damage = 1;
+		finalDamage = 1;
 	}
 
-	if (damage > target->GetCurrentHP())
+	if (finalDamage > target->GetCurrentHP())
 	{
-		damage = target->GetCurrentHP();
+		finalDamage = target->GetCurrentHP();
 	}
 
 	if (target->HasSubstitute() && !currentMove->CanBypassSubstitute())
 	{
-		target->DamageSubstitute(static_cast<int>(damage));
+		target->DamageSubstitute(finalDamage);
 		m_context.flags.hitSubstitute = true;
 	}
 
 	else
 	{
-		target->DamageCurrentHP(static_cast<int>(damage));
+		target->DamageCurrentHP(finalDamage);
 		m_context.flags.hitSubstitute = false;
 	}
 
@@ -313,12 +287,12 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 
 	if (target->IsBiding() && !isMultiStrike && !target->HasSubstitute())
 	{
-		target->AddBideDamage(static_cast<int>(damage));
+		target->AddBideDamage(finalDamage);
 	}
 
-	m_context.damageTaken = damage;
+	m_context.damageTaken = finalDamage;
 
-	m_resultsUI.DisplayDirectDamageInflictedMsg(damage);
+	m_resultsUI.DisplayDirectDamageInflictedMsg(finalDamage);
 }
 
 // Calculate power of low kick based on target Pokemon's weight (in kg)
@@ -331,27 +305,27 @@ int BattleCalculations::CalculateLowKickPower(BattlePokemon* target)
 		return 20;
 	}
 
-	if (pokemonWeight >= 10 && pokemonWeight <= 24.9)
+	if (pokemonWeight >= 10.0 && pokemonWeight <= 24.9)
 	{
 		return 40;
 	}
 
-	if (pokemonWeight >= 25 && pokemonWeight <= 49.9)
+	if (pokemonWeight >= 25.0 && pokemonWeight <= 49.9)
 	{
 		return 60;
 	}
 
-	if (pokemonWeight >= 50 && pokemonWeight <= 99.9)
+	if (pokemonWeight >= 50.0 && pokemonWeight <= 99.9)
 	{
 		return 80;
 	}
 
-	if (pokemonWeight >= 100 && pokemonWeight <= 199.9)
+	if (pokemonWeight >= 100.0 && pokemonWeight <= 199.9)
 	{
 		return 100;
 	}
 
-	if (pokemonWeight >= 200)
+	if (pokemonWeight >= 200.0)
 	{
 		return 120;
 	}

@@ -5,8 +5,6 @@
 
 #include "StatusEffectProcessor.h"
 
-#include <cmath>
-
 StatusEffectProcessor::StatusEffectProcessor(BattleContext& context, RandomEngine& rng, IStatusEffectUI& statusEffectUI)
 	: m_context(context), m_rng(rng), m_statusEffectUI(statusEffectUI) {}
 
@@ -152,19 +150,24 @@ bool StatusEffectProcessor::ConfusedStatus()
 		{
 			m_statusEffectUI.DisplayHurtItselfConfuseMsg();
 
-			std::uniform_int_distribution<int> damagemoddistributor(85, 100);
-			double damagemod{ static_cast<double>(damagemoddistributor(m_rng.GetGenerator())) };
-			double random{ (damagemod / 100.0) };
-
 			// Confused damage does not take into account Pokemon's stat boosts, burn status, stab, nor critical, and is a typeless physical move
-			using std::floor;
-			double damage = floor(floor(floor(floor(2 * m_context.attackingPokemon->GetLevel() / 5 + 2) * 40 * (static_cast<double>(m_context.attackingPokemon->GetAttack()) / static_cast<double>(m_context.attackingPokemon->GetDefense())) / 50) + 2) * random);
+			int level{ m_context.attackingPokemon->GetLevel() };
+			int confusePower{ 40 };
 
-			m_context.attackingPokemon->DamageCurrentHP(static_cast<int>(damage));
+			int sourceAttack{ m_context.attackingPokemon->GetAttack() };
+			int targetDefense{ m_context.attackingPokemon->GetDefense() };
+
+			int baseDamage = (((((2 * level / 5) + 2) * 40 * sourceAttack) / targetDefense) / 50) + 2;
+
+			std::uniform_int_distribution<int> damagemoddistributor(85, 100);
+			int damageMod{ damagemoddistributor(m_rng.GetGenerator()) };
+			int finalDamage = baseDamage * damageMod / 100;
+
+			m_context.attackingPokemon->DamageCurrentHP(finalDamage);
 
 			if (m_context.attackingPokemon->IsBiding())
 			{
-				m_context.attackingPokemon->AddBideDamage(static_cast<int>(damage));
+				m_context.attackingPokemon->AddBideDamage(finalDamage);
 			}
 
 			ResetPokemonTurnStatuses();
@@ -248,7 +251,6 @@ void StatusEffectProcessor::CheckSubstituteCondition(Player* targetPlayer, Battl
 {
 	if (targetPokemon->GetSubstituteHP() <= 0 && targetPokemon->HasSubstitute())
 	{
-		m_statusEffectUI.DisplaySubstituteFadedMsg();
 		targetPokemon->SetSubstitute(false);
 	}
 }

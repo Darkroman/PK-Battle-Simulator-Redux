@@ -33,7 +33,7 @@ struct BattleContext
 
     BattleStateFlags flags;
 
-    double damageTaken{};
+    int damageTaken{};
 
     Player* playerOne;
     Player* playerTwo;

@@ -44,11 +44,6 @@ void EasyAIStrategy::ChooseSwitch(Player& self, BattlePokemon& selfMon)
         self.SetIsSwitching(true);
         self.SetPokemonToSwitchTo(viablePokemon[0]);
     }
-    else
-    {
-        //std::cout << "Well this isn't supposed to happen. (EasyAIStrategy.cpp error line 43)\n";
-    }
-    
 }
 
 bool EasyAIStrategy::WantsToSwitch(Player& self, BattlePokemon& selfMon)

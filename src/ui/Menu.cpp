@@ -1680,22 +1680,16 @@ bool Menu::ChangeMove(Player* player, size_t beltslot)
 
 void Menu::SetDefaultPokemon()
 {
-	players[0]->GetBelt(1)->SetPokemon("Poketest");
-	players[1]->GetBelt(1)->SetPokemon("Poketest");
+	players[0]->GetBelt(1)->SetPokemon("Gengar");
+	players[1]->GetBelt(1)->SetPokemon("Venusaur");
 
 	if (players[0]->GetBelt(1)->GetCurrentHP() != 0)
 	{
 		players[0]->IncrementPokemonCount();
 		players[1]->IncrementPokemonCount();
 
-		players[0]->GetBelt(1)->SetMove(1, "Hypnosis");
-		players[0]->GetBelt(1)->SetMove(2, "Poison Gas");
-		players[0]->GetBelt(1)->SetMove(3, "Fury Attack");
-		players[0]->GetBelt(1)->SetMove(4, "Fire Punch");
-		players[1]->GetBelt(1)->SetMove(1, "Substitute");
-		players[1]->GetBelt(1)->SetMove(2, "Thunder Punch");
-		players[1]->GetBelt(1)->SetMove(3, "Pound");
-		players[1]->GetBelt(1)->SetMove(4, "Slash");
+		players[0]->GetBelt(1)->SetMove(1, "Psychic");
+		players[1]->GetBelt(1)->SetMove(1, "Razor Leaf");
 
 		players[0]->GetBelt(1)->IncrementMoveCount();
 		players[0]->GetBelt(1)->IncrementMoveCount();
@@ -1709,19 +1703,26 @@ void Menu::SetDefaultPokemon()
 		players[0]->GetBelt(1)->SetLevel(100);
 		players[1]->GetBelt(1)->SetLevel(100);
 
-		players[0]->GetBelt(1)->SetHPEV(0);
+		//players[0]->GetBelt(1)->SetHPEV(252);
 		//players[0]->GetBelt(1)->SetAttackEV(252);
-		players[0]->GetBelt(1)->SetDefenseEV(0);
-		players[0]->GetBelt(1)->SetHPIV(0);
-		players[0]->GetBelt(1)->SetAttackIV(0);
-		players[0]->GetBelt(1)->SetDefenseIV(0);
-		players[0]->GetBelt(1)->SetSpeedIV(0);
-		players[1]->GetBelt(1)->SetHPEV(0);
+		//players[0]->GetBelt(1)->SetDefenseEV(252);
+		//players[0]->GetBelt(1)->SetHPIV(31);
+		//players[0]->GetBelt(1)->SetAttackIV(31);
+		//players[0]->GetBelt(1)->SetDefenseIV(31);
+		//players[0]->GetBelt(1)->SetSpeedIV(31);
+
+		players[1]->GetBelt(1)->SetHPEV(252);
 		//players[1]->GetBelt(1)->SetAttackEV(252);
-		players[1]->GetBelt(1)->SetDefenseEV(0);
-		players[1]->GetBelt(1)->SetHPIV(0);
-		players[1]->GetBelt(1)->SetDefenseIV(0);
+		//players[1]->GetBelt(1)->SetDefenseEV(252);
+		players[1]->GetBelt(1)->SetSpecialDefenseEV(252);
+		players[1]->GetBelt(1)->SetHPIV(31);
+		//players[1]->GetBelt(1)->SetAttackIV(0);
+		//players[1]->GetBelt(1)->SetDefenseIV(31);
+		players[1]->GetBelt(1)->SetSpecialDefenseIV(31);
 		players[1]->GetBelt(1)->SetSpeedIV(31);
+
+		//players[0]->GetBelt(1)->SetAttackStage(6);
+		//players[1]->GetBelt(1)->SetDefenseStage(-6);
 	}
 	else
 	{

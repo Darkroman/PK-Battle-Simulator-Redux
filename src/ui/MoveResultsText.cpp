@@ -31,7 +31,7 @@ void MoveResultsText::DisplayEffectivenessTextDialog(Player* targetPlayer, Battl
 		std::cout << "It was super effective!\n";
 	}
 
-	if (m_context.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No && m_context.flags.hit)
+	if (m_context.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
 		std::cout << "It doesn't affect " << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << "...\n";
 	}
@@ -63,6 +63,10 @@ void MoveResultsText::DisplaySubstituteDamageTextDialog(Player* player, BattlePo
 	{
 		std::cout << "The substitute took damage for " << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "!\n";
 	}
+	else if (pokemon->GetSubstituteHP() <= 0 && pokemon->HasSubstitute() && m_context.flags.hitSubstitute)
+	{
+		std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "'s substitute faded!\n";
+	}
 }
 
 void MoveResultsText::BoundMoveText(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* sourcePokemon, BattlePokemon* targetPokemon, BattlePokemon::pokemonMove* currentMove)
@@ -93,9 +97,9 @@ void MoveResultsText::DisplayNoopMsg()
 	std::cout << "This isn't implemented yet!\n\n";
 }
 
-void MoveResultsText::DisplayDirectDamageInflictedMsg(double damage)
+void MoveResultsText::DisplayDirectDamageInflictedMsg(int damage)
 {
-	std::cout << static_cast<int>(damage) << " damage inflicted.\n";
+	std::cout << damage << " damage inflicted.\n";
 }
 
 void MoveResultsText::DisplayMultiAttackMsg(int timesHit)
@@ -148,7 +152,7 @@ void MoveResultsText::DisplayDigChargeMsg()
 	std::cout << m_context.attackingPokemon->GetNameView() << " burrowed its way under the ground!\n";
 }
 
-void MoveResultsText::DisplayRecoveredHPRestoredMsg(double healAmount)
+void MoveResultsText::DisplayRecoveredHPRestoredMsg(int healAmount)
 {
 	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
 		<< " had its HP restored!\n";

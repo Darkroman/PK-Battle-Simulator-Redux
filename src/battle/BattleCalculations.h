@@ -11,15 +11,11 @@ class BattleCalculations
 public:
 	BattleCalculations(BattleContext&, RandomEngine&, IMoveResultsUI&);
 
-	int CalculateCriticalHitStageModifier(size_t);
+	void CalculateCriticalHit(BattlePokemon*);
 
-	double CalculateCriticalHit(BattlePokemon*);
+	std::pair<int, int> GetStageRatio(int);
 
-	double CalculateStageModifier(size_t);
-
-	double CalculateTypeEffectiveness(BattlePokemon::pokemonMove*, BattlePokemon*);
-
-	double CalculateAccuracyModifiers(int);
+	int CalculateTypeEffectiveness(BattlePokemon::pokemonMove*, BattlePokemon*);
 
 	bool CalculateHitChance(BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target);
 
@@ -34,66 +30,69 @@ private:
 
 public:
 
-	const std::array<double, 13> m_arr_StageMultiplier{ 2.0 / 8.0, 2.0 / 7.0, 2.0 / 6.0, 2.0 / 5.0, 2.0 / 4.0, 2.0 / 3.0, 2.0 / 2.0, 3.0 / 2.0, 4.0 / 2.0, 5.0 / 2.0, 6.0 / 2.0, 7.0 / 2.0, 8.0 / 2.0 }; // For attack, defense, special attack, special defense, and speed (not accuracy, evasion, or crit)
-	const std::array<double, 13> m_arr_AccuracyStageMultiplier{ 3.0 / 9.0, 3.0 / 8.0, 3.0 / 7.0, 3.0 / 6.0, 3.0 / 5.0, 3.0 / 4.0, 3.0 / 3.0, 4.0 / 3.0, 5.0 / 3.0, 6.0 / 3.0, 7.0 / 3.0, 8.0 / 3.0, 9.0 / 3.0 }; // For accuracy and evasion
-	const std::array<int, 4> m_arr_CriticalHitStageMultiplier{ 417, 1250, 5000, 10000 }; // For critical hit
-
-	enum class TypeEffect : uint8_t
-	{
-		Immune = 0,
-		NotVery = 1,
-		Normal = 2,
-		Super = 3
+	const std::array<std::pair<int, int>, 13> m_arr_StageRatio{
+		std::make_pair(2, 8),  // -6
+		std::make_pair(2, 7),  // -5
+		std::make_pair(2, 6),  // -4
+		std::make_pair(2, 5),  // -3
+		std::make_pair(2, 4),  // -2
+		std::make_pair(2, 3),  // -1
+		std::make_pair(2, 2),  //  0 (neutral)
+		std::make_pair(3, 2),  // +1
+		std::make_pair(4, 2),  // +2
+		std::make_pair(5, 2),  // +3
+		std::make_pair(6, 2),  // +4
+		std::make_pair(7, 2),  // +5
+		std::make_pair(8, 2),  // +6
 	};
 
-	const std::array<std::array<TypeEffect, 18>, 18> typeEffectivenessChart = { {
-	{{ TypeEffect::Normal, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Immune,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Immune,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal }},
-	{{ TypeEffect::Super,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::Immune,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Super,   TypeEffect::NotVery }},
-	{{ TypeEffect::Normal, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Immune,  TypeEffect::Super }},
-	{{ TypeEffect::Normal, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Immune,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Immune,  TypeEffect::NotVery, TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::NotVery }},
-	{{ TypeEffect::Normal, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal }},
-	{{ TypeEffect::Immune, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal }},
-	{{ TypeEffect::Normal, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Immune }},
-	{{ TypeEffect::Normal, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::NotVery }},
-	{{ TypeEffect::Normal, TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::NotVery, TypeEffect::Super }},
-	{{ TypeEffect::Normal, TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Normal,  TypeEffect::Super,   TypeEffect::Super,   TypeEffect::NotVery, TypeEffect::Normal }}
-} };
+	const std::array<std::pair<int, int>, 13> m_arr_accuracyStageRatio{
+		std::make_pair(6, 18),  // -6
+		std::make_pair(6, 16),  // -5
+		std::make_pair(6, 14),  // -4
+		std::make_pair(6, 12),  // -3
+		std::make_pair(6, 10),  // -2
+		std::make_pair(6, 8),  // -1
+		std::make_pair(6, 6),  //  0 (neutral)
+		std::make_pair(8, 6),  // +1
+		std::make_pair(10, 6),  // +2
+		std::make_pair(12, 6),  // +3
+		std::make_pair(14, 6),  // +4
+		std::make_pair(16, 6),  // +5
+		std::make_pair(18, 6),  // +6
+	};
 
-	double DecodeEffectiveness(TypeEffect effect)
+	const std::array<int, 4> m_arr_CriticalHitStageThresholds{ 1, 3, 12, 24 }; // For critical hit
+
+	const std::array<std::array<uint16_t, 18>, 18> typeChart
+	{{
+			         // NOR  FIR  WAT  ELE  GRA  ICE  FIG  POI  GRO  FLY  PSY  BUG  ROC  GHO  DRA  DAR  STE  FAI
+			/* NOR */ {4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,2048,   0,4096,4096,2048,4096},
+			/* FIR */ {4096,2048,2048,4096,8192,8192,4096,4096,4096,4096,4096,8192,2048,4096,2048,4096,8192,4096},
+			/* WAT */ {4096,8192,2048,8192,2048,4096,4096,4096,8192,4096,4096,4096,4096,4096,2048,4096,4096,4096},
+			/* ELE */ {4096,4096,2048,2048,8192,4096,4096,4096,   0,8192,4096,4096,4096,4096,2048,4096,4096,4096},
+			/* GRA */ {4096,2048,8192,2048,2048,4096,4096,2048,8192,2048,4096,8192,4096,4096,2048,4096,2048,4096},
+			/* ICE */ {4096,2048,2048,4096,8192,2048,4096,4096,8192,8192,4096,4096,4096,4096,8192,4096,2048,4096},
+			/* FIG */ {8192,4096,4096,4096,4096,8192,4096,2048,4096,2048,2048,2048,8192,   0,4096,8192,8192,2048},
+			/* POI */ {4096,4096,4096,4096,8192,4096,4096,2048,2048,4096,8192,4096,2048,2048,4096,4096,   0,8192},
+			/* GRO */ {4096,8192,2048,8192,2048,4096,4096,8192,4096,   0,4096,4096,8192,4096,4096,4096,8192,4096},
+			/* FLY */ {4096,4096,4096,2048,8192,4096,8192,4096,8192,4096,4096,8192,2048,4096,4096,4096,2048,4096},
+			/* PSY */ {4096,4096,4096,4096,4096,4096,8192,8192,4096,4096,2048,4096,4096,4096,4096,   0,4096,4096},
+			/* BUG */ {4096,2048,4096,4096,2048,4096,2048,2048,4096,2048,8192,4096,4096,2048,4096,8192,2048,2048},
+			/* ROC */ {4096,8192,4096,4096,4096,8192,2048,4096,2048,8192,4096,8192,4096,4096,4096,4096,2048,4096},
+			/* GHO */ {   0,4096,4096,4096,4096,4096,4096,4096,4096,4096,8192,4096,4096,8192,4096,2048,4096,4096},
+			/* DRA */ {4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,8192,4096,2048,   0},
+			/* DAR */ {4096,4096,4096,4096,4096,4096,2048,4096,4096,4096,8192,4096,4096,8192,4096,2048,4096,2048},
+			/* STE */ {4096,2048,2048,2048,8192,8192,4096,8192,4096,4096,4096,4096,8192,4096,4096,4096,2048,8192},
+			/* FAI */ {4096,2048,4096,4096,4096,4096,8192,2048,4096,4096,2048,4096,4096,8192,8192,8192,2048,4096}
+	}};
+
+	int MultiplyEffectiveness(uint16_t effect1, uint16_t effect2)
 	{
-		switch (effect)
-		{
-			case TypeEffect::Immune:
-				return 0.0;
+		if (effect1 == 0 || effect2 == 0) // Immunity check
+			return 0;
 
-			case TypeEffect::NotVery:
-				return 0.5;
-
-			case TypeEffect::Normal:   
-				return 1.0;
-
-			case TypeEffect::Super:    
-				return 2.0;
-
-			default:                   
-				return 1.0;
-		}
-	}
-
-	double MultiplyEffectiveness(TypeEffect effect1, TypeEffect effect2)
-	{
-		if (effect1 == TypeEffect::Immune || effect2 == TypeEffect::Immune)
-		{
-			return 0.0;
-		}
-		return DecodeEffectiveness(effect1) * DecodeEffectiveness(effect2);
+		uint32_t product = static_cast<uint32_t>(effect1) * effect2;
+		return static_cast<uint16_t>(product >> 12);
 	}
 };

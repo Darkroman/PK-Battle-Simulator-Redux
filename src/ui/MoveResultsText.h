@@ -27,7 +27,7 @@ public:
 
 	void DisplayNoopMsg() override;
 
-	void DisplayDirectDamageInflictedMsg(double) override;
+	void DisplayDirectDamageInflictedMsg(int) override;
 
 	void DisplayMultiAttackMsg(int) override;
 
@@ -49,7 +49,7 @@ public:
 
 	void DisplayDigChargeMsg() override;
 
-	void DisplayRecoveredHPRestoredMsg(double) override;
+	void DisplayRecoveredHPRestoredMsg(int) override;
 
 	void DisplayHPFullMsg() override;
 

@@ -79,7 +79,7 @@ bool BattleManager::RunBattleLoop()
 		m_battleMenuUI.NewLine();
 
 #if !defined NDEBUG
-		// ResetHPandPPForTesting();
+		//ResetHPandPPForTesting();
 #endif
 	}
 

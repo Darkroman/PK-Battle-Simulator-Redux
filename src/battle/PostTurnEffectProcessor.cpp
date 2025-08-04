@@ -6,8 +6,6 @@
 #include "StatusEffectProcessor.h"
 #include "WinChecker.h"
 
-#include <cmath>
-
 PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, BattleCalculations& calculations, IStatusEffectUI& statusEffectUI, StatusEffectProcessor& statusProcessor, WinChecker& winChecker)
     : m_context(context)
     , m_calculations(calculations)
@@ -18,9 +16,11 @@ PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, BattleC
 
 void PostTurnEffectProcessor::DeterminePostTurnDamageOrder()
 {
-    double playerOneSpeed = std::floor(m_context.playerOneCurrentPokemon->GetSpeed() * m_calculations.CalculateStageModifier(m_context.playerOneCurrentPokemon->GetSpeedStage()));
+    auto [numerator1, denominator1] = m_calculations.GetStageRatio(m_context.playerOneCurrentPokemon->GetSpeed());
+    int playerOneSpeed = m_context.playerOneCurrentPokemon->GetSpeed() * numerator1 / denominator1;
 
-    double playerTwoSpeed = std::floor(m_context.playerTwoCurrentPokemon->GetSpeed() * m_calculations.CalculateStageModifier(m_context.playerTwoCurrentPokemon->GetSpeedStage()));
+    auto [numerator2, denominator2] = m_calculations.GetStageRatio(m_context.playerTwoCurrentPokemon->GetSpeed());
+    int playerTwoSpeed = m_context.playerTwoCurrentPokemon->GetSpeed() * numerator2 / denominator2;
 
     if (m_context.playerOneCurrentPokemon->GetStatus() == Status::Paralyzed)
     {
@@ -86,14 +86,14 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
         return;
     }
         
-    double leechedHealth{ 0 };
+    int leechedHealth{ 0 };
 
     if (m_context.attackingPokemon->IsSeeded() && (!m_context.attackingPokemon->IsFainted() || m_context.attackingPokemon->GetCurrentHP() > 0) && !m_context.defendingPokemon->IsFainted())
     {
-        leechedHealth = std::floor(m_context.attackingPokemon->GetMaxHP() / 8.0);
+        leechedHealth = m_context.attackingPokemon->GetMaxHP() / 8;
 
-        m_context.attackingPokemon->DamageCurrentHP(static_cast<int>(leechedHealth));
-        m_context.defendingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
+        m_context.attackingPokemon->DamageCurrentHP(leechedHealth);
+        m_context.defendingPokemon->HealCurrentHP(leechedHealth);
 
         m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.attackingPlayer, m_context.attackingPokemon);
 
@@ -105,10 +105,10 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
         return;
     }
 
-    leechedHealth = std::floor(m_context.defendingPokemon->GetMaxHP() / 8.0);
+    leechedHealth = m_context.defendingPokemon->GetMaxHP() / 8;
 
-    m_context.defendingPokemon->DamageCurrentHP(static_cast<int>(leechedHealth));
-    m_context.attackingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
+    m_context.defendingPokemon->DamageCurrentHP(leechedHealth);
+    m_context.attackingPokemon->HealCurrentHP(leechedHealth);
 
     m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.defendingPlayer, m_context.defendingPokemon);
 
@@ -165,24 +165,24 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
 
 void PostTurnEffectProcessor::BurnedStatus(Player* player, BattlePokemon* pokemon)
 {
-    double burnDamage = std::floor(pokemon->GetMaxHP() / 16.0);
-    pokemon->DamageCurrentHP(static_cast<int>(burnDamage));
+    int burnDamage = pokemon->GetMaxHP() / 16;
+    pokemon->DamageCurrentHP(burnDamage);
 
     m_statusEffectUI.DisplayDamagedByStatusPostTurn("burn", player, pokemon);
 }
 
 void PostTurnEffectProcessor::PoisonedStatus(Player* player, BattlePokemon* pokemon)
 {
-    double poisonDamage = std::floor(pokemon->GetMaxHP() / 8.0);
-    pokemon->DamageCurrentHP(static_cast<int>(poisonDamage));
+    int poisonDamage = pokemon->GetMaxHP() / 8;
+    pokemon->DamageCurrentHP(poisonDamage);
 
     m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player, pokemon);
 }
 
 void PostTurnEffectProcessor::BadlyPoisonedStatus(Player* player, BattlePokemon* pokemon)
 {
-    double poisonDamage = std::floor(pokemon->GetMaxHP() / 16.0) * pokemon->GetBadlyPoisonCounter();
-    pokemon->DamageCurrentHP(static_cast<int>(poisonDamage));
+    int poisonDamage = pokemon->GetMaxHP() / 16 * pokemon->GetBadlyPoisonCounter();
+    pokemon->DamageCurrentHP(poisonDamage);
 
     m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player, pokemon);
 
@@ -196,7 +196,7 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
         return;
     }
 
-    double boundDamage{};
+    int boundDamage{};
 
     if (m_context.attackingPokemon->IsBound() && (!m_context.attackingPokemon->IsFainted() || m_context.attackingPokemon->GetCurrentHP() > 0))
     {
@@ -212,9 +212,9 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
         else
         {
             m_context.attackingPokemon->IncrementBoundCounter();
-            boundDamage = std::floor(m_context.attackingPokemon->GetMaxHP() / 8.0);
+            boundDamage = m_context.attackingPokemon->GetMaxHP() / 8;
 
-            m_context.attackingPokemon->DamageCurrentHP(static_cast<int>(boundDamage));
+            m_context.attackingPokemon->DamageCurrentHP(boundDamage);
 
             m_statusEffectUI.DisplayHurtByBoundMsg(m_context.attackingPlayer, m_context.attackingPokemon);
 
@@ -242,9 +242,9 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
     {
 
         m_context.defendingPokemon->IncrementBoundCounter();
-        boundDamage = std::floor(m_context.defendingPokemon->GetMaxHP() / 8.0);
+        boundDamage = m_context.defendingPokemon->GetMaxHP() / 8;
 
-        m_context.defendingPokemon->DamageCurrentHP(static_cast<int>(boundDamage));
+        m_context.defendingPokemon->DamageCurrentHP(boundDamage);
 
         m_statusEffectUI.DisplayHurtByBoundMsg(m_context.defendingPlayer, m_context.defendingPokemon);
 

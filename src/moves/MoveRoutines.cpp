@@ -392,6 +392,14 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
+	deps.calculations.CalculateTypeEffectiveness(ctx.currentMove, ctx.defendingPokemon);
+
+	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
+	{
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		return;
+	}
+
 	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
 	if (!ctx.flags.hit)
@@ -496,12 +504,14 @@ void MultiAttack::DoMove(MoveRoutineDeps& deps)
 		turnCount = 5;
 
 	int timesHit = 0;
+
 	while (turnCount > 0 && ctx.defendingPokemon->GetCurrentHP() > 0)
 	{
 		deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
 		deps.resultsUI.DisplayCritTextDialog();
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -517,10 +527,12 @@ void MultiAttack::DoMove(MoveRoutineDeps& deps)
 	
 	if (ctx.defendingPokemon->IsBiding() && ctx.defendingPokemon->GetCurrentHP() != 0 && !ctx.flags.hitSubstitute)
 	{
-		ctx.defendingPokemon->AddBideDamage(static_cast<int>(ctx.damageTaken));
+		ctx.defendingPokemon->AddBideDamage(ctx.damageTaken);
 	}
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
 void BurnHit::DoMove(MoveRoutineDeps& deps)
@@ -1073,7 +1085,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPokemon->IsBiding() && ctx.defendingPokemon->GetCurrentHP() != 0 && !ctx.flags.hitSubstitute)
 	{
-		ctx.defendingPokemon->AddBideDamage(static_cast<int>(ctx.damageTaken));
+		ctx.defendingPokemon->AddBideDamage(ctx.damageTaken);
 	}
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
@@ -1103,8 +1115,8 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 	{
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
 
-		double crashDamage = std::floor(ctx.attackingPokemon->GetMaxHP() / 2);
-		ctx.attackingPokemon->DamageCurrentHP(static_cast<int>(crashDamage));
+		int crashDamage = ctx.attackingPokemon->GetMaxHP() / 2;
+		ctx.attackingPokemon->DamageCurrentHP(crashDamage);
 
 		deps.resultsUI.DisplayJumpKickCrashMsg();
 		return;
@@ -1293,7 +1305,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	bool hitSubstitute = ctx.defendingPokemon->HasSubstitute();
 
-	double targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
+	int targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 	
 	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1305,11 +1317,11 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
-	double targetHPEnd = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
+	int targetHPEnd = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	int recoilDamage = static_cast<int>(std::floor((targetHPBegin - targetHPEnd) / 4));
+	int recoilDamage = (targetHPBegin - targetHPEnd) / 4;
 
-	ctx.attackingPokemon->DamageCurrentHP(static_cast<int>(recoilDamage));
+	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
 
 	deps.resultsUI.DisplayRecoilMsg();
 
@@ -1431,7 +1443,7 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	bool hitSubstitute = ctx.defendingPokemon->HasSubstitute();
 
-	double targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
+	int targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
 	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1443,11 +1455,11 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
-	double targetHPEnd = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
+	int targetHPEnd = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	int recoilDamage = static_cast<int>(std::floor((targetHPBegin - targetHPEnd) / 3));
+	int recoilDamage = (targetHPBegin - targetHPEnd) / 3;
 
-	ctx.attackingPokemon->DamageCurrentHP(static_cast<int>(recoilDamage));
+	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
 
 	deps.resultsUI.DisplayRecoilMsg();
 
@@ -1588,7 +1600,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPokemon->IsBiding() && ctx.defendingPokemon->GetCurrentHP() != 0)
 	{
-		ctx.defendingPokemon->AddBideDamage(static_cast<int>(ctx.damageTaken));
+		ctx.defendingPokemon->AddBideDamage(ctx.damageTaken);
 	}
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
@@ -2122,7 +2134,7 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 
 	const auto* lastMove = ctx.defendingPokemon->GetLastUsedMove();
 	const bool lastWasPhysical = lastMove && lastMove->GetCategoryEnum() == Category::Physical;
-	const int lastDamage = static_cast<int>(ctx.damageTaken);
+	const int lastDamage = ctx.damageTaken;
 
 	if (!lastWasPhysical || lastDamage <= 0 || ctx.flags.hitSubstitute)
 	{
@@ -2146,7 +2158,7 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int counterDamage = static_cast<int>(ctx.damageTaken * 2);
+	int counterDamage = ctx.damageTaken * 2;
 
 	bool hasSubstitute = ctx.defendingPokemon->HasSubstitute();
 
@@ -2258,7 +2270,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-	double leechedHealth{};
+	int leechedHealth{};
 
 	if (ctx.damageTaken <= 0)
 	{
@@ -2270,7 +2282,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 	}
 	else
 	{
-		leechedHealth = std::floor(ctx.damageTaken / 2);
+		leechedHealth = ctx.damageTaken / 2;
 	}
 
 	if (leechedHealth > (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP()))
@@ -2278,7 +2290,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 		leechedHealth = (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP());
 	}
 
-	ctx.attackingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
+	ctx.attackingPokemon->HealCurrentHP(leechedHealth);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 	
@@ -3121,9 +3133,9 @@ void HealHalfHP::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.attackingPokemon->GetCurrentHP() < ctx.attackingPokemon->GetMaxHP())
 	{
-		double healAmount = std::ceil(static_cast<double>(ctx.attackingPokemon->GetMaxHP()) / 2.0);
+		int healAmount = (ctx.attackingPokemon->GetMaxHP() + 1) / 2;
 
-		ctx.attackingPokemon->HealCurrentHP(static_cast<int>(healAmount));
+		ctx.attackingPokemon->HealCurrentHP(healAmount);
 
 		deps.resultsUI.DisplayRecoveredHPRestoredMsg(healAmount);
 	}
@@ -3657,7 +3669,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
-	double leechedHealth{};
+	int leechedHealth{};
 
 	if (ctx.damageTaken <= 0)
 	{
@@ -3669,7 +3681,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 	}
 	else
 	{
-		leechedHealth = std::floor(ctx.damageTaken / 2);
+		leechedHealth = ctx.damageTaken / 2;
 	}
 
 	if (leechedHealth > (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP()))
@@ -3677,11 +3689,11 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 		leechedHealth = (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP());
 	}
 
-	ctx.attackingPokemon->HealCurrentHP(static_cast<int>(leechedHealth));
+	ctx.attackingPokemon->HealCurrentHP(leechedHealth);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
-	if (!ctx.defendingPokemon->HasSubstitute() && leechedHealth > 0)
+	if (leechedHealth > 0)
 	{
 		deps.resultsUI.DisplayEnergyDrainedMsg();
 	}
@@ -3844,12 +3856,12 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	double psywaveDamage = 0.0;
+	int psywaveDamage = 0;
 
 	std::uniform_int_distribution<int> rngDist(0, 100);
 	int randomNumber{ rngDist(deps.rng.GetGenerator()) };
 
-	psywaveDamage = floor(ctx.attackingPokemon->GetLevel() * (randomNumber + 50) / 100);
+	psywaveDamage = ctx.attackingPokemon->GetLevel() * (randomNumber + 50) / 100;
 
 	if (psywaveDamage == 0)
 	{
@@ -3858,16 +3870,19 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPokemon->HasSubstitute())
 	{
-		ctx.defendingPokemon->DamageSubstitute(static_cast<int>(psywaveDamage));
+		ctx.defendingPokemon->DamageSubstitute(psywaveDamage);
+
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
+		ctx.flags.hitSubstitute = true;
 	}
 	else
 	{
-		ctx.defendingPokemon->DamageCurrentHP(static_cast<int>(psywaveDamage));
+		ctx.defendingPokemon->DamageCurrentHP(psywaveDamage);
+		ctx.flags.hitSubstitute = false;
 	}
 
-	ctx.damageTaken = static_cast<int>(psywaveDamage);
+	ctx.damageTaken = psywaveDamage;
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 }
@@ -4033,17 +4048,20 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 
 	int hpSource = hasSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	int finalDamage = std::max(1, static_cast<int>(std::floor(hpSource / 2.0)));
+	int finalDamage = std::max(1, hpSource / 2);
 
 	if (hasSubstitute)
 	{
 		ctx.defendingPokemon->DamageSubstitute(finalDamage);
+
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
+		ctx.flags.hitSubstitute = true;
 	}
 	else
 	{
 		ctx.defendingPokemon->DamageCurrentHP(finalDamage);
+		ctx.flags.hitSubstitute = false;
 	}
 
 	ctx.damageTaken = finalDamage;
@@ -4067,7 +4085,7 @@ void Substitute::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	double substituteHP = std::floor(ctx.attackingPokemon->GetMaxHP() / 4.0);
+	int substituteHP = ctx.attackingPokemon->GetMaxHP() / 4;
 
 	if (substituteHP >= ctx.attackingPokemon->GetCurrentHP())
 	{
@@ -4075,7 +4093,7 @@ void Substitute::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int hpCost = static_cast<int>(substituteHP);
+	int hpCost = substituteHP;
 
 	deps.statusUI.DisplayPutInSubstituteMsg();
 	ctx.attackingPokemon->SetSubstitute(true);
@@ -4119,9 +4137,9 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
-	double recoilDamage = std::round(ctx.attackingPokemon->GetMaxHP() / 4);
+	int recoilDamage = (ctx.attackingPokemon->GetMaxHP() + 2) / 4;
 
-	ctx.attackingPokemon->DamageCurrentHP(static_cast<int>(recoilDamage));
+	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
 
 	deps.resultsUI.DisplayRecoilMsg();
 

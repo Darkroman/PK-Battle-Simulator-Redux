@@ -20,11 +20,11 @@ TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calcula
 
 void TurnProcessor::DetermineWhoGoesFirst()
 {
-	double stageMultiplierOne = m_calculations.CalculateStageModifier(m_context.playerOneCurrentPokemon->GetSpeedStage());
-	double stageMultiplierTwo = m_calculations.CalculateStageModifier(m_context.playerTwoCurrentPokemon->GetSpeedStage());
+	auto [numerator1, denominator1] = m_calculations.GetStageRatio(m_context.playerOneCurrentPokemon->GetSpeed());
+	int playerOneSpeed = m_context.playerOneCurrentPokemon->GetSpeed() * numerator1 / denominator1;
 
-	double playerOneSpeed = std::floor(m_context.playerOneCurrentPokemon->GetSpeed() * stageMultiplierOne);
-	double playerTwoSpeed = std::floor(m_context.playerTwoCurrentPokemon->GetSpeed() * stageMultiplierTwo);
+	auto [numerator2, denominator2] = m_calculations.GetStageRatio(m_context.playerTwoCurrentPokemon->GetSpeed());
+	int playerTwoSpeed = m_context.playerTwoCurrentPokemon->GetSpeed() * numerator2 / denominator2;
 
 	if (m_context.playerOneCurrentPokemon->GetStatus() == Status::Paralyzed)
 	{
