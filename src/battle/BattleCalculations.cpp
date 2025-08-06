@@ -251,12 +251,12 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 
 	if (targetPlayer->HasReflect() && !m_context.flags.isCriticalHit && currentMove->GetCategoryEnum() == Category::Physical)
 	{
-		baseDamage = (baseDamage * 2048) >> 12;
+		finalDamage = (finalDamage * 2048) >> 12;
 	}
 
 	if (targetPlayer->HasLightScreen() && !m_context.flags.isCriticalHit && currentMove->GetCategoryEnum() == Category::Special)
 	{
-		baseDamage = (baseDamage * 2048) >> 12;
+		finalDamage = (finalDamage * 2048) >> 12;
 	}
 
 	if (finalDamage < 1 && effectiveness != 0)
@@ -331,4 +331,5 @@ int BattleCalculations::CalculateLowKickPower(BattlePokemon* target)
 	}
 
 	return 0;
+
 }
