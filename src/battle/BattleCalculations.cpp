@@ -291,7 +291,7 @@ void BattleCalculations::ApplyDamage(Player* targetPlayer, BattlePokemon::pokemo
 		m_context.flags.hitSubstitute = false;
 	}
 
-	bool isMultiStrike = currentMove->GetMoveEffectEnum() == MoveEffect::MultiAttack ||
+	bool isMultiStrike = currentMove->GetMoveEffectEnum() == MoveEffect::MultiHit ||
 		currentMove->GetMoveEffectEnum() == MoveEffect::DoubleHit ||
 		currentMove->GetMoveEffectEnum() == MoveEffect::Twineedle;
 

@@ -80,7 +80,7 @@ public:
 	void DoMove(MoveRoutineDeps&) override;
 };
 
-class MultiAttack : public IMoveRoutine
+class MultiHit : public IMoveRoutine
 {
 public:
 	void DoMove(MoveRoutineDeps&) override;
@@ -128,7 +128,7 @@ public:
 	void DoMove(MoveRoutineDeps&) override;
 };
 
-class MakeEnemySwitch : public IMoveRoutine
+class ForceSwitch : public IMoveRoutine
 {
 public:
 	void DoMove(MoveRoutineDeps&) override;
@@ -140,7 +140,7 @@ public:
 	void DoMove(MoveRoutineDeps&) override;
 };
 
-class Bound : public IMoveRoutine
+class PartialTrap : public IMoveRoutine
 {
 public:
 	void DoMove(MoveRoutineDeps&) override;
@@ -188,7 +188,7 @@ public:
 	void DoMove(MoveRoutineDeps&) override;
 };
 
-class Thrash : public IMoveRoutine
+class Rampage : public IMoveRoutine
 {
 public:
 	void DoMove(MoveRoutineDeps&) override;
@@ -500,7 +500,7 @@ public:
 	void DoMove(MoveRoutineDeps&) override;
 };
 
-class Swift : public IMoveRoutine
+class AlwaysHit : public IMoveRoutine
 {
 public:
 	void DoMove(MoveRoutineDeps&) override;

@@ -108,8 +108,8 @@ std::unique_ptr<IMoveRoutine> MoveRoutineFactory::Call(MoveEffect ID)
 	case MoveEffect::IncreasedCritical:
 		return std::make_unique<IncreasedCritical>();
 
-	case MoveEffect::MultiAttack:
-		return std::make_unique<MultiAttack>();
+	case MoveEffect::MultiHit:
+		return std::make_unique<MultiHit>();
 
 	case MoveEffect::BurnHit:
 		return std::make_unique<BurnHit>();
@@ -132,14 +132,14 @@ std::unique_ptr<IMoveRoutine> MoveRoutineFactory::Call(MoveEffect ID)
 	case MoveEffect::Gust:
 		return std::make_unique<Gust>();
 
-	case MoveEffect::MakeEnemySwitch:
-		return std::make_unique<MakeEnemySwitch>();
+	case MoveEffect::ForceSwitch:
+		return std::make_unique<ForceSwitch>();
 
 	case MoveEffect::Fly:
 		return std::make_unique<Fly>();
 
-	case MoveEffect::Bound:
-		return std::make_unique<Bound>();
+	case MoveEffect::PartialTrap:
+		return std::make_unique<PartialTrap>();
 
 	case MoveEffect::Stomp:
 		return std::make_unique<Stomp>();
@@ -162,8 +162,8 @@ std::unique_ptr<IMoveRoutine> MoveRoutineFactory::Call(MoveEffect ID)
 	case MoveEffect::RecoilQuarter:
 		return std::make_unique<RecoilQuarter>();
 
-	case MoveEffect::Thrash:
-		return std::make_unique<Thrash>();
+	case MoveEffect::Rampage:
+		return std::make_unique<Rampage>();
 
 	case MoveEffect::RecoilThird:
 		return std::make_unique<RecoilThird>();
@@ -318,8 +318,8 @@ std::unique_ptr<IMoveRoutine> MoveRoutineFactory::Call(MoveEffect ID)
 	case MoveEffect::Explosion:
 		return std::make_unique<Explosion>();
 
-	case MoveEffect::Swift:
-		return std::make_unique<Swift>();
+	case MoveEffect::AlwaysHit:
+		return std::make_unique<AlwaysHit>();
 
 	case MoveEffect::SkullBash:
 		return std::make_unique<SkullBash>();
@@ -466,7 +466,7 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
-void MultiAttack::DoMove(MoveRoutineDeps& deps)
+void MultiHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -820,7 +820,7 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
-void MakeEnemySwitch::DoMove(MoveRoutineDeps& deps)
+void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -859,7 +859,7 @@ void MakeEnemySwitch::DoMove(MoveRoutineDeps& deps)
 	std::uniform_int_distribution<size_t> randomModDistributor(0, enemyPokemonList.size() - 1);
 	BattlePokemon* newMon = enemyPokemonList.at(randomModDistributor(deps.rng.GetGenerator()));
 
-	// Reset stats for the PokÃ©mon being forced out
+	// Reset stats for the Pokémon being forced out
 	ctx.defendingPokemon->ResetStatsOnSwitch();
 
 	if (ctx.attackingPokemon->IsBound())
@@ -932,7 +932,7 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
-void Bound::DoMove(MoveRoutineDeps& deps)
+void PartialTrap::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -1354,7 +1354,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 }
 
-void Thrash::DoMove(MoveRoutineDeps& deps)
+void Rampage::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -3569,7 +3569,7 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 }
 
-void Swift::DoMove(MoveRoutineDeps& deps)
+void AlwaysHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -4213,5 +4213,4 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplayRecoilMsg();
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
-
 }

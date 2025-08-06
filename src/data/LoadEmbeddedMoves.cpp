@@ -13,9 +13,9 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(2, "Karate Chop", "Fighting", PokemonType::Fighting, "Physical", Category::Physical, 0, MoveEffect::IncreasedCritical, 0, 25, 40, 50, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(3, "Double Slap", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiAttack, 0, 10, 16, 15, 85, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(3, "Double Slap", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiHit, 0, 10, 16, 15, 85, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(4, "Comet Punch", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiAttack, 0, 15, 24, 18, 85, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(4, "Comet Punch", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiHit, 0, 15, 24, 18, 85, 1, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(5, "Mega Punch", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::NormalHit, 0, 20, 32, 80, 85, 1, 1, 0, 0, 1, 1, 0, 0);
 
@@ -43,11 +43,11 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(17, "Wing Attack", "Flying", PokemonType::Flying, "Physical", Category::Physical, 0, MoveEffect::NormalHit, 0, 35, 56, 60, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(18, "Whirlwind", "Normal", PokemonType::Normal, "Status", Category::Status, -6, MoveEffect::MakeEnemySwitch, 0, 20, 32, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1);
+	movedex.emplace_back(18, "Whirlwind", "Normal", PokemonType::Normal, "Status", Category::Status, -6, MoveEffect::ForceSwitch, 0, 20, 32, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1);
 
 	movedex.emplace_back(19, "Fly", "Flying", PokemonType::Flying, "Physical", Category::Physical, 0, MoveEffect::Fly, 0, 15, 24, 90, 95, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(20, "Bind", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::Bound, 0, 20, 32, 15, 85, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(20, "Bind", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::PartialTrap, 0, 20, 32, 15, 85, 1, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(21, "Slam", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::NormalHit, 0, 20, 32, 80, 75, 1, 1, 0, 0, 1, 1, 0, 0);
 
@@ -69,7 +69,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(30, "Horn Attack", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::NormalHit, 0, 25, 40, 65, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(31, "Fury Attack", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiAttack, 0, 20, 32, 15, 85, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(31, "Fury Attack", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiHit, 0, 20, 32, 15, 85, 1, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(32, "Horn Drill", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::OHKO, 0, 5, 8, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0);
 
@@ -77,11 +77,11 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(34, "Body Slam", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::BodySlam, 30, 15, 24, 85, 100, 1, 1, 0, 0, 1, 0, 0, 0);
 
-	movedex.emplace_back(35, "Wrap", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::Bound, 0, 20, 32, 15, 90, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(35, "Wrap", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::PartialTrap, 0, 20, 32, 15, 90, 1, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(36, "Take Down", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::RecoilQuarter, 0, 20, 32, 90, 85, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(37, "Thrash", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::Thrash, 0, 10, 16, 120, 100, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(37, "Thrash", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::Rampage, 0, 10, 16, 120, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(38, "Double-Edge", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::RecoilThird, 0, 15, 24, 120, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
@@ -91,7 +91,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(41, "Twineedle", "Bug", PokemonType::Bug, "Physical", Category::Physical, 0, MoveEffect::Twineedle, 20, 20, 32, 25, 100, 0, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(42, "Pin Missile", "Bug", PokemonType::Bug, "Physical", Category::Physical, 0, MoveEffect::MultiAttack, 0, 20, 32, 25, 95, 0, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(42, "Pin Missile", "Bug", PokemonType::Bug, "Physical", Category::Physical, 0, MoveEffect::MultiHit, 0, 20, 32, 25, 95, 0, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(43, "Leer", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::DefenseDown, 0, 30, 48, 0, 100, 0, 1, 1, 0, 1, 0, 0, 0);
 
@@ -99,7 +99,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(45, "Growl", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::AttackDown, 0, 40, 64, 0, 100, 0, 1, 1, 0, 1, 0, 1, 1);
 
-	movedex.emplace_back(46, "Roar", "Normal", PokemonType::Normal, "Status", Category::Status, -6, MoveEffect::MakeEnemySwitch, 0, 20, 32, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1);
+	movedex.emplace_back(46, "Roar", "Normal", PokemonType::Normal, "Status", Category::Status, -6, MoveEffect::ForceSwitch, 0, 20, 32, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1);
 
 	movedex.emplace_back(47, "Sing", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::SleepMove, 0, 15, 24, 0, 55, 0, 1, 1, 0, 1, 0, 1, 1);
 
@@ -167,13 +167,13 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(79, "Sleep Powder", "Grass", PokemonType::Grass, "Status", Category::Status, 0, MoveEffect::SleepPowder, 0, 15, 24, 0, 75, 0, 1, 1, 0, 1, 0, 0, 0);
 
-	movedex.emplace_back(80, "Petal Dance", "Grass", PokemonType::Grass, "Special", Category::Special, 0, MoveEffect::Thrash, 0, 10, 16, 120, 100, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(80, "Petal Dance", "Grass", PokemonType::Grass, "Special", Category::Special, 0, MoveEffect::Rampage, 0, 10, 16, 120, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(81, "String Shot", "Bug", PokemonType::Bug, "Status", Category::Status, 0, MoveEffect::SpeedDown2, 0, 40, 64, 0, 95, 0, 1, 1, 0, 1, 0, 0, 0);
 
 	movedex.emplace_back(82, "Dragon Rage", "Dragon", PokemonType::Dragon, "Special", Category::Special, 0, MoveEffect::DragonRage, 0, 10, 16, 0, 100, 0, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(83, "Fire Spin", "Fire", PokemonType::Fire, "Special", Category::Special, 0, MoveEffect::Bound, 0, 15, 24, 35, 85, 0, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(83, "Fire Spin", "Fire", PokemonType::Fire, "Special", Category::Special, 0, MoveEffect::PartialTrap, 0, 15, 24, 35, 85, 0, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(84, "Thunder Shock", "Electric", PokemonType::Electric, "Special", Category::Special, 0, MoveEffect::ParalyzeHit, 10, 30, 48, 40, 100, 0, 1, 0, 0, 1, 0, 0, 0);
 
@@ -263,13 +263,13 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(127, "Waterfall", "Water", PokemonType::Water, "Physical", Category::Physical, 0, MoveEffect::FlinchHit, 20, 15, 24, 80, 100, 1, 1, 0, 0, 1, 0, 0, 0);
 
-	movedex.emplace_back(128, "Clamp", "Water", PokemonType::Water, "Physical", Category::Physical, 0, MoveEffect::Bound, 0, 15, 24, 35, 85, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(128, "Clamp", "Water", PokemonType::Water, "Physical", Category::Physical, 0, MoveEffect::PartialTrap, 0, 15, 24, 35, 85, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(129, "Swift", "Normal", PokemonType::Normal, "Special", Category::Special, 0, MoveEffect::Swift, 0, 20, 32, 60, 0, 0, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(129, "Swift", "Normal", PokemonType::Normal, "Special", Category::Special, 0, MoveEffect::AlwaysHit, 0, 20, 32, 60, 0, 0, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(130, "Skull Bash", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::SkullBash, 0, 10, 16, 130, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(131, "Spike Cannon", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiAttack, 0, 15, 24, 20, 100, 0, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(131, "Spike Cannon", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiHit, 0, 15, 24, 20, 100, 0, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(132, "Constrict", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::SpeedDownHit, 10, 35, 56, 10, 100, 1, 1, 0, 0, 1, 0, 0, 0);
 
@@ -287,7 +287,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(139, "Poison Gas", "Poison", PokemonType::Poison, "Status", Category::Status, 0, MoveEffect::PoisonGas, 0, 40, 64, 0, 90, 0, 1, 1, 0, 1, 0, 0, 0);
 
-	movedex.emplace_back(140, "Barrage", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiAttack, 0, 20, 32, 15, 85, 0, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(140, "Barrage", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiHit, 0, 20, 32, 15, 85, 0, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(141, "Leech Life", "Bug", PokemonType::Bug, "Physical", Category::Physical, 0, MoveEffect::Leech, 0, 10, 16, 80, 100, 1, 1, 0, 0, 1, 1, 0, 0);
 
@@ -315,7 +315,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(153, "Explosion", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::Explosion, 0, 5, 8, 250, 100, 0, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(154, "Fury Swipes", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiAttack, 0, 15, 24, 18, 80, 1, 1, 0, 0, 1, 1, 0, 0);
+	movedex.emplace_back(154, "Fury Swipes", "Normal", PokemonType::Normal, "Physical", Category::Physical, 0, MoveEffect::MultiHit, 0, 15, 24, 18, 80, 1, 1, 0, 0, 1, 1, 0, 0);
 
 	movedex.emplace_back(155, "Bonemerang", "Ground", PokemonType::Ground, "Physical", Category::Physical, 0, MoveEffect::DoubleHit, 0, 10, 16, 50, 90, 0, 1, 0, 0, 1, 1, 0, 0);
 
