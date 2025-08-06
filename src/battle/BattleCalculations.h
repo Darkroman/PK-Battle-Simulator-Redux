@@ -4,12 +4,11 @@ class RandomEngine;
 struct BattleContext;
 class Player;
 class BattlePokemon;
-class IMoveResultsUI;
 
 class BattleCalculations
 {
 public:
-	BattleCalculations(BattleContext&, RandomEngine&, IMoveResultsUI&);
+	BattleCalculations(BattleContext&, RandomEngine&);
 
 	void CalculateCriticalHit(BattlePokemon*);
 
@@ -30,7 +29,6 @@ public:
 private:
 	RandomEngine& m_rng;
 	BattleContext& m_context;
-	IMoveResultsUI& m_resultsUI;
 
 public:
 

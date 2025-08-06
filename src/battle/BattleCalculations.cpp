@@ -1,4 +1,3 @@
-#include "../ui/interfaces/IMoveResultsUI.h"
 #include "../data/Pokemon.h"
 #include "../moves/MoveEffectEnums.h"
 #include "../data/StringToTypes.h"
@@ -7,7 +6,7 @@
 
 #include "BattleCalculations.h"
 
-BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng, IMoveResultsUI& resultsUI) : m_context(context), m_rng(rng), m_resultsUI(resultsUI) {}
+BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng) : m_context(context), m_rng(rng) {}
 
 void BattleCalculations::CalculateCriticalHit(BattlePokemon* source)
 {

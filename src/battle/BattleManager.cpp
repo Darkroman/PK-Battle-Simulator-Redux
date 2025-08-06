@@ -12,7 +12,7 @@ BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleM
 	, m_battleMenuUI(battleMenuUI)
 	, m_moveResultsUI(moveResultsUI)
 	, m_statusEffectUI(statusEffectUI)
-	, m_calculations(context, rng, moveResultsUI)
+	, m_calculations(context, rng)
 	, m_switchExecutor(context, battleMenuUI)
 	, m_winChecker(context, m_switchExecutor, battleMenuUI)
 	, m_statusEffectProcessor(context, rng, statusEffectUI)
