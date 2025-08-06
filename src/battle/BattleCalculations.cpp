@@ -111,7 +111,7 @@ bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentM
 	}
 }
 
-void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
+int BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
 {
 	m_context.flags.hitSubstitute = false;
 
@@ -131,12 +131,12 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		baseDamage = target->GetCurrentHP();
 		target->DamageCurrentHP(baseDamage);
 		m_context.damageTaken = baseDamage;
-		return;
+		return baseDamage;
 	}
 
 	if (effectiveness == 0)
 	{
-		return;
+		return 0;
 	}
 
 	int sourceAttack{ 0 };
@@ -269,30 +269,38 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		finalDamage = target->GetCurrentHP();
 	}
 
+	return finalDamage;
+}
+
+void BattleCalculations::ApplyDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target, int damage)
+{
+	if (damage == 0)
+	{
+		return;
+	}
+
 	if (target->HasSubstitute() && !currentMove->CanBypassSubstitute())
 	{
-		target->DamageSubstitute(finalDamage);
+		target->DamageSubstitute(damage);
 		m_context.flags.hitSubstitute = true;
 	}
 
 	else
 	{
-		target->DamageCurrentHP(finalDamage);
+		target->DamageCurrentHP(damage);
 		m_context.flags.hitSubstitute = false;
 	}
 
 	bool isMultiStrike = currentMove->GetMoveEffectEnum() == MoveEffect::MultiAttack ||
-						 currentMove->GetMoveEffectEnum() == MoveEffect::DoubleHit ||
-						 currentMove->GetMoveEffectEnum() == MoveEffect::Twineedle;
+		currentMove->GetMoveEffectEnum() == MoveEffect::DoubleHit ||
+		currentMove->GetMoveEffectEnum() == MoveEffect::Twineedle;
 
 	if (target->IsBiding() && !isMultiStrike && !target->HasSubstitute())
 	{
-		target->AddBideDamage(finalDamage);
+		target->AddBideDamage(damage);
 	}
 
-	m_context.damageTaken = finalDamage;
-
-	m_resultsUI.DisplayDirectDamageInflictedMsg(finalDamage);
+	m_context.damageTaken = damage;
 }
 
 // Calculate power of low kick based on target Pokemon's weight (in hectograms)

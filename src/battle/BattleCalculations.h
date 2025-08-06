@@ -19,7 +19,9 @@ public:
 
 	bool CalculateHitChance(BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target);
 
-	void CalculateDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*);
+	int CalculateDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*);
+
+	void ApplyDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*, int);
 
 	int CalculateLowKickPower(BattlePokemon*);
 

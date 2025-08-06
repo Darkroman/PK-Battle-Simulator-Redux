@@ -99,7 +99,10 @@ void MoveResultsText::DisplayNoopMsg()
 
 void MoveResultsText::DisplayDirectDamageInflictedMsg(int damage)
 {
-	std::cout << damage << " damage inflicted.\n";
+	if (damage > 0)
+	{
+		std::cout << damage << " damage inflicted.\n";
+	}
 }
 
 void MoveResultsText::DisplayMultiAttackMsg(int timesHit)

@@ -90,8 +90,9 @@ void IMoveRoutine::BasicDamageRoutine(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -408,8 +409,9 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -450,8 +452,9 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetCriticalHitStage(newCritStage);
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -505,13 +508,14 @@ void MultiAttack::DoMove(MoveRoutineDeps& deps)
 
 	int timesHit = 0;
 
+	int totalDamage{};
 	while (turnCount > 0 && ctx.defendingPokemon->GetCurrentHP() > 0)
 	{
-		deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+		int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+		deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog();
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -525,6 +529,8 @@ void MultiAttack::DoMove(MoveRoutineDeps& deps)
 		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
 	}
 	
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
+
 	if (ctx.defendingPokemon->IsBiding() && ctx.defendingPokemon->GetCurrentHP() != 0 && !ctx.flags.hitSubstitute)
 	{
 		ctx.defendingPokemon->AddBideDamage(ctx.damageTaken);
@@ -561,8 +567,9 @@ void BurnHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -600,8 +607,9 @@ void FreezeHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -639,8 +647,9 @@ void ParalyzeHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -679,8 +688,8 @@ void OHKO::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// OHKO specific logic done in CalculateDamage()
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -727,8 +736,9 @@ void RazorWind::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -798,8 +808,9 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 		ctx.initialPowerMultiplier = 20;
 	}
 	
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -909,8 +920,9 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -946,8 +958,9 @@ void Bound::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1015,8 +1028,9 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Damage multiplier for when defending Pokemon has minimized is in CalculateDamage()
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1068,10 +1082,12 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 	int turnCount = 2;
 	int timesHit = 0;
 
+	int totalDamage{};
 	while (turnCount != 0 && ctx.defendingPokemon->GetCurrentHP() > 0)
 	{
-		deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+		int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+		deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog();
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1086,6 +1102,8 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 	{
 		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
 	}
+
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
 
 	if (ctx.defendingPokemon->IsBiding() && ctx.defendingPokemon->GetCurrentHP() != 0 && !ctx.flags.hitSubstitute)
 	{
@@ -1126,8 +1144,9 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1163,8 +1182,9 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1268,8 +1288,9 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Damage multiplier for when defending Pokemon has minimized is in CalculateDamage()
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1307,12 +1328,13 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	bool hitSubstitute = ctx.defendingPokemon->HasSubstitute();
+	bool hitSubstitute = ctx.defendingPokemon->HasSubstitute() && !ctx.currentMove->CanBypassSubstitute();
 
 	int targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 	
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1402,7 +1424,9 @@ void Thrash::DoMove(MoveRoutineDeps& deps)
 		ctx.currentMove->m_currentPP -= 1;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1445,12 +1469,13 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	bool hitSubstitute = ctx.defendingPokemon->HasSubstitute();
+	bool hitSubstitute = ctx.defendingPokemon->HasSubstitute() && !ctx.currentMove->CanBypassSubstitute();
 
 	int targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1539,8 +1564,9 @@ void PoisonHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1581,10 +1607,12 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 	int turnCount = 2;
 	int timesHit = 0;
 
+	int totalDamage{};
 	while (turnCount != 0 && ctx.defendingPokemon->GetCurrentHP() > 0)
 	{
-		deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+		int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+		deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog();
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1601,6 +1629,8 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 	{
 		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
 	}
+
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
 
 	if (ctx.defendingPokemon->IsBiding() && ctx.defendingPokemon->GetCurrentHP() != 0)
 	{
@@ -1827,7 +1857,9 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 		
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1899,7 +1931,9 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -1955,7 +1989,9 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 		
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2007,7 +2043,9 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2067,7 +2105,9 @@ void RechargeAttack::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2110,7 +2150,9 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Low Kick power calculated in CalculateDamage()
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2268,8 +2310,9 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 	
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2416,8 +2459,9 @@ void SolarBeam::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2739,8 +2783,9 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Damage multiplier for when defending Pokemon is SemiInvulnerableDig is in CalculateDamage()
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2789,8 +2834,9 @@ void Dig::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -2922,7 +2968,9 @@ void Rage::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -3505,8 +3553,9 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -3538,8 +3587,9 @@ void Swift::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -3600,8 +3650,9 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -3667,8 +3718,9 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -3789,8 +3841,9 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetCriticalHitStage(newCritStage);
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -3990,7 +4043,9 @@ void TriAttack::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -4141,10 +4196,11 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
+	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
