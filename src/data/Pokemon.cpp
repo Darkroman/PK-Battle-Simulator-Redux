@@ -4,7 +4,7 @@ Pokemon::Pokemon
 (int nationalDexNumber, std::string_view name,
     int basehp, int baseattack, int basedefense,
     int basespecialattack, int basespecialdefense, int basespeed,
-    std::string_view type1, PokemonType type1e, std::string_view type2, PokemonType type2e, double weight)
+    std::string_view type1, PokemonType type1e, std::string_view type2, PokemonType type2e, int weight)
     : m_nationalDexNumber{ nationalDexNumber }, m_name{ name },
     m_basehp{ basehp }, m_baseattack{ baseattack }, m_basedefense{ basedefense },
     m_basespecialattack{ basespecialattack }, m_basespecialdefense{ basespecialdefense }, m_basespeed{ basespeed },
@@ -73,9 +73,14 @@ const PokemonType Pokemon::GetSecondTypeEnum() const
     return m_type2e;
 }
 
-const double Pokemon::GetPokemonWeight() const
+const int Pokemon::GetPokemonWeightHg() const
 {
     return m_weight;
+}
+
+const double Pokemon::GetPokemonWeightKg() const
+{
+    return static_cast<double>(m_weight) / 10;
 }
 
 const std::vector<size_t> Pokemon::GetMoveList() const

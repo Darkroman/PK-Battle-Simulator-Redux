@@ -199,16 +199,16 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 		currentMovePower = CalculateLowKickPower(target);
 	}
 
-	int powerModifier{ 1 };
+	int powerModifier = m_context.initialPowerMultiplier;
 
-	if (target->IsSemiInvulnerableFromFly() && (currentMove->GetMoveEffectEnum() == MoveEffect::Gust))
+	if (powerModifier > 10)
 	{
-		powerModifier = 2;
+		currentMovePower = currentMovePower * powerModifier / 10;
 	}
 
 	int level = source->GetLevel();
 
-	baseDamage = (((((2 * level / 5) + 2) * currentMovePower * powerModifier * sourceAttack) / targetDefense) / 50) + 2;
+	baseDamage = (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / targetDefense) / 50) + 2;
 
 	CalculateCriticalHit(source);
 
@@ -295,40 +295,40 @@ void BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::po
 	m_resultsUI.DisplayDirectDamageInflictedMsg(finalDamage);
 }
 
-// Calculate power of low kick based on target Pokemon's weight (in kg)
+// Calculate power of low kick based on target Pokemon's weight (in hectograms)
 int BattleCalculations::CalculateLowKickPower(BattlePokemon* target)
 {
-	double pokemonWeight = target->GetPokemonDatabasePointer()->GetPokemonWeight();
+	int pokemonWeight = target->GetPokemonDatabasePointer()->GetPokemonWeightHg();
 
-	if (pokemonWeight >= 0.1 && pokemonWeight <= 9.9)
+	if (pokemonWeight <= 0)
+	{
+		return 0;
+	}
+
+	if (pokemonWeight < 100)
 	{
 		return 20;
 	}
 
-	if (pokemonWeight >= 10.0 && pokemonWeight <= 24.9)
+	if (pokemonWeight < 250)
 	{
 		return 40;
 	}
 
-	if (pokemonWeight >= 25.0 && pokemonWeight <= 49.9)
+	if (pokemonWeight < 500)
 	{
 		return 60;
 	}
 
-	if (pokemonWeight >= 50.0 && pokemonWeight <= 99.9)
+	if (pokemonWeight < 1000)
 	{
 		return 80;
 	}
 
-	if (pokemonWeight >= 100.0 && pokemonWeight <= 199.9)
+	if (pokemonWeight < 2000)
 	{
 		return 100;
 	}
 
-	if (pokemonWeight >= 200.0)
-	{
-		return 120;
-	}
-
-	return 0;
+	return 120;
 }

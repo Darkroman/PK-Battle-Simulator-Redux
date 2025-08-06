@@ -53,4 +53,6 @@ struct BattleContext
     BattlePokemon::pokemonMove* currentMove{ nullptr };
 
     BattlePokemon::pokemonMove* selectedMove{ nullptr };
+
+    int initialPowerMultiplier{ 10 };
 };

@@ -12,7 +12,7 @@ public:
     (int, std::string_view,
      int, int, int,
      int, int, int,
-     std::string_view, PokemonType, std::string_view, PokemonType, double);
+     std::string_view, PokemonType, std::string_view, PokemonType, int);
 
     const int      GetNationalDexNumber() const;
     std::string_view            GetName() const;
@@ -28,7 +28,8 @@ public:
     const PokemonType GetSecondTypeEnum() const;
     const std::vector<size_t> GetMoveList() const;
 
-    const double GetPokemonWeight() const;
+    const int GetPokemonWeightHg() const;
+    const double GetPokemonWeightKg() const;
 
     std::vector<size_t>::iterator MovelistBegin();
     std::vector<size_t>::iterator   MovelistEnd();
@@ -61,7 +62,7 @@ private:
     PokemonType     m_type1e;
     std::string      m_type2;
     PokemonType     m_type2e;
-    double          m_weight;
+    int             m_weight;
 
     std::vector<size_t> m_movelist;
 };

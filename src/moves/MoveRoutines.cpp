@@ -793,7 +793,11 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	// Power modifier for when defending Pokemon is SemiInvulnerableFly is in CalculateDamage()
+	if (ctx.defendingPokemon->IsSemiInvulnerableFromFly())
+	{
+		ctx.initialPowerMultiplier = 20;
+	}
+	
 	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
 	deps.resultsUI.DisplayCritTextDialog();
