@@ -1143,8 +1143,6 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
-
 	deps.calculations.CalculateTypeEffectiveness(ctx.currentMove, ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
@@ -1152,6 +1150,8 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 		return;
 	}
+
+	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
 	if (!ctx.flags.hit)
 	{
@@ -3780,11 +3780,18 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
+	int oldCritStage = ctx.attackingPokemon->GetCriticalHitStage();
+	int newCritStage = oldCritStage + 1;
+
+	ctx.attackingPokemon->SetCriticalHitStage(newCritStage);
+
 	deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
 	deps.resultsUI.DisplayCritTextDialog();
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+
+	ctx.attackingPokemon->SetCriticalHitStage(oldCritStage);
 
 	std::uniform_int_distribution<int> randomModDistributor(1, 100);
 	int randomMod = randomModDistributor(deps.rng.GetGenerator());

@@ -331,5 +331,4 @@ int BattleCalculations::CalculateLowKickPower(BattlePokemon* target)
 	}
 
 	return 0;
-
 }
