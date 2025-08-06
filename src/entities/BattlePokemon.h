@@ -24,31 +24,31 @@ public:
         void SetMovePointer(Move*);
         Move* GetMovePointer() const;
 
-        const size_t   GetMoveIndex() const;
+        size_t   GetMoveIndex() const;
         std::string_view    GetName() const;
 
-        std::string_view      GetCategory() const;
-        const Category    GetCategoryEnum() const;
-        std::string_view      GetMoveType() const;
-        const PokemonType GetMoveTypeEnum() const;
+        std::string_view GetCategory() const;
+        Category     GetCategoryEnum() const;
+        std::string_view GetMoveType() const;
+        PokemonType  GetMoveTypeEnum() const;
 
-        const int              GetPriority() const;
-        const MoveEffect GetMoveEffectEnum() const;
-        const int          GetEffectChance() const;
+        int              GetPriority() const;
+        MoveEffect GetMoveEffectEnum() const;
+        int          GetEffectChance() const;
 
-        const int       GetPP() const;
-        const int    GetMaxPP() const;
-        const int    GetPower() const;
-        const int GetAccuracy() const;
+        int       GetPP() const;
+        int    GetMaxPP() const;
+        int    GetPower() const;
+        int GetAccuracy() const;
 
-        const bool        DoesMakeContact() const;
-        const bool    IsAffectedByProtect() const;
-        const bool  IsAffectedByMagicCoat() const;
-        const bool     IsAffectedBySnatch() const;
-        const bool IsAffectedByMirrorMove() const;
-        const bool   IsAffectedByKingRock() const;
-        const bool           IsSoundBased() const;
-        const bool    CanBypassSubstitute() const;
+        bool        DoesMakeContact() const;
+        bool    IsAffectedByProtect() const;
+        bool  IsAffectedByMagicCoat() const;
+        bool     IsAffectedBySnatch() const;
+        bool IsAffectedByMirrorMove() const;
+        bool   IsAffectedByKingRock() const;
+        bool           IsSoundBased() const;
+        bool    CanBypassSubstitute() const;
 
     private:
         Move* mp_move{ nullptr };
@@ -104,7 +104,7 @@ public:
 
 public:
     //BattlePokemon();
-    Pokemon* GetPokemonDatabasePointer();
+    Pokemon* GetPokemonDatabasePointer() const;
 
     void SetPokemon(size_t);
     void SetPokemon(std::string_view);
@@ -114,8 +114,8 @@ public:
     void SetMove(size_t, std::string_view);
 
     void SetNickname(std::string_view);
-    const bool HasNickname() const;
-    std::string_view GetNickname();
+    bool HasNickname() const;
+    std::string_view GetNickname() const;
 
     void SetLevel(int);
 
@@ -133,19 +133,19 @@ public:
     bool SetSpecialDefenseEV(int);
     bool SetSpeedEV(int);
 
-    const int GetHPEV() const;
-    const int GetAttackEV() const;
-    const int GetDefenseEV() const;
-    const int GetSpecialAttackEV() const;
-    const int GetSpecialDefenseEV() const;
-    const int GetSpeedEV() const;
+    int GetHPEV() const;
+    int GetAttackEV() const;
+    int GetDefenseEV() const;
+    int GetSpecialAttackEV() const;
+    int GetSpecialDefenseEV() const;
+    int GetSpeedEV() const;
 
-    const int GetHPIV() const;
-    const int GetAttackIV() const;
-    const int GetDefenseIV() const;
-    const int GetSpecialAttackIV() const;
-    const int GetSpecialDefenseIV() const;
-    const int GetSpeedIV() const;
+    int GetHPIV() const;
+    int GetAttackIV() const;
+    int GetDefenseIV() const;
+    int GetSpecialAttackIV() const;
+    int GetSpecialDefenseIV() const;
+    int GetSpeedIV() const;
 
 private:
     bool ExceedsMaxAllowedEVs(int);
@@ -166,13 +166,13 @@ public:
     const std::string& GetName() const;
     std::string_view GetNameView() const;
 
-    const int GetLevel() const;
+    int GetLevel() const;
     void DisplayLearnedMoves() const;
     void DisplayMovesInBattle() const;
 
     BattlePokemon::pokemonMove* GetMove(size_t);
-    const int GetPP(size_t) const;
-    const int GetMaxPP(size_t) const;
+    int GetPP(size_t) const;
+    int GetMaxPP(size_t) const;
 
     bool HasPokemon();
     bool HasMove(size_t);
@@ -180,42 +180,42 @@ public:
     void IncrementMoveCount();
     void DecrementMoveCount();
 
-    const int GetMoveCount() const;
+    int GetMoveCount() const;
 
     std::string_view GetMoveName(size_t) const;
 
-    pokemonMove* GetLastUsedMove();
+    pokemonMove* GetLastUsedMove() const;
     void SetLastUsedMove(pokemonMove*);
 
-    const int GetTotalEVs() const;
+    int GetTotalEVs() const;
 
-    const int GetCurrentHP() const;
-    const int GetMaxHP() const;
-    const int GetAttack() const;
-    const int GetDefense() const;
-    const int GetSpecialAttack() const;
-    const int GetSpecialDefense() const;
-    const int GetSpeed() const;
+    int GetCurrentHP() const;
+    int GetMaxHP() const;
+    int GetAttack() const;
+    int GetDefense() const;
+    int GetSpecialAttack() const;
+    int GetSpecialDefense() const;
+    int GetSpeed() const;
 
     void DamageCurrentHP(int);
     void HealCurrentHP(int);
 
-    const bool IsFainted() const;
+    bool IsFainted() const;
     void SetFainted(bool);
 
     std::string_view GetTypeOne() const;
-    const PokemonType GetTypeOneEnum() const;
+    PokemonType GetTypeOneEnum() const;
     std::string_view GetTypeTwo() const;
-    const PokemonType GetTypeTwoEnum() const;
+    PokemonType GetTypeTwoEnum() const;
 
-    const int GetAttackStage() const;
-    const int GetDefenseStage() const;
-    const int GetSpecialAttackStage() const;
-    const int GetSpecialDefenseStage() const;
-    const int GetSpeedStage() const;
-    const int GetEvasionStage() const;
-    const int GetAccuracyStage() const;
-    const int GetCriticalHitStage() const;
+    int GetAttackStage() const;
+    int GetDefenseStage() const;
+    int GetSpecialAttackStage() const;
+    int GetSpecialDefenseStage() const;
+    int GetSpeedStage() const;
+    int GetEvasionStage() const;
+    int GetAccuracyStage() const;
+    int GetCriticalHitStage() const;
 
     void SetAttackStage(int);
     void SetDefenseStage(int);
@@ -226,107 +226,107 @@ public:
     void SetAccuracyStage(int);
     void SetCriticalHitStage(int);
 
-    const bool IsConfused() const;
+    bool IsConfused() const;
     void SetConfusedStatus(bool);
     void SetConfusedTurnCount(int);
-    const int GetConfusedTurnCount() const;
+    int GetConfusedTurnCount() const;
     void IncrementConfusedCounter();
-    const int GetConfusedCounter() const;
+    int GetConfusedCounter() const;
     void ResetConfusedCounter();
 
-    const bool IsSeeded() const;
+    bool IsSeeded() const;
     void SetSeededStatus(bool);
 
-    const bool IsBound() const;
+    bool IsBound() const;
     void SetBound(bool);
     void SetBoundMoveName(size_t);
     std::string_view GetBoundMoveName() const;
     void SetBoundTurnCount(int);
-    const int GetBoundTurnCount() const;
+    int GetBoundTurnCount() const;
     void IncrementBoundCounter();
-    const int GetBoundCounter() const;
+    int GetBoundCounter() const;
     void ResetBoundCounter();
 
-    const bool IsSemiInvulnerable() const;
-    const bool IsSemiInvulnerableFromDig() const;
-    const bool IsSemiInvulnerableFromFly() const;
+    bool IsSemiInvulnerable() const;
+    bool IsSemiInvulnerableFromDig() const;
+    bool IsSemiInvulnerableFromFly() const;
     void SetSemiInvulnerableDig(bool);
     void SetSemiInvulnerableFly(bool);
 
-    const bool IsCharging() const;
+    bool IsCharging() const;
     void SetCharging(bool);
 
-    const bool IsRecharging() const;
+    bool IsRecharging() const;
     void SetRecharging(bool);
 
     void SetSleepTurnCount(int);
-    const int GetSleepTurnCount() const;
+    int GetSleepTurnCount() const;
     void IncrementSleepCounter();
-    const int GetSleepCounter() const;
+    int GetSleepCounter() const;
     void ResetSleepCounter();
 
-    const bool IsThrashing() const;
+    bool IsThrashing() const;
     void SetThrashing(bool);
     void SetThrashTurnCount(int);
-    const int GetThrashTurnCount() const;
+     int GetThrashTurnCount() const;
     void IncrementThrashCounter();
-    const int GetThrashCounter() const;
+    int GetThrashCounter() const;
     void ResetThrashCounter();
 
     void SetDisabledStatus(bool);
     void IncrementDisabledCounter();
-    const int GetDisabledCounter() const;
+    int GetDisabledCounter() const;
     void ResetDisabledCounter();
-    const bool MoveIsDisabled() const;
-    const pokemonMove* GetDisabledMove() const;
+    bool MoveIsDisabled() const;
+    pokemonMove* GetDisabledMove() const;
 
-    const int GetBadlyPoisonCounter() const;
+    int GetBadlyPoisonCounter() const;
     void ResetBadlyPoisonCounter();
     void IncrementBadlyPoisonCounter();
 
-    const bool IsFlinched() const;
+    bool IsFlinched() const;
     void SetIsFlinched(bool);
 
-    const bool HasUsedMinimize() const;
+    bool HasUsedMinimize() const;
     void SetUsedMinimize(bool);
 
-    const bool IsRaging() const;
+    bool IsRaging() const;
     void SetRaging(bool);
 
-    const bool HasUsedMimic() const;
+    bool HasUsedMimic() const;
     void SetUsedMimic(bool);
-    const int GetMimicPP() const;
+    int GetMimicPP() const;
     void SetMimicPP(int);
 
-    const bool HasFocusEnergy() const;
+    bool HasFocusEnergy() const;
     void SetFocusEnergy(bool);
 
-    const Status GetStatus() const;
+    Status GetStatus() const;
     void ChangeStatus(Status);
 
-    const bool IsBiding() const;
+    bool IsBiding() const;
     void SetBide(bool);
     void SetBideTurnCount(int);
-    const int GetBideTurnCount() const;
+    int GetBideTurnCount() const;
     void IncrementBideCounter();
-    const int GetBideCounter() const;
+    int GetBideCounter() const;
     void ResetBideCounter();
-    const int GetBideDamage() const;
+    int GetBideDamage() const;
     void AddBideDamage(int);
     void ResetBideDamage();
 
-    const bool IsTransformed() const;
+    bool IsTransformed() const;
     void SetTransformation(BattlePokemon*);
     void Detransform();
 
-    const bool IsConverted() const;
+    bool IsConverted() const;
     void SetConversion(BattlePokemon::pokemonMove*);
     void Deconvert();
 
-    const bool HasSubstitute() const;
+    bool HasSubstitute() const;
     void SetSubstitute(bool);
     void SetSubstituteHP(int);
-    const int GetSubstituteHP() const;
+    int GetSubstituteHP() const;
     void DamageSubstitute(int);
 
     BattlePokemon::pokemonMove* Struggle();

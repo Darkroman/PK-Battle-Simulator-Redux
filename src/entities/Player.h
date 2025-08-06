@@ -11,7 +11,7 @@ public:
 
     virtual ~Player() = default;
 
-    virtual const bool IsHuman() const = 0;
+    virtual bool IsHuman() const = 0;
 
     virtual std::array<BattlePokemon, 6> CopyBelt();
     virtual void AssignBelt(std::array<BattlePokemon, 6>&);
@@ -26,22 +26,22 @@ public:
 
     virtual void IncrementPokemonCount();
     virtual void DecrementPokemonCount();
-    virtual const int GetPokemonCount() const;
+    virtual int GetPokemonCount() const;
 
-    virtual const int GetFaintedCount() const;
+    virtual int GetFaintedCount() const;
     virtual void IncrementFaintedCount();
     virtual void DecrementFaintedCount();
 
-    virtual const bool IsFirst() const;
+    virtual bool IsFirst() const;
     virtual void SetFirst(bool);
 
-    virtual const bool CanSwitch() const;
+    virtual bool CanSwitch() const;
     virtual void SetCanSwitch(bool);
 
-    virtual const bool IsSwitching() const;
+    virtual bool IsSwitching() const;
     virtual void SetIsSwitching(bool);
 
-    virtual const bool HasSwitched() const;
+    virtual bool HasSwitched() const;
     virtual void SetHasSwitched(bool);
 
     virtual void SetPokemonToSwitchTo(BattlePokemon*);
@@ -49,27 +49,27 @@ public:
 
     virtual void SetWinCondition(bool);
 
-    virtual const bool HasWon() const;
+    virtual bool HasWon() const;
 
     virtual void SetForfeit(bool);
-    virtual const bool HasForfeited() const;
+    virtual bool HasForfeited() const;
 
     virtual void SetMist(bool);
-    virtual const bool HasMist() const;
+    virtual bool HasMist() const;
     virtual void IncrementMistCounter();
-    virtual const int GetMistCounter() const;
+    virtual int GetMistCounter() const;
     virtual void ResetMistCounter();
 
     virtual void SetLightScreen(bool);
-    virtual const bool HasLightScreen() const;
+    virtual bool HasLightScreen() const;
     virtual void IncrementLightScreenCounter();
-    virtual const int GetLightScreenCounter() const;
+    virtual int GetLightScreenCounter() const;
     virtual void ResetLightScreenCounter();
 
     virtual void SetReflect(bool);
-    virtual const bool HasReflect() const;
+    virtual bool HasReflect() const;
     virtual void IncrementReflectCounter();
-    virtual const int GetReflectCounter() const;
+    virtual int GetReflectCounter() const;
     virtual void ResetReflectCounter();
 
     virtual void ResetValues();

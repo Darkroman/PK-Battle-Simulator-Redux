@@ -7,6 +7,6 @@ class HumanPlayer : public Player
 public:
 	explicit HumanPlayer(std::string_view);
 
-	const bool IsHuman() const;
+	bool IsHuman() const override;
 
 };

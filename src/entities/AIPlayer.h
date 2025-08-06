@@ -11,7 +11,7 @@ public:
 	explicit AIPlayer(std::string_view, IAIStrategy&);
 	void ChooseAction(BattlePokemon*, BattleContext&);
 
-	const bool IsHuman() const;
+	bool IsHuman() const override;
 	BattlePokemon::pokemonMove* ChooseMove(BattlePokemon&);
 	bool WantsToSwitch(BattlePokemon&);
 	void ChooseSwitch(BattlePokemon&);

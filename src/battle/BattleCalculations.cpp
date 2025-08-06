@@ -7,8 +7,6 @@
 
 #include "BattleCalculations.h"
 
-#include <iostream>
-
 BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng, IMoveResultsUI& resultsUI) : m_context(context), m_rng(rng), m_resultsUI(resultsUI) {}
 
 void BattleCalculations::CalculateCriticalHit(BattlePokemon* source)
@@ -28,6 +26,15 @@ std::pair<int, int> BattleCalculations::GetStageRatio(int stage)
 {
 	stage = std::clamp(stage, -6, 6);
 	return m_arr_StageRatio[static_cast<size_t>(stage + 6)];
+}
+
+int BattleCalculations::MultiplyEffectiveness(uint16_t effect1, uint16_t effect2)
+{
+	if (effect1 == 0 || effect2 == 0) // Immunity check
+		return 0;
+
+	int product = static_cast<int>(effect1 * effect2);
+	return (product >> 12);
 }
 
 int BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* currentMove, BattlePokemon* target)

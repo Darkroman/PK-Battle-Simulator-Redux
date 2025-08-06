@@ -5,8 +5,6 @@
 #include "../ui/interfaces/IBattleMenuUI.h"
 #include "../entities/AIPlayer.h"
 
-#include <iostream>
-
 WinChecker::WinChecker(BattleContext& context, SwitchExecutor& switchExecutor, IBattleMenuUI& battleMenuUI)
     : m_context(context)
 	, m_switchExecutor(switchExecutor)

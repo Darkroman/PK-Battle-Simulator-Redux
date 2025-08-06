@@ -14,22 +14,22 @@ public:
      int, int, int,
      std::string_view, PokemonType, std::string_view, PokemonType, int);
 
-    const int      GetNationalDexNumber() const;
-    std::string_view            GetName() const;
-    const int                 GetBaseHP() const;
-    const int             GetBaseAttack() const;
-    const int            GetBaseDefense() const;
-    const int      GetBaseSpecialAttack() const;
-    const int     GetBaseSpecialDefense() const;
-    const int              GetBaseSpeed() const;
-    std::string_view       GetFirstType() const;
-    const PokemonType  GetFirstTypeEnum() const;
-    std::string_view      GetSecondType() const;
-    const PokemonType GetSecondTypeEnum() const;
-    const std::vector<size_t> GetMoveList() const;
+    int        GetNationalDexNumber() const;
+    std::string_view        GetName() const;
+    int                   GetBaseHP() const;
+    int               GetBaseAttack() const;
+    int              GetBaseDefense() const;
+    int        GetBaseSpecialAttack() const;
+    int       GetBaseSpecialDefense() const;
+    int                GetBaseSpeed() const;
+    std::string_view   GetFirstType() const;
+    PokemonType    GetFirstTypeEnum() const;
+    std::string_view  GetSecondType() const;
+    PokemonType   GetSecondTypeEnum() const;
+    std::vector<size_t> GetMoveList() const;
 
-    const int GetPokemonWeightHg() const;
-    const double GetPokemonWeightKg() const;
+    int GetPokemonWeightHg() const;
+    double GetPokemonWeightKg() const;
 
     std::vector<size_t>::iterator MovelistBegin();
     std::vector<size_t>::iterator   MovelistEnd();

@@ -83,12 +83,12 @@ void Player::DecrementPokemonCount()
     --m_PokemonCount;
 }
 
-const int Player::GetPokemonCount() const
+int Player::GetPokemonCount() const
 {
     return m_PokemonCount;
 }
 
-const int Player::GetFaintedCount() const
+int Player::GetFaintedCount() const
 {
     return m_faintedPokemon;
 }
@@ -103,7 +103,7 @@ void Player::DecrementFaintedCount()
     --m_faintedPokemon;
 }
 
-const bool Player::IsFirst() const
+bool Player::IsFirst() const
 {
     return b_isFirst;
 }
@@ -113,7 +113,7 @@ void Player::SetFirst(bool first)
     b_isFirst = first;
 }
 
-const bool Player::CanSwitch() const
+bool Player::CanSwitch() const
 {
     return b_canSwitch;
 }
@@ -123,7 +123,7 @@ void Player::SetCanSwitch(bool canSwitch)
     b_canSwitch = canSwitch;
 }
 
-const bool Player::IsSwitching() const
+bool Player::IsSwitching() const
 {
     return b_isSwitching;
 }
@@ -133,7 +133,7 @@ void Player::SetIsSwitching(bool Switching)
     b_isSwitching = Switching;
 }
 
-const bool Player::HasSwitched() const
+bool Player::HasSwitched() const
 {
     return b_hasSwitched;
 }
@@ -158,7 +158,7 @@ void Player::SetWinCondition(bool won)
     b_hasWon = won;
 }
 
-const bool Player::HasWon() const
+bool Player::HasWon() const
 {
     return b_hasWon;
 }
@@ -168,7 +168,7 @@ void Player::SetForfeit(bool forfeit)
     b_hasForfeited = forfeit;
 }
 
-const bool Player::HasForfeited() const
+bool Player::HasForfeited() const
 {
     return b_hasForfeited;
 }
@@ -178,7 +178,7 @@ void Player::SetMist(bool mist)
     b_hasMist = mist;
 }
 
-const bool Player::HasMist() const
+bool Player::HasMist() const
 {
     return b_hasMist;
 }
@@ -188,7 +188,7 @@ void Player::IncrementMistCounter()
     m_mistCounter++;
 }
 
-const int Player::GetMistCounter() const
+int Player::GetMistCounter() const
 {
     return m_mistCounter;
 }
@@ -203,7 +203,7 @@ void Player::SetLightScreen(bool lightScreen)
     b_hasLightScreen = lightScreen;
 }
 
-const bool Player::HasLightScreen() const
+bool Player::HasLightScreen() const
 {
     return b_hasLightScreen;
 }
@@ -213,7 +213,7 @@ void Player::IncrementLightScreenCounter()
     m_lightscreenCounter++;
 }
 
-const int Player::GetLightScreenCounter() const
+int Player::GetLightScreenCounter() const
 {
     return m_lightscreenCounter;
 }
@@ -228,7 +228,7 @@ void Player::SetReflect(bool reflect)
     b_hasReflect = reflect;
 }
 
-const bool Player::HasReflect() const
+bool Player::HasReflect() const
 {
     return b_hasReflect;
 }
@@ -238,7 +238,7 @@ void Player::IncrementReflectCounter()
     m_reflectCounter++;
 }
 
-const int Player::GetReflectCounter() const
+int Player::GetReflectCounter() const
 {
     return m_reflectCounter;
 }

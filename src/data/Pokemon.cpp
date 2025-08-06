@@ -13,7 +13,7 @@ Pokemon::Pokemon
 
 }
 
-const int Pokemon::GetNationalDexNumber() const
+int Pokemon::GetNationalDexNumber() const
 {
     return m_nationalDexNumber;
 }
@@ -23,32 +23,32 @@ std::string_view Pokemon::GetName() const
     return m_name;
 }
 
-const int Pokemon::GetBaseHP() const
+int Pokemon::GetBaseHP() const
 {
     return m_basehp;
 }
 
-const int Pokemon::GetBaseAttack() const
+int Pokemon::GetBaseAttack() const
 {
     return m_baseattack;
 }
 
-const int Pokemon::GetBaseDefense() const
+int Pokemon::GetBaseDefense() const
 {
     return m_basedefense;
 }
 
-const int Pokemon::GetBaseSpecialAttack() const
+int Pokemon::GetBaseSpecialAttack() const
 {
     return m_basespecialattack;
 }
 
-const int Pokemon::GetBaseSpecialDefense() const
+int Pokemon::GetBaseSpecialDefense() const
 {
     return m_basespecialdefense;
 }
 
-const int Pokemon::GetBaseSpeed() const
+int Pokemon::GetBaseSpeed() const
 {
     return m_basespeed;
 }
@@ -58,7 +58,7 @@ std::string_view Pokemon::GetFirstType() const
     return m_type1;
 }
 
-const PokemonType Pokemon::GetFirstTypeEnum() const
+PokemonType Pokemon::GetFirstTypeEnum() const
 {
     return m_type1e;
 }
@@ -68,22 +68,22 @@ std::string_view Pokemon::GetSecondType() const
     return m_type2;
 }
 
-const PokemonType Pokemon::GetSecondTypeEnum() const
+PokemonType Pokemon::GetSecondTypeEnum() const
 {
     return m_type2e;
 }
 
-const int Pokemon::GetPokemonWeightHg() const
+int Pokemon::GetPokemonWeightHg() const
 {
     return m_weight;
 }
 
-const double Pokemon::GetPokemonWeightKg() const
+double Pokemon::GetPokemonWeightKg() const
 {
     return static_cast<double>(m_weight) / 10;
 }
 
-const std::vector<size_t> Pokemon::GetMoveList() const
+std::vector<size_t> Pokemon::GetMoveList() const
 {
     return m_movelist;
 }

@@ -59,7 +59,7 @@ void BattlePokemon::DetransformData::BackupOriginalPokemonData(BattlePokemon* po
     }
 }
 
-Pokemon* BattlePokemon::GetPokemonDatabasePointer()
+Pokemon* BattlePokemon::GetPokemonDatabasePointer() const
 {
     return mp_pokemon;
 }
@@ -211,12 +211,12 @@ void BattlePokemon::SetNickname(std::string_view input)
     }
 }
 
-const bool BattlePokemon::HasNickname() const
+bool BattlePokemon::HasNickname() const
 {
     return b_hasNickname;
 }
 
-std::string_view BattlePokemon::GetNickname()
+std::string_view BattlePokemon::GetNickname() const
 {
     return m_nickname;
 }
@@ -492,62 +492,62 @@ bool BattlePokemon::SetSpeedEV(int input)
     return true;
 }
 
-const int BattlePokemon::GetHPEV() const
+int BattlePokemon::GetHPEV() const
 {
     return m_hp_ev;
 }
 
-const int BattlePokemon::GetAttackEV() const
+int BattlePokemon::GetAttackEV() const
 {
     return m_attack_ev;
 }
 
-const int BattlePokemon::GetDefenseEV() const
+int BattlePokemon::GetDefenseEV() const
 {
     return m_defense_ev;
 }
 
-const int BattlePokemon::GetSpecialAttackEV() const
+int BattlePokemon::GetSpecialAttackEV() const
 {
     return m_specialattack_ev;
 }
 
-const int BattlePokemon::GetSpecialDefenseEV() const
+int BattlePokemon::GetSpecialDefenseEV() const
 {
     return m_specialdefense_ev;
 }
 
-const int BattlePokemon::GetSpeedEV() const
+int BattlePokemon::GetSpeedEV() const
 {
     return m_speed_ev;
 }
 
-const int BattlePokemon::GetHPIV() const
+int BattlePokemon::GetHPIV() const
 {
     return m_hp_iv;
 }
 
-const int BattlePokemon::GetAttackIV() const
+int BattlePokemon::GetAttackIV() const
 {
     return m_attack_iv;
 }
 
-const int BattlePokemon::GetDefenseIV() const
+int BattlePokemon::GetDefenseIV() const
 {
     return m_defense_iv;
 }
 
-const int BattlePokemon::GetSpecialAttackIV() const
+int BattlePokemon::GetSpecialAttackIV() const
 {
     return m_specialattack_iv;
 }
 
-const int BattlePokemon::GetSpecialDefenseIV() const
+int BattlePokemon::GetSpecialDefenseIV() const
 {
     return m_specialdefense_iv;
 }
 
-const int BattlePokemon::GetSpeedIV() const
+int BattlePokemon::GetSpeedIV() const
 {
     return m_speed_iv;
 }
@@ -680,7 +680,7 @@ std::string_view BattlePokemon::GetNameView() const
     return ((b_hasNickname == false) ? m_name : m_nickname);
 }
 
-const int BattlePokemon::GetLevel() const
+int BattlePokemon::GetLevel() const
 {
     return m_level;
 }
@@ -742,7 +742,7 @@ bool BattlePokemon::pokemonMove::IsActive() const
     return mp_move != nullptr;
 }
 
-const size_t BattlePokemon::pokemonMove::GetMoveIndex() const
+size_t BattlePokemon::pokemonMove::GetMoveIndex() const
 {
     return mp_move->GetMoveIndex();
 }
@@ -757,7 +757,7 @@ std::string_view BattlePokemon::pokemonMove::GetCategory() const
     return mp_move->GetCategory();
 }
 
-const Category BattlePokemon::pokemonMove::GetCategoryEnum() const
+Category BattlePokemon::pokemonMove::GetCategoryEnum() const
 {
     return mp_move->GetCategoryEnum();
 }
@@ -767,93 +767,93 @@ std::string_view BattlePokemon::pokemonMove::GetMoveType() const
     return mp_move->GetMoveType();
 }
 
-const PokemonType BattlePokemon::pokemonMove::GetMoveTypeEnum() const
+PokemonType BattlePokemon::pokemonMove::GetMoveTypeEnum() const
 {
     return mp_move->GetMoveTypeEnum();
 }
 
-const int BattlePokemon::pokemonMove::GetPriority() const
+int BattlePokemon::pokemonMove::GetPriority() const
 {
     return mp_move->GetPriority();
 }
 
-const MoveEffect BattlePokemon::pokemonMove::GetMoveEffectEnum() const
+MoveEffect BattlePokemon::pokemonMove::GetMoveEffectEnum() const
 {
     return mp_move->GetMoveEffectEnum();
 }
 
-const int BattlePokemon::pokemonMove::GetEffectChance() const
+int BattlePokemon::pokemonMove::GetEffectChance() const
 {
     return mp_move->GetEffectChance();
 }
 
-const int BattlePokemon::pokemonMove::GetPP() const
+int BattlePokemon::pokemonMove::GetPP() const
 {
     return mp_move->GetPP();
 }
 
-const int BattlePokemon::pokemonMove::GetMaxPP() const
+int BattlePokemon::pokemonMove::GetMaxPP() const
 {
     return mp_move->GetMaxPP();
 }
 
-const int BattlePokemon::pokemonMove::GetPower() const
+int BattlePokemon::pokemonMove::GetPower() const
 {
     return mp_move->GetPower();
 }
 
-const int BattlePokemon::pokemonMove::GetAccuracy() const
+int BattlePokemon::pokemonMove::GetAccuracy() const
 {
     return mp_move->GetAccuracy();
 }
 
-const bool BattlePokemon::pokemonMove::DoesMakeContact() const
+bool BattlePokemon::pokemonMove::DoesMakeContact() const
 {
     return mp_move->DoesMakeContact();
 }
 
-const bool BattlePokemon::pokemonMove::IsAffectedByProtect() const
+bool BattlePokemon::pokemonMove::IsAffectedByProtect() const
 {
     return mp_move->IsAffectedByProtect();
 }
 
-const bool BattlePokemon::pokemonMove::IsAffectedByMagicCoat() const
+bool BattlePokemon::pokemonMove::IsAffectedByMagicCoat() const
 {
     return mp_move->IsAffectedByMagicCoat();
 }
 
-const bool BattlePokemon::pokemonMove::IsAffectedBySnatch() const
+bool BattlePokemon::pokemonMove::IsAffectedBySnatch() const
 {
     return mp_move->IsAffectedBySnatch();
 }
 
-const bool BattlePokemon::pokemonMove::IsAffectedByMirrorMove() const
+bool BattlePokemon::pokemonMove::IsAffectedByMirrorMove() const
 {
     return mp_move->IsAffectedByMirrorMove();
 }
 
-const bool BattlePokemon::pokemonMove::IsAffectedByKingRock() const
+bool BattlePokemon::pokemonMove::IsAffectedByKingRock() const
 {
     return mp_move->IsAffectedByKingRock();
 }
 
-const bool BattlePokemon::pokemonMove::IsSoundBased() const
+bool BattlePokemon::pokemonMove::IsSoundBased() const
 {
     return mp_move->IsSoundBased();
 }
 
-const bool BattlePokemon::pokemonMove::CanBypassSubstitute() const
+bool BattlePokemon::pokemonMove::CanBypassSubstitute() const
 {
     return mp_move->CanBypassSubstitute();
 }
 
-const int BattlePokemon::GetPP(size_t moveslot) const
+int BattlePokemon::GetPP(size_t moveslot) const
 {
     --moveslot;
     return m_array_moves[moveslot].m_currentPP;
 }
 
-const int BattlePokemon::GetMaxPP(size_t moveslot) const
+int BattlePokemon::GetMaxPP(size_t moveslot) const
 {
     --moveslot;
     return m_array_moves[moveslot].m_maxPP;
@@ -886,7 +886,7 @@ std::string_view BattlePokemon::GetMoveName(size_t moveslot) const
     return m_array_moves[moveslot].GetName();
 }
 
-BattlePokemon::pokemonMove* BattlePokemon::GetLastUsedMove()
+BattlePokemon::pokemonMove* BattlePokemon::GetLastUsedMove() const
 {
     return lastUsedMove;
 }
@@ -896,17 +896,17 @@ void BattlePokemon::SetLastUsedMove(BattlePokemon::pokemonMove* move)
     lastUsedMove = move;
 }
 
-const int BattlePokemon::GetTotalEVs() const
+int BattlePokemon::GetTotalEVs() const
 {
     return m_ev_total;
 }
 
-const int BattlePokemon::GetCurrentHP() const
+int BattlePokemon::GetCurrentHP() const
 {
     return m_currentHP;
 }
 
-const int BattlePokemon::GetMaxHP() const
+int BattlePokemon::GetMaxHP() const
 {
     if (b_isTransformed == true)
     {
@@ -918,7 +918,7 @@ const int BattlePokemon::GetMaxHP() const
     }
 }
 
-const int BattlePokemon::GetAttack() const
+int BattlePokemon::GetAttack() const
 {
     if (b_isTransformed && b_transformBurnPenalty && currentStatus != Status::Burned)
     {
@@ -928,22 +928,22 @@ const int BattlePokemon::GetAttack() const
     return (((m_attack_iv + 2 * mp_pokemon->GetBaseAttack() + (m_attack_ev / 4)) * m_level / 100) + 5);
 }
 
-const int BattlePokemon::GetDefense() const
+int BattlePokemon::GetDefense() const
 {
     return  (((m_defense_iv + 2 * mp_pokemon->GetBaseDefense() + (m_defense_ev / 4)) * m_level / 100) + 5);
 }
 
-const int BattlePokemon::GetSpecialAttack() const
+int BattlePokemon::GetSpecialAttack() const
 {
     return (((m_specialattack_iv + 2 * mp_pokemon->GetBaseSpecialAttack() + (m_specialattack_ev / 4)) * m_level / 100) + 5);
 }
 
-const int BattlePokemon::GetSpecialDefense() const
+int BattlePokemon::GetSpecialDefense() const
 {
     return (((m_specialdefense_iv + 2 * mp_pokemon->GetBaseSpecialDefense() + (m_specialdefense_ev / 4)) * m_level / 100) + 5);
 }
 
-const int BattlePokemon::GetSpeed() const
+int BattlePokemon::GetSpeed() const
 {
     if (b_isTransformed && b_transformParalysisPenalty && currentStatus != Status::Paralyzed)
     {
@@ -973,7 +973,7 @@ void BattlePokemon::HealCurrentHP(int amount)
     }
 }
 
-const bool BattlePokemon::IsFainted() const
+bool BattlePokemon::IsFainted() const
 {
     return b_isFainted;
 }
@@ -995,7 +995,7 @@ std::string_view BattlePokemon::GetTypeOne() const
     return m_type1;
 }
 
-const PokemonType BattlePokemon::GetTypeOneEnum() const
+PokemonType BattlePokemon::GetTypeOneEnum() const
 {
     return m_type1e;
 }
@@ -1005,47 +1005,47 @@ std::string_view BattlePokemon::GetTypeTwo() const
     return m_type2;
 }
 
-const PokemonType BattlePokemon::GetTypeTwoEnum() const
+PokemonType BattlePokemon::GetTypeTwoEnum() const
 {
     return m_type2e;
 }
 
-const int BattlePokemon::GetAttackStage() const
+int BattlePokemon::GetAttackStage() const
 {
     return m_attackstage;
 }
 
-const int BattlePokemon::GetDefenseStage() const
+int BattlePokemon::GetDefenseStage() const
 {
     return m_defensestage;
 }
 
-const int BattlePokemon::GetSpecialAttackStage() const
+int BattlePokemon::GetSpecialAttackStage() const
 {
     return m_specialattackstage;
 }
 
-const int BattlePokemon::GetSpecialDefenseStage() const
+int BattlePokemon::GetSpecialDefenseStage() const
 {
     return m_specialdefensestage;
 }
 
-const int BattlePokemon::GetSpeedStage() const
+int BattlePokemon::GetSpeedStage() const
 {
     return m_speedstage;
 }
 
-const int BattlePokemon::GetEvasionStage() const
+int BattlePokemon::GetEvasionStage() const
 {
     return m_evasionstage;
 }
 
-const int BattlePokemon::GetAccuracyStage() const
+int BattlePokemon::GetAccuracyStage() const
 {
     return m_accuracystage;
 }
 
-const int BattlePokemon::GetCriticalHitStage() const
+int BattlePokemon::GetCriticalHitStage() const
 {
     return m_criticalhitstage;
 }
@@ -1090,12 +1090,12 @@ void BattlePokemon::SetCriticalHitStage(int num)
     m_criticalhitstage = num;
 }
 
-const int BattlePokemon::GetMoveCount() const
+int BattlePokemon::GetMoveCount() const
 {
     return m_moveCount;
 }
 
-const Status BattlePokemon::GetStatus() const
+Status BattlePokemon::GetStatus() const
 {
     return currentStatus;
 }
@@ -1105,7 +1105,7 @@ void BattlePokemon::ChangeStatus(Status status)
     currentStatus = status;
 }
 
-const bool BattlePokemon::IsConfused() const
+bool BattlePokemon::IsConfused() const
 {
     return b_isConfused;
 }
@@ -1120,7 +1120,7 @@ void BattlePokemon::SetConfusedTurnCount(int count)
     m_confusedTurnCount = count;
 }
 
-const int BattlePokemon::GetConfusedTurnCount() const
+int BattlePokemon::GetConfusedTurnCount() const
 {
     return m_confusedTurnCount;
 }
@@ -1130,7 +1130,7 @@ void BattlePokemon::IncrementConfusedCounter()
     ++m_confusedCounter;
 }
 
-const int BattlePokemon::GetConfusedCounter() const
+int BattlePokemon::GetConfusedCounter() const
 {
     return m_confusedCounter;
 }
@@ -1140,7 +1140,7 @@ void BattlePokemon::ResetConfusedCounter()
     m_confusedCounter = 0;
 }
 
-const bool BattlePokemon::IsSeeded() const
+bool BattlePokemon::IsSeeded() const
 {
     return b_isSeeded;
 }
@@ -1150,7 +1150,7 @@ void BattlePokemon::SetSeededStatus(bool seeded)
     b_isSeeded = seeded;
 }
 
-const bool BattlePokemon::IsBound() const
+bool BattlePokemon::IsBound() const
 {
     return b_isBound;
 }
@@ -1186,7 +1186,7 @@ void BattlePokemon::SetBoundTurnCount(int number)
     m_boundTurnCount = number;
 }
 
-const int BattlePokemon::GetBoundTurnCount() const
+int BattlePokemon::GetBoundTurnCount() const
 {
     return m_boundTurnCount;
 }
@@ -1196,7 +1196,7 @@ void BattlePokemon::IncrementBoundCounter()
     m_boundCounter++;
 }
 
-const int BattlePokemon::GetBoundCounter() const
+int BattlePokemon::GetBoundCounter() const
 {
     return m_boundCounter;
 }
@@ -1206,17 +1206,17 @@ void BattlePokemon::ResetBoundCounter()
     m_boundCounter = 0;
 }
 
-const bool BattlePokemon::IsSemiInvulnerable() const
+bool BattlePokemon::IsSemiInvulnerable() const
 {
     return (b_isSemiInvulnerableDig || b_isSemiInvulnerableFly);
 }
 
-const bool BattlePokemon::IsSemiInvulnerableFromDig() const
+bool BattlePokemon::IsSemiInvulnerableFromDig() const
 {
     return b_isSemiInvulnerableDig;
 }
 
-const bool BattlePokemon::IsSemiInvulnerableFromFly() const
+bool BattlePokemon::IsSemiInvulnerableFromFly() const
 {
     return b_isSemiInvulnerableFly;
 }
@@ -1231,7 +1231,7 @@ void BattlePokemon::SetSemiInvulnerableFly(bool fly)
     b_isSemiInvulnerableFly = fly;
 }
 
-const bool BattlePokemon::IsCharging() const
+bool BattlePokemon::IsCharging() const
 {
     return b_isCharging;
 }
@@ -1241,7 +1241,7 @@ void BattlePokemon::SetCharging(bool charging)
     b_isCharging = charging;
 }
 
-const bool BattlePokemon::IsRecharging() const
+bool BattlePokemon::IsRecharging() const
 {
     return b_isRecharging;
 }
@@ -1256,7 +1256,7 @@ void BattlePokemon::SetSleepTurnCount(int number)
     m_sleepTurnCount = number;
 }
 
-const int BattlePokemon::GetSleepTurnCount() const
+int BattlePokemon::GetSleepTurnCount() const
 {
     return m_sleepTurnCount;
 }
@@ -1266,7 +1266,7 @@ void BattlePokemon::IncrementSleepCounter()
     m_sleepCounter++;
 }
 
-const int BattlePokemon::GetSleepCounter() const
+int BattlePokemon::GetSleepCounter() const
 {
     return m_sleepCounter;
 }
@@ -1276,7 +1276,7 @@ void BattlePokemon::ResetSleepCounter()
     m_sleepCounter = 0;
 }
 
-const bool BattlePokemon::IsThrashing() const
+bool BattlePokemon::IsThrashing() const
 {
     return b_isThrashing;
 }
@@ -1291,7 +1291,7 @@ void BattlePokemon::SetThrashTurnCount(int number)
     m_thrashTurnCount = number;
 }
 
-const int BattlePokemon::GetThrashTurnCount() const
+int BattlePokemon::GetThrashTurnCount() const
 {
     return m_thrashTurnCount;
 }
@@ -1301,7 +1301,7 @@ void BattlePokemon::IncrementThrashCounter()
     m_thrashCounter++;
 }
 
-const int BattlePokemon::GetThrashCounter() const
+int BattlePokemon::GetThrashCounter() const
 {
     return m_thrashCounter;
 }
@@ -1335,7 +1335,7 @@ void BattlePokemon::IncrementDisabledCounter()
     m_disabledCounter++;
 }
 
-const int BattlePokemon::GetDisabledCounter() const
+int BattlePokemon::GetDisabledCounter() const
 {
     return m_disabledCounter;
 }
@@ -1345,17 +1345,17 @@ void BattlePokemon::ResetDisabledCounter()
     m_disabledCounter = 0;
 }
 
-const bool BattlePokemon::MoveIsDisabled() const
+bool BattlePokemon::MoveIsDisabled() const
 {
     return b_moveIsDisabled;
 }
 
-const BattlePokemon::pokemonMove* BattlePokemon::GetDisabledMove() const
+BattlePokemon::pokemonMove* BattlePokemon::GetDisabledMove() const
 {
     return disabledMove;
 }
 
-const int BattlePokemon::GetBadlyPoisonCounter() const
+int BattlePokemon::GetBadlyPoisonCounter() const
 {
     return m_badlyPoisonCounter;
 }
@@ -1370,7 +1370,7 @@ void BattlePokemon::IncrementBadlyPoisonCounter()
     ++m_badlyPoisonCounter;
 }
 
-const bool BattlePokemon::IsFlinched() const
+bool BattlePokemon::IsFlinched() const
 {
     return b_isFlinched;
 }
@@ -1380,7 +1380,7 @@ void BattlePokemon::SetIsFlinched(bool flinched)
     b_isFlinched = flinched;
 }
 
-const bool BattlePokemon::HasUsedMinimize() const
+bool BattlePokemon::HasUsedMinimize() const
 {
     return b_hasUsedMinimize;
 }
@@ -1390,7 +1390,7 @@ void BattlePokemon::SetUsedMinimize(bool minimize)
     b_hasUsedMinimize = minimize;
 }
 
-const bool BattlePokemon::IsRaging() const
+bool BattlePokemon::IsRaging() const
 {
     return b_isRaging;
 }
@@ -1400,7 +1400,7 @@ void BattlePokemon::SetRaging(bool rage)
     b_isRaging = rage;
 }
 
-const bool BattlePokemon::HasUsedMimic() const
+bool BattlePokemon::HasUsedMimic() const
 {
     return b_usedMimic;
 }
@@ -1410,7 +1410,7 @@ void BattlePokemon::SetUsedMimic(bool mimic)
     b_usedMimic = mimic;
 }
 
-const int BattlePokemon::GetMimicPP() const
+int BattlePokemon::GetMimicPP() const
 {
     return m_mimicPP;
 }
@@ -1420,7 +1420,7 @@ void BattlePokemon::SetMimicPP(int pp)
     m_mimicPP = pp;
 }
 
-const bool BattlePokemon::HasFocusEnergy() const
+bool BattlePokemon::HasFocusEnergy() const
 {
     return b_hasFocusEnergy;
 }
@@ -1430,7 +1430,7 @@ void BattlePokemon::SetFocusEnergy(bool focus)
     b_hasFocusEnergy = focus;
 }
 
-const bool BattlePokemon::IsBiding() const
+bool BattlePokemon::IsBiding() const
 {
     return b_isBiding;
 }
@@ -1445,7 +1445,7 @@ void BattlePokemon::SetBideTurnCount(int turnCount)
     m_bideTurnCount = turnCount;
 }
 
-const int BattlePokemon::GetBideTurnCount() const
+int BattlePokemon::GetBideTurnCount() const
 {
     return m_bideTurnCount;
 }
@@ -1455,7 +1455,7 @@ void BattlePokemon::IncrementBideCounter()
     m_bideCounter++;
 }
 
-const int BattlePokemon::GetBideCounter() const
+int BattlePokemon::GetBideCounter() const
 {
     return m_bideCounter;
 }
@@ -1465,7 +1465,7 @@ void BattlePokemon::ResetBideCounter()
     m_bideCounter = 0;
 }
 
-const int BattlePokemon::GetBideDamage() const
+int BattlePokemon::GetBideDamage() const
 {
     return m_bideDamageTaken;
 }
@@ -1480,7 +1480,7 @@ void BattlePokemon::ResetBideDamage()
     m_bideDamageTaken = 0;
 }
 
-const bool BattlePokemon::IsTransformed() const
+bool BattlePokemon::IsTransformed() const
 {
     return b_isTransformed;
 }
@@ -1585,7 +1585,7 @@ void BattlePokemon::Detransform()
     this->b_isTransformed = false;
 }
 
-const bool BattlePokemon::IsConverted() const
+bool BattlePokemon::IsConverted() const
 {
     return b_isConverted;
 }
@@ -1609,7 +1609,7 @@ void BattlePokemon::Deconvert()
     m_type1e = m_beforeConversionType_e;
 }
 
-const bool BattlePokemon::HasSubstitute() const
+bool BattlePokemon::HasSubstitute() const
 {
     return b_hasSubstitute;
 }
@@ -1624,7 +1624,7 @@ void BattlePokemon::SetSubstituteHP(int hp)
     m_substituteHealth = hp;
 }
 
-const int BattlePokemon::GetSubstituteHP() const
+int BattlePokemon::GetSubstituteHP() const
 {
     return m_substituteHealth;
 }

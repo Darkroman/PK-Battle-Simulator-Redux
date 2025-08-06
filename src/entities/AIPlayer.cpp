@@ -5,7 +5,7 @@
 AIPlayer::AIPlayer(std::string_view name, IAIStrategy& strat) :
 	Player(name), m_aiStrategy(strat) {}
 
-const bool AIPlayer::IsHuman() const
+bool AIPlayer::IsHuman() const
 {
 	return false;
 }

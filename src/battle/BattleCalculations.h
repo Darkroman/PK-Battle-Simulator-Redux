@@ -15,9 +15,11 @@ public:
 
 	std::pair<int, int> GetStageRatio(int);
 
+	int MultiplyEffectiveness(uint16_t, uint16_t);
+
 	int CalculateTypeEffectiveness(BattlePokemon::pokemonMove*, BattlePokemon*);
 
-	bool CalculateHitChance(BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target);
+	bool CalculateHitChance(BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*);
 
 	int CalculateDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*);
 
@@ -32,7 +34,8 @@ private:
 
 public:
 
-	const std::array<std::pair<int, int>, 13> m_arr_StageRatio{
+	const std::array<std::pair<int, int>, 13> m_arr_StageRatio
+	{
 		std::make_pair(2, 8),  // -6
 		std::make_pair(2, 7),  // -5
 		std::make_pair(2, 6),  // -4
@@ -48,7 +51,8 @@ public:
 		std::make_pair(8, 2),  // +6
 	};
 
-	const std::array<std::pair<int, int>, 13> m_arr_accuracyStageRatio{
+	const std::array<std::pair<int, int>, 13> m_arr_accuracyStageRatio
+	{
 		std::make_pair(6, 18),  // -6
 		std::make_pair(6, 16),  // -5
 		std::make_pair(6, 14),  // -4
@@ -88,13 +92,4 @@ public:
 			/* STE */ {4096,2048,2048,2048,8192,8192,4096,8192,4096,4096,4096,4096,8192,4096,4096,4096,2048,8192},
 			/* FAI */ {4096,2048,4096,4096,4096,4096,8192,2048,4096,4096,2048,4096,4096,8192,8192,8192,2048,4096}
 	}};
-
-	int MultiplyEffectiveness(uint16_t effect1, uint16_t effect2)
-	{
-		if (effect1 == 0 || effect2 == 0) // Immunity check
-			return 0;
-
-		uint32_t product = static_cast<uint32_t>(effect1) * effect2;
-		return static_cast<uint16_t>(product >> 12);
-	}
 };
