@@ -859,7 +859,7 @@ void MakeEnemySwitch::DoMove(MoveRoutineDeps& deps)
 	std::uniform_int_distribution<size_t> randomModDistributor(0, enemyPokemonList.size() - 1);
 	BattlePokemon* newMon = enemyPokemonList.at(randomModDistributor(deps.rng.GetGenerator()));
 
-	// Reset stats for the Pokémon being forced out
+	// Reset stats for the PokÃ©mon being forced out
 	ctx.defendingPokemon->ResetStatsOnSwitch();
 
 	if (ctx.attackingPokemon->IsBound())
@@ -4204,6 +4204,8 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
+
 	int recoilDamage = (ctx.attackingPokemon->GetMaxHP() + 2) / 4;
 
 	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
@@ -4211,4 +4213,5 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplayRecoilMsg();
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
 }
