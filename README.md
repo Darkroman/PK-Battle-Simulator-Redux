@@ -7,6 +7,13 @@
 
    </summary>
 
+### 8/6/2025
+- Fixed bug with Reflect and Light Screen. They should work properly now. Forgot to change variable baseDamage to finalDamage in reflect and light screen conditions in CalculateDamage().
+- Sky Attack now correctly has a higher crit ratio
+- Pokemon's weight value is now in hectograms. This makes it so I can have the weight value as an int rather than double.
+- CalculateLowKickPower() is updated to take the new values and cleaned up the method a bit.
+- There is now a move power modifier in BattleContext set by a move routine (for now only Gust since it's the only gen 1 move that doubles in power if target is in semi-invulnerable Fly state). CalculateDamage() uses it to set currentMovePower and powerModifier is taken out of the main baseDamage equation.
+
 ### 8/4/2025
 - Made damage calculations more in line with the official games which use fixed point math using 4096 scale, rather than floating point math
 - Fixed type effectiveness bugs where it wouldn't display "doesn't affect" message and gives incorrect values
