@@ -6,6 +6,17 @@
 ## UPDATES
 
    </summary>
+   
+### 11/8/2025
+- Changed MoveRoutines to use std::variant rather than using runtime polymorphism. Less verbose, and (very slightly) faster (AI only battles seemed snappier). I did also test with void* type erasure and even simple function pointer array lookups and it seemed std::variant was the snappiest feeling one.
+- Added in some AI routines to observe and update its memory based on outcome of battle turns. The features have been implemented but they're not in use by the AI yet to determine what to do in battle.
+- CalculateTypeEffectiveness is now only ever used in Move Routines, not in CalculateDamage(). It updates effectiveness in BattleContext.
+- Added a default argument in CalculateDamage() "bool IsAI = false" so AI can use it to determine possible damage outcome with the random number being 92.
+- Fixed bug in DetermineWhoGoesFirst() where it was getting the pokemon's current speed rather than its speed stage.
+- Fixed CalculateHitChance() missing in the Seismic Toss Move Routine.
+- ApplyDamage() now used in all Move Routines that do damage.
+- If going against AI, the AI Pokémon's HP is seen as a percent now. Increments of 0.25% is known. This is to sort of mimic Sword/Shield's 400 pixel wide HP bar. You'll still see exact damage inflicted.
+- Changed the if else block in DisplaySubstituteDamageTextDialog to be a bit more readable and straightforward.
 
 ### 8/6/2025
 - Fixed bug with Reflect and Light Screen. They should work properly now. Forgot to change variable baseDamage to finalDamage in reflect and light screen conditions in CalculateDamage().
