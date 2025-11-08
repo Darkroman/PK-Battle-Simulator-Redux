@@ -49,13 +49,13 @@ public:
     bool    CanBypassSubstitute() const;
 
 private:
-    size_t      m_movenum;
-    std::string m_name;
+    size_t            m_movenum;
+    std::string_view     m_name;
 
-    std::string     m_type;
-    PokemonType    m_typee;
-    std::string m_category;
-    Category   m_categorye;
+    std::string_view     m_type;
+    PokemonType         m_typee;
+    std::string_view m_category;
+    Category        m_categorye;
 
     int              m_priority;
     MoveEffect m_moveEffectEnum;

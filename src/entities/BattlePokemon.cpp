@@ -807,6 +807,12 @@ int BattlePokemon::pokemonMove::GetAccuracy() const
     return mp_move->GetAccuracy();
 }
 
+void BattlePokemon::pokemonMove::DeductPP()
+{
+
+    m_currentPP -= 1;
+}
+
 bool BattlePokemon::pokemonMove::DoesMakeContact() const
 {
     return mp_move->DoesMakeContact();

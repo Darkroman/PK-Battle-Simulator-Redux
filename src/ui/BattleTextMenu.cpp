@@ -19,11 +19,47 @@ void BattleTextMenu::ThrowOutFirstPokemon()
 
 void BattleTextMenu::DisplayFightingPokemon()
 {
-    std::cout << m_context.playerOne->GetPlayerNameView() << "'s Pokemon: " << m_context.playerOneCurrentPokemon->GetNameView() << " ("
-        << m_context.playerOneCurrentPokemon->GetCurrentHP() << "/" << m_context.playerOneCurrentPokemon->GetMaxHP() << ")\n";
+    auto PrintPercent = [&](int currentHP, int maxHP)
+    {
+        if (currentHP >= maxHP)
+        {
+            std::cout << "100%";
+            return;
+        }
 
-    std::cout << m_context.playerTwo->GetPlayerNameView() << "'s Pokemon: " << m_context.playerTwoCurrentPokemon->GetNameView() << " ("
-        << m_context.playerTwoCurrentPokemon->GetCurrentHP() << "/" << m_context.playerTwoCurrentPokemon->GetMaxHP() << ")\n\n";
+        const int HP_BAR_WIDTH = m_context.HP_BAR_WIDTH;
+
+        int pixelsOfHP = currentHP * HP_BAR_WIDTH / maxHP;
+        int quarterPercent = pixelsOfHP * 25;
+
+        int integer = quarterPercent / 100;
+        int decimal = quarterPercent % 100;
+
+        std::cout << integer << ".";
+        if (decimal < 10) std::cout << "0";
+        std::cout << decimal << "%";
+    };
+
+    auto PrintPokemon = [&](Player& player, BattlePokemon& pokemon, bool isAI)
+        {
+            if (isAI)
+            {
+                std::cout << player.GetPlayerNameView() << "'s Pokemon: " << pokemon.GetNameView() << " (";
+                PrintPercent(pokemon.GetCurrentHP(), pokemon.GetMaxHP());
+                std::cout << "/100%)\n";
+            }
+            else
+            {
+                std::cout << player.GetPlayerNameView() << "'s Pokemon: " << pokemon.GetNameView() << " ("
+                          << pokemon.GetCurrentHP() << "/" << pokemon.GetMaxHP() << ")\n";
+            }
+        };
+
+    bool isOneAI = m_context.aiPlayerOne;
+    PrintPokemon(*m_context.playerOne, *m_context.playerOneCurrentPokemon, isOneAI);
+
+    bool isTwoAI = m_context.aiPlayerTwo;
+    PrintPokemon(*m_context.playerTwo, *m_context.playerTwoCurrentPokemon, isTwoAI);
 }
 
 void BattleTextMenu::PlayerOneMakeSelection()

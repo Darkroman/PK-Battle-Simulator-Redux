@@ -26,7 +26,5 @@ MoveExecutor::MoveExecutor(
 
 void MoveExecutor::ExecuteMove()
 {
-    auto effectEnum = m_deps.context.currentMove->GetMoveEffectEnum();
-    auto moveRoutine = MoveRoutineFactory::Call(effectEnum);
-    moveRoutine->DoMove(m_deps);
+    ExecuteMoveRoutine::Execute(m_deps.context.currentMove->GetMoveEffectEnum(), m_deps);
 }

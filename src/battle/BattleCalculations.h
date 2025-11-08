@@ -16,11 +16,11 @@ public:
 
 	int MultiplyEffectiveness(uint16_t, uint16_t);
 
-	int CalculateTypeEffectiveness(BattlePokemon::pokemonMove*, BattlePokemon*);
+	void CalculateTypeEffectiveness(BattlePokemon::pokemonMove*, BattlePokemon*);
 
 	bool CalculateHitChance(BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*);
 
-	int CalculateDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*);
+	int CalculateDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*, bool isAI = false);
 
 	void ApplyDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*, int);
 
@@ -90,5 +90,4 @@ public:
 			/* STE */ {4096,2048,2048,2048,4096,8192,4096,4096,4096,4096,4096,4096,8192,4096,4096,4096,2048,8192},
 			/* FAI */ {4096,2048,4096,4096,4096,4096,8192,2048,4096,4096,4096,4096,4096,4096,8192,8192,2048,4096}
 	}};
-
 };

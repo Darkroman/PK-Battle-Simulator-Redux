@@ -11,11 +11,10 @@
 #include "../battle/SwitchExecutor.h"
 #include "../data/Move.h"
 #include "../data/StringToTypes.h"
-#include "../moves/MoveEffectEnums.h"
 
 #include "MoveRoutines.h"
 
-void IMoveRoutine::InflictNVStatus(Status status, int chance, MoveRoutineDeps& deps)
+void InflictNVStatus(Status status, int chance, MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -86,7 +85,7 @@ void IMoveRoutine::InflictNVStatus(Status status, int chance, MoveRoutineDeps& d
 	deps.statusUI.DisplayNVStatusMsg(statusMessage);
 }
 
-void IMoveRoutine::BasicDamageRoutine(MoveRoutineDeps& deps)
+void BasicDamageRoutine(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
@@ -98,276 +97,113 @@ void IMoveRoutine::BasicDamageRoutine(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
-std::unique_ptr<IMoveRoutine> MoveRoutineFactory::Call(MoveEffect ID)
+void ExecuteMoveRoutine::DoMove(MoveRoutineDeps& deps)
+{
+	std::visit([&deps](auto&& routine) {
+		routine.DoMove(deps);
+		}, routine_variant);
+}
+
+void ExecuteMoveRoutine::Execute(MoveEffect ID, MoveRoutineDeps& deps)
+{
+	ExecuteMoveRoutine routine = MoveRoutineFactory::Call(ID);
+	routine.DoMove(deps);
+}
+
+ExecuteMoveRoutine MoveRoutineFactory::Call(MoveEffect ID)
 {
 	switch (ID)
 	{
-	case MoveEffect::NormalHit:
-		return std::make_unique<NormalHit>();
-
-	case MoveEffect::IncreasedCritical:
-		return std::make_unique<IncreasedCritical>();
-
-	case MoveEffect::MultiHit:
-		return std::make_unique<MultiHit>();
-
-	case MoveEffect::BurnHit:
-		return std::make_unique<BurnHit>();
-
-	case MoveEffect::FreezeHit:
-		return std::make_unique<FreezeHit>();
-
-	case MoveEffect::ParalyzeHit:
-		return std::make_unique<ParalyzeHit>();
-
-	case MoveEffect::OHKO:
-		return std::make_unique<OHKO>();
-
-	case MoveEffect::RazorWind:
-		return std::make_unique<RazorWind>();
-
-	case MoveEffect::AttackUp2:
-		return std::make_unique<AttackUp2>();
-
-	case MoveEffect::Gust:
-		return std::make_unique<Gust>();
-
-	case MoveEffect::ForceSwitch:
-		return std::make_unique<ForceSwitch>();
-
-	case MoveEffect::Fly:
-		return std::make_unique<Fly>();
-
-	case MoveEffect::PartialTrap:
-		return std::make_unique<PartialTrap>();
-
-	case MoveEffect::Stomp:
-		return std::make_unique<Stomp>();
-
-	case MoveEffect::DoubleHit:
-		return std::make_unique<DoubleHit>();
-
-	case MoveEffect::JumpKick:
-		return std::make_unique<JumpKick>();
-
-	case MoveEffect::FlinchHit:
-		return std::make_unique<FlinchHit>();
-
-	case MoveEffect::AccuracyDown:
-		return std::make_unique<AccuracyDown>();
-
-	case MoveEffect::BodySlam:
-		return std::make_unique<BodySlam>();
-
-	case MoveEffect::RecoilQuarter:
-		return std::make_unique<RecoilQuarter>();
-
-	case MoveEffect::Rampage:
-		return std::make_unique<Rampage>();
-
-	case MoveEffect::RecoilThird:
-		return std::make_unique<RecoilThird>();
-
-	case MoveEffect::DefenseDown:
-		return std::make_unique<DefenseDown>();
-
-	case MoveEffect::PoisonHit:
-		return std::make_unique<PoisonHit>();
-
-	case MoveEffect::Twineedle:
-		return std::make_unique<Twineedle>();
-
-	case MoveEffect::AttackDown:
-		return std::make_unique<AttackDown>();
-
-	case MoveEffect::SleepMove:
-		return std::make_unique<SleepMove>();
-
-	case MoveEffect::Confuse:
-		return std::make_unique<Confuse>();
-
-	case MoveEffect::SonicBoom:
-		return std::make_unique<SonicBoom>();
-
-	case MoveEffect::Disable:
-		return std::make_unique<Disable>();
-
-	case MoveEffect::SpecialDefenseDownHit:
-		return std::make_unique<SpecialDefenseDownHit>();
-
-	case MoveEffect::Mist:
-		return std::make_unique<Mist>();
-
-	case MoveEffect::ConfuseHit:
-		return std::make_unique<ConfuseHit>();
-
-	case MoveEffect::SpeedDownHit:
-		return std::make_unique<SpeedDownHit>();
-
-	case MoveEffect::AttackDownHit:
-		return std::make_unique<AttackDownHit>();
-
-	case MoveEffect::RechargeAttack:
-		return std::make_unique<RechargeAttack>();
-
-	case MoveEffect::LowKick:
-		return std::make_unique<LowKick>();
-
-	case MoveEffect::Counter:
-		return std::make_unique<Counter>();
-
-	case MoveEffect::SeismicToss:
-		return std::make_unique<SeismicToss>();
-
-	case MoveEffect::Leech:
-		return std::make_unique<Leech>();
-
-	case MoveEffect::LeechSeed:
-		return std::make_unique<LeechSeed>();
-
-	case MoveEffect::Growth:
-		return std::make_unique<Growth>();
-
-	case MoveEffect::SolarBeam:
-		return std::make_unique<SolarBeam>();
-
-	case MoveEffect::PoisonPowder:
-		return std::make_unique<PoisonPowder>();
-
-	case MoveEffect::StunSpore:
-		return std::make_unique<StunSpore>();
-
-	case MoveEffect::SleepPowder:
-		return std::make_unique<SleepPowder>();
-
-	case MoveEffect::SpeedDown2:
-		return std::make_unique<SpeedDown2>();
-
-	case MoveEffect::DragonRage:
-		return std::make_unique<DragonRage>();
-
-	case MoveEffect::Paralyze:
-		return std::make_unique<Paralyze>();
-
-	case MoveEffect::Earthquake:
-		return std::make_unique<Earthquake>();
-
-	case MoveEffect::Dig:
-		return std::make_unique<Dig>();
-
-	case MoveEffect::Toxic:
-		return std::make_unique<Toxic>();
-
-	case MoveEffect::AttackUp:
-		return std::make_unique<AttackUp>();
-
-	case MoveEffect::SpeedUp2:
-		return std::make_unique<SpeedUp2>();
-
-	case MoveEffect::Rage:
-		return std::make_unique<Rage>();
-
-	case MoveEffect::Teleport:
-		return std::make_unique<Teleport>();
-
-	case MoveEffect::NightShade:
-		return std::make_unique<NightShade>();
-
-	case MoveEffect::Mimic:
-		return std::make_unique<Mimic>();
-
-	case MoveEffect::DefenseDown2:
-		return std::make_unique<DefenseDown2>();
-
-	case MoveEffect::EvasionUp:
-		return std::make_unique<EvasionUp>();
-
-	case MoveEffect::HealHalfHP:
-		return std::make_unique<HealHalfHP>();
-
-	case MoveEffect::DefenseUp:
-		return std::make_unique<DefenseUp>();
-
-	case MoveEffect::Minimize:
-		return std::make_unique<Minimize>();
-
-	case MoveEffect::DefenseUp2:
-		return std::make_unique<DefenseUp2>();
-
-	case MoveEffect::LightScreen:
-		return std::make_unique<LightScreen>();
-
-	case MoveEffect::Haze:
-		return std::make_unique<Haze>();
-
-	case MoveEffect::Reflect:
-		return std::make_unique<Reflect>();
-
-	case MoveEffect::FocusEnergy:
-		return std::make_unique<FocusEnergy>();
-
-	case MoveEffect::Bide:
-		return std::make_unique<Bide>();
-
-	case MoveEffect::Metronome:
-		return std::make_unique<Metronome>();
-
-	case MoveEffect::MirrorMove:
-		return std::make_unique<MirrorMove>();
-
-	case MoveEffect::Explosion:
-		return std::make_unique<Explosion>();
-
-	case MoveEffect::AlwaysHit:
-		return std::make_unique<AlwaysHit>();
-
-	case MoveEffect::SkullBash:
-		return std::make_unique<SkullBash>();
-
-	case MoveEffect::SpecialDefenseUp2:
-		return std::make_unique<SpecialDefenseUp2>();
-
-	case MoveEffect::DreamEater:
-		return std::make_unique<DreamEater>();
-
-	case MoveEffect::PoisonGas:
-		return std::make_unique<PoisonGas>();
-
-	case MoveEffect::SkyAttack:
-		return std::make_unique<SkyAttack>();
-
-	case MoveEffect::Transform:
-		return std::make_unique<Transform>();
-
-	case MoveEffect::Psywave:
-		return std::make_unique<Psywave>();
-
-	case MoveEffect::Splash:
-		return std::make_unique<Splash>();
-
-	case MoveEffect::Rest:
-		return std::make_unique<Rest>();
-
-	case MoveEffect::Conversion:
-		return std::make_unique<Conversion>();
-
-	case MoveEffect::TriAttack:
-		return std::make_unique<TriAttack>();
-
-	case MoveEffect::SuperFang:
-		return std::make_unique<SuperFang>();
-
-	case MoveEffect::Substitute:
-		return std::make_unique<Substitute>();
-
-	case MoveEffect::Struggle:
-		return std::make_unique<Struggle>();
-
-	default:
-		return std::make_unique<Noop>();
-
+	case MoveEffect::NormalHit:          return ExecuteMoveRoutine(NormalHit{});
+	case MoveEffect::IncreasedCritical:  return ExecuteMoveRoutine(IncreasedCritical{});
+	case MoveEffect::MultiHit:           return ExecuteMoveRoutine(MultiHit{});
+	case MoveEffect::BurnHit:            return ExecuteMoveRoutine(BurnHit{});
+	case MoveEffect::FreezeHit:          return ExecuteMoveRoutine(FreezeHit{});
+	case MoveEffect::ParalyzeHit:        return ExecuteMoveRoutine(ParalyzeHit{});
+	case MoveEffect::OHKO:               return ExecuteMoveRoutine(OHKO{});
+	case MoveEffect::RazorWind:          return ExecuteMoveRoutine(RazorWind{});
+	case MoveEffect::AttackUp2:          return ExecuteMoveRoutine(AttackUp2{});
+	case MoveEffect::Gust:               return ExecuteMoveRoutine(Gust{});
+	case MoveEffect::ForceSwitch:        return ExecuteMoveRoutine(ForceSwitch{});
+	case MoveEffect::Fly:                return ExecuteMoveRoutine(Fly{});
+	case MoveEffect::PartialTrap:        return ExecuteMoveRoutine(PartialTrap{});
+	case MoveEffect::Stomp:              return ExecuteMoveRoutine(Stomp{});
+	case MoveEffect::DoubleHit:          return ExecuteMoveRoutine(DoubleHit{});
+	case MoveEffect::JumpKick:           return ExecuteMoveRoutine(JumpKick{});
+	case MoveEffect::FlinchHit:          return ExecuteMoveRoutine(FlinchHit{});
+	case MoveEffect::AccuracyDown:       return ExecuteMoveRoutine(AccuracyDown{});
+	case MoveEffect::BodySlam:           return ExecuteMoveRoutine(BodySlam{});
+	case MoveEffect::RecoilQuarter:      return ExecuteMoveRoutine(RecoilQuarter{});
+	case MoveEffect::Rampage:            return ExecuteMoveRoutine(Rampage{});
+	case MoveEffect::RecoilThird:        return ExecuteMoveRoutine(RecoilThird{});
+	case MoveEffect::DefenseDown:        return ExecuteMoveRoutine(DefenseDown{});
+	case MoveEffect::PoisonHit:          return ExecuteMoveRoutine(PoisonHit{});
+	case MoveEffect::Twineedle:          return ExecuteMoveRoutine(Twineedle{});
+	case MoveEffect::AttackDown:         return ExecuteMoveRoutine(AttackDown{});
+	case MoveEffect::SleepMove:          return ExecuteMoveRoutine(SleepMove{});
+	case MoveEffect::Confuse:            return ExecuteMoveRoutine(Confuse{});
+	case MoveEffect::SonicBoom:          return ExecuteMoveRoutine(SonicBoom{});
+	case MoveEffect::Disable:            return ExecuteMoveRoutine(Disable{});
+	case MoveEffect::SpecialDefenseDownHit: return ExecuteMoveRoutine(SpecialDefenseDownHit{});
+	case MoveEffect::Mist:               return ExecuteMoveRoutine(Mist{});
+	case MoveEffect::ConfuseHit:         return ExecuteMoveRoutine(ConfuseHit{});
+	case MoveEffect::SpeedDownHit:       return ExecuteMoveRoutine(SpeedDownHit{});
+	case MoveEffect::AttackDownHit:      return ExecuteMoveRoutine(AttackDownHit{});
+	case MoveEffect::RechargeAttack:     return ExecuteMoveRoutine(RechargeAttack{});
+	case MoveEffect::LowKick:            return ExecuteMoveRoutine(LowKick{});
+	case MoveEffect::Counter:            return ExecuteMoveRoutine(Counter{});
+	case MoveEffect::SeismicToss:        return ExecuteMoveRoutine(SeismicToss{});
+	case MoveEffect::Leech:              return ExecuteMoveRoutine(Leech{});
+	case MoveEffect::LeechSeed:          return ExecuteMoveRoutine(LeechSeed{});
+	case MoveEffect::Growth:             return ExecuteMoveRoutine(Growth{});
+	case MoveEffect::SolarBeam:          return ExecuteMoveRoutine(SolarBeam{});
+	case MoveEffect::PoisonPowder:       return ExecuteMoveRoutine(PoisonPowder{});
+	case MoveEffect::StunSpore:          return ExecuteMoveRoutine(StunSpore{});
+	case MoveEffect::SleepPowder:        return ExecuteMoveRoutine(SleepPowder{});
+	case MoveEffect::SpeedDown2:         return ExecuteMoveRoutine(SpeedDown2{});
+	case MoveEffect::DragonRage:         return ExecuteMoveRoutine(DragonRage{});
+	case MoveEffect::Paralyze:           return ExecuteMoveRoutine(Paralyze{});
+	case MoveEffect::Earthquake:         return ExecuteMoveRoutine(Earthquake{});
+	case MoveEffect::Dig:                return ExecuteMoveRoutine(Dig{});
+	case MoveEffect::Toxic:              return ExecuteMoveRoutine(Toxic{});
+	case MoveEffect::AttackUp:           return ExecuteMoveRoutine(AttackUp{});
+	case MoveEffect::SpeedUp2:           return ExecuteMoveRoutine(SpeedUp2{});
+	case MoveEffect::Rage:               return ExecuteMoveRoutine(Rage{});
+	case MoveEffect::Teleport:           return ExecuteMoveRoutine(Teleport{});
+	case MoveEffect::NightShade:         return ExecuteMoveRoutine(NightShade{});
+	case MoveEffect::Mimic:              return ExecuteMoveRoutine(Mimic{});
+	case MoveEffect::DefenseDown2:       return ExecuteMoveRoutine(DefenseDown2{});
+	case MoveEffect::EvasionUp:          return ExecuteMoveRoutine(EvasionUp{});
+	case MoveEffect::HealHalfHP:         return ExecuteMoveRoutine(HealHalfHP{});
+	case MoveEffect::DefenseUp:          return ExecuteMoveRoutine(DefenseUp{});
+	case MoveEffect::Minimize:           return ExecuteMoveRoutine(Minimize{});
+	case MoveEffect::DefenseUp2:         return ExecuteMoveRoutine(DefenseUp2{});
+	case MoveEffect::LightScreen:        return ExecuteMoveRoutine(LightScreen{});
+	case MoveEffect::Haze:               return ExecuteMoveRoutine(Haze{});
+	case MoveEffect::Reflect:            return ExecuteMoveRoutine(Reflect{});
+	case MoveEffect::FocusEnergy:        return ExecuteMoveRoutine(FocusEnergy{});
+	case MoveEffect::Bide:               return ExecuteMoveRoutine(Bide{});
+	case MoveEffect::Metronome:          return ExecuteMoveRoutine(Metronome{});
+	case MoveEffect::MirrorMove:         return ExecuteMoveRoutine(MirrorMove{});
+	case MoveEffect::Explosion:          return ExecuteMoveRoutine(Explosion{});
+	case MoveEffect::AlwaysHit:          return ExecuteMoveRoutine(AlwaysHit{});
+	case MoveEffect::SkullBash:          return ExecuteMoveRoutine(SkullBash{});
+	case MoveEffect::SpecialDefenseUp2:  return ExecuteMoveRoutine(SpecialDefenseUp2{});
+	case MoveEffect::DreamEater:         return ExecuteMoveRoutine(DreamEater{});
+	case MoveEffect::PoisonGas:          return ExecuteMoveRoutine(PoisonGas{});
+	case MoveEffect::SkyAttack:          return ExecuteMoveRoutine(SkyAttack{});
+	case MoveEffect::Transform:          return ExecuteMoveRoutine(Transform{});
+	case MoveEffect::Psywave:            return ExecuteMoveRoutine(Psywave{});
+	case MoveEffect::Splash:             return ExecuteMoveRoutine(Splash{});
+	case MoveEffect::Rest:               return ExecuteMoveRoutine(Rest{});
+	case MoveEffect::Conversion:         return ExecuteMoveRoutine(Conversion{});
+	case MoveEffect::TriAttack:          return ExecuteMoveRoutine(TriAttack{});
+	case MoveEffect::SuperFang:          return ExecuteMoveRoutine(SuperFang{});
+	case MoveEffect::Substitute:         return ExecuteMoveRoutine(Substitute{});
+	case MoveEffect::Struggle:           return ExecuteMoveRoutine(Struggle{});
+
+	default: return ExecuteMoveRoutine(Noop{});
 	}
-	return std::make_unique<Noop>();
 }
 
 void Noop::DoMove(MoveRoutineDeps& deps)
@@ -376,7 +212,7 @@ void Noop::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -389,7 +225,7 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -427,7 +263,7 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -472,7 +308,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -547,7 +383,7 @@ void BurnHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -587,7 +423,7 @@ void FreezeHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -627,7 +463,7 @@ void ParalyzeHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -667,7 +503,7 @@ void OHKO::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -713,7 +549,7 @@ void RazorWind::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -754,7 +590,7 @@ void AttackUp2::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -782,7 +618,7 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -826,7 +662,7 @@ void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -871,11 +707,19 @@ void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPlayer == ctx.playerOne)
 	{
-		deps.context.playerOneCurrentPokemon = newMon;
+		ctx.playerOneCurrentPokemon = newMon;
+		if (ctx.aiPlayerTwo)
+		{
+			ctx.aiPlayerTwo->UpdateActivePokemon(ctx.playerOneCurrentPokemon);
+		}
 	}
 	else
 	{
-		deps.context.playerTwoCurrentPokemon = newMon;
+		ctx.playerTwoCurrentPokemon = newMon;
+		if (ctx.aiPlayerOne)
+		{
+			ctx.aiPlayerOne->UpdateActivePokemon(ctx.playerTwoCurrentPokemon);
+		}
 	}
 
 	deps.resultsUI.DisplayEnemySwitchMsg(*newMon);
@@ -896,7 +740,7 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -938,7 +782,7 @@ void PartialTrap::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -996,7 +840,7 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1059,7 +903,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1119,7 +963,7 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1162,7 +1006,7 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1213,7 +1057,7 @@ void AccuracyDown::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1256,7 +1100,7 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1308,7 +1152,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1421,7 +1265,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 		ctx.attackingPokemon->SetThrashTurnCount(randomMod);
 		ctx.attackingPokemon->ResetThrashCounter();
 
-		ctx.currentMove->m_currentPP -= 1;
+		ctx.currentMove->DeductPP();
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
@@ -1451,7 +1295,7 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1501,7 +1345,7 @@ void DefenseDown::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1544,7 +1388,7 @@ void PoisonHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1584,7 +1428,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1646,7 +1490,7 @@ void AttackDown::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1689,7 +1533,7 @@ void SleepMove::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1722,7 +1566,7 @@ void Confuse::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1756,7 +1600,7 @@ void SonicBoom::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1784,23 +1628,12 @@ void SonicBoom::DoMove(MoveRoutineDeps& deps)
 
 	int finalDamage = std::min(baseDamage, maxDamage);
 
-	if (hasSubstitute)
-	{
-		ctx.defendingPokemon->DamageSubstitute(finalDamage);
-
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-		ctx.flags.hitSubstitute = true;
-	}
-	else
-	{
-		ctx.defendingPokemon->DamageCurrentHP(finalDamage);
-		ctx.flags.hitSubstitute = false;
-	}
-
-	ctx.damageTaken = finalDamage;
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
 void Disable::DoMove(MoveRoutineDeps& deps)
@@ -1809,7 +1642,7 @@ void Disable::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1845,9 +1678,17 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
+
+	deps.calculations.CalculateTypeEffectiveness(ctx.currentMove, ctx.defendingPokemon);
+
+	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
+	{
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		return;
+	}
 
 	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1891,7 +1732,7 @@ void Mist::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1912,7 +1753,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1969,7 +1810,7 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2023,7 +1864,7 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2085,7 +1926,7 @@ void RechargeAttack::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2129,7 +1970,7 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2166,9 +2007,13 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
+	int counterDamage = ctx.damageTaken * 2;
+
+	ctx.damageTaken = 0;
+
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2204,31 +2049,18 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int counterDamage = ctx.damageTaken * 2;
-
 	bool hasSubstitute = ctx.defendingPokemon->HasSubstitute();
 
 	int maxDamage = hasSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
 	int finalDamage = std::min(counterDamage, maxDamage);
 
-	if (hasSubstitute)
-	{
-		ctx.defendingPokemon->DamageSubstitute(finalDamage);
-
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-		ctx.flags.hitSubstitute = true;
-	}
-	else
-	{
-		ctx.defendingPokemon->DamageCurrentHP(finalDamage);
-		ctx.flags.hitSubstitute = false;
-	}
-
-	ctx.damageTaken = finalDamage;
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
 void SeismicToss::DoMove(MoveRoutineDeps& deps)
@@ -2237,7 +2069,7 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2249,13 +2081,13 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
+	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
+
 	if (!ctx.flags.hit)
 	{
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
 		return;
 	}
-
-	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
 	const int baseDamage = ctx.defendingPokemon->GetLevel();
 
@@ -2265,23 +2097,12 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 
 	int finalDamage = std::min(baseDamage, maxDamage);
 
-	if (hasSubstitute)
-	{
-		ctx.defendingPokemon->DamageSubstitute(finalDamage);
-
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-		ctx.flags.hitSubstitute = true;
-	}
-	else
-	{
-		ctx.defendingPokemon->DamageCurrentHP(finalDamage);
-		ctx.flags.hitSubstitute = false;
-	}
-
-	ctx.damageTaken = finalDamage;
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
 void Leech::DoMove(MoveRoutineDeps& deps)
@@ -2290,7 +2111,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2355,7 +2176,7 @@ void LeechSeed::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2392,7 +2213,7 @@ void Growth::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2436,7 +2257,7 @@ void SolarBeam::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2477,7 +2298,7 @@ void PoisonPowder::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2520,7 +2341,7 @@ void StunSpore::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2562,7 +2383,7 @@ void SleepPowder::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2603,7 +2424,7 @@ void SpeedDown2::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2653,7 +2474,7 @@ void DragonRage::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2681,23 +2502,12 @@ void DragonRage::DoMove(MoveRoutineDeps& deps)
 
 	int finalDamage = std::min(baseDamage, maxDamage);
 
-	if (hasSubstitute)
-	{
-		ctx.defendingPokemon->DamageSubstitute(finalDamage);
-
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-		ctx.flags.hitSubstitute = true;
-	}
-	else
-	{
-		ctx.defendingPokemon->DamageCurrentHP(finalDamage);
-		ctx.flags.hitSubstitute = false;
-	}
-
-	ctx.damageTaken = finalDamage;
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
 void Paralyze::DoMove(MoveRoutineDeps& deps)
@@ -2706,11 +2516,9 @@ void Paralyze::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
-
-	deps.calculations.CalculateTypeEffectiveness(ctx.currentMove, ctx.defendingPokemon);
 
 	bool isElectricType = (ctx.defendingPokemon->GetTypeOneEnum() == PokemonType::Electric ||
 		ctx.defendingPokemon->GetTypeTwoEnum() == PokemonType::Electric);
@@ -2762,7 +2570,7 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2810,7 +2618,7 @@ void Dig::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2852,7 +2660,7 @@ void Toxic::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2894,7 +2702,7 @@ void AttackUp::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2918,7 +2726,7 @@ void SpeedUp2::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2948,7 +2756,7 @@ void Rage::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -2985,7 +2793,7 @@ void Teleport::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3008,7 +2816,7 @@ void NightShade::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3036,23 +2844,12 @@ void NightShade::DoMove(MoveRoutineDeps& deps)
 
 	int finalDamage = std::min(baseDamage, maxDamage);
 
-	if (hasSubstitute)
-	{
-		ctx.defendingPokemon->DamageSubstitute(finalDamage);
-
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-		ctx.flags.hitSubstitute = true;
-	}
-	else
-	{
-		ctx.defendingPokemon->DamageCurrentHP(finalDamage);
-		ctx.flags.hitSubstitute = false;
-	}
-
-	ctx.damageTaken = finalDamage;
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
 void Mimic::DoMove(MoveRoutineDeps& deps)
@@ -3061,7 +2858,7 @@ void Mimic::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3105,7 +2902,7 @@ void DefenseDown2::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3155,7 +2952,7 @@ void EvasionUp::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3179,7 +2976,7 @@ void HealHalfHP::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3204,7 +3001,7 @@ void DefenseUp::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3228,7 +3025,7 @@ void Minimize::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3262,7 +3059,7 @@ void DefenseUp2::DoMove(MoveRoutineDeps& deps)
 
 	int defenseStage = ctx.attackingPokemon->GetDefenseStage();
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3290,7 +3087,7 @@ void LightScreen::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3311,7 +3108,7 @@ void Haze::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3340,7 +3137,7 @@ void Reflect::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3361,7 +3158,7 @@ void FocusEnergy::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3415,7 +3212,7 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 		ctx.attackingPokemon->SetBideTurnCount(2);
 		ctx.attackingPokemon->ResetBideCounter();
 
-		ctx.currentMove->m_currentPP -= 1;
+		ctx.currentMove->DeductPP();
 	}
 
 	if (ctx.attackingPokemon->GetBideCounter() >= ctx.attackingPokemon->GetBideTurnCount())
@@ -3480,7 +3277,7 @@ void Metronome::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	size_t randomMod{ 67 };
 	while (randomMod == 67 || randomMod == 101 || randomMod == 117 || randomMod == 118 || randomMod == 143)
@@ -3498,8 +3295,7 @@ void Metronome::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->metronomeMove.m_maxPP = 1;
 
 	{
-		std::unique_ptr<IMoveRoutine> moveRoutine = MoveRoutineFactory::Call(selectedMove->GetMoveEffectEnum());
-		moveRoutine->DoMove(deps);
+		ExecuteMoveRoutine::Execute(deps.context.currentMove->GetMoveEffectEnum(), deps);
 	}
 }
 
@@ -3509,7 +3305,7 @@ void MirrorMove::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	BattlePokemon::pokemonMove* targetLastUsedMove = ctx.defendingPokemon->GetLastUsedMove();
 
@@ -3526,8 +3322,7 @@ void MirrorMove::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->mirrorMove.m_maxPP = 1;
 
 	{
-		std::unique_ptr<IMoveRoutine> moveRoutine = MoveRoutineFactory::Call(selectedMove->GetMoveEffectEnum());
-		moveRoutine->DoMove(deps);
+		ExecuteMoveRoutine::Execute(deps.context.currentMove->GetMoveEffectEnum(), deps);
 	}
 }
 
@@ -3537,9 +3332,22 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
+
+	deps.calculations.CalculateTypeEffectiveness(ctx.currentMove, ctx.defendingPokemon);
+
+	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
+	{
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+
+		ctx.attackingPokemon->DamageCurrentHP(ctx.attackingPokemon->GetCurrentHP());
+
+		deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+		return;
+	}
 
 	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -3575,9 +3383,17 @@ void AlwaysHit::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
+
+	deps.calculations.CalculateTypeEffectiveness(ctx.currentMove, ctx.defendingPokemon);
+
+	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
+	{
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		return;
+	}
 
 	ctx.flags.hit = !ctx.defendingPokemon->IsSemiInvulnerable();
 
@@ -3627,7 +3443,7 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3668,7 +3484,7 @@ void SpecialDefenseUp2::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3698,7 +3514,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3763,7 +3579,7 @@ void PoisonGas::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3813,7 +3629,7 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3872,7 +3688,7 @@ void Transform::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3900,7 +3716,7 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3932,23 +3748,12 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 		psywaveDamage = 1;
 	}
 
-	if (ctx.defendingPokemon->HasSubstitute())
-	{
-		ctx.defendingPokemon->DamageSubstitute(psywaveDamage);
-
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-		ctx.flags.hitSubstitute = true;
-	}
-	else
-	{
-		ctx.defendingPokemon->DamageCurrentHP(psywaveDamage);
-		ctx.flags.hitSubstitute = false;
-	}
-
-	ctx.damageTaken = psywaveDamage;
+	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, psywaveDamage);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
+
+	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 }
 
 void Splash::DoMove(MoveRoutineDeps& deps)
@@ -3957,7 +3762,7 @@ void Splash::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3970,7 +3775,7 @@ void Rest::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3999,7 +3804,7 @@ void Conversion::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	if (ctx.attackingPokemon->GetTypeOneEnum() == ctx.currentMove->GetMoveTypeEnum() ||
 		ctx.attackingPokemon->GetTypeTwoEnum() == ctx.currentMove->GetMoveTypeEnum() ||
@@ -4023,7 +3828,7 @@ void TriAttack::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -4090,7 +3895,7 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -4141,7 +3946,7 @@ void Substitute::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
 
-	ctx.currentMove->m_currentPP -= 1;
+	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 

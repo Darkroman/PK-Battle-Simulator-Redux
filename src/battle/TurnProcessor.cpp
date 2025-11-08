@@ -20,10 +20,10 @@ TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calcula
 
 void TurnProcessor::DetermineWhoGoesFirst()
 {
-	auto [numerator1, denominator1] = m_calculations.GetStageRatio(m_context.playerOneCurrentPokemon->GetSpeed());
+	auto [numerator1, denominator1] = m_calculations.GetStageRatio(m_context.playerOneCurrentPokemon->GetSpeedStage());
 	int playerOneSpeed = m_context.playerOneCurrentPokemon->GetSpeed() * numerator1 / denominator1;
 
-	auto [numerator2, denominator2] = m_calculations.GetStageRatio(m_context.playerTwoCurrentPokemon->GetSpeed());
+	auto [numerator2, denominator2] = m_calculations.GetStageRatio(m_context.playerTwoCurrentPokemon->GetSpeedStage());
 	int playerTwoSpeed = m_context.playerTwoCurrentPokemon->GetSpeed() * numerator2 / denominator2;
 
 	if (m_context.playerOneCurrentPokemon->GetStatus() == Status::Paralyzed)
@@ -102,13 +102,27 @@ void TurnProcessor::SetFirst(Player* first, Player* second)
 
 void TurnProcessor::ExecuteTurn(bool& winCondition)
 {
+	auto& ctx = m_context;
+
+	if (ctx.currentMove)
+	{
+		if (ctx.currentMove->GetName() != "Counter")
+		{
+			ctx.damageTaken = 0;
+		}
+	}
+	
+
+	ctx.pixelsLost = 0;
+	ctx.initialPowerMultiplier = 10;
+	ctx.effectiveness = 4096;
+
+	ctx.flags.ResetBattleFlags();
+
 	if (m_context.attackingPlayer->IsSwitching())
 	{
 		m_switchExecutor.ExecuteSwitch(m_context.attackingPlayer, m_context.attackingPokemon);
-		if (m_context.defendingPokemon->IsBound())
-		{
-			m_context.defendingPokemon->SetBoundTurnCount(m_context.defendingPokemon->GetBoundCounter());
-		}
+
 		return;
 	}
 	else if (m_context.attackingPlayer->HasSwitched())

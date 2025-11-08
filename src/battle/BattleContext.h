@@ -3,7 +3,8 @@
 #include <vector>
 #include <memory>
 
-#include "../entities/Player.h"
+//#include "../entities/Player.h"
+#include "../entities/AIPlayer.h"
 
 struct BattleStateFlags
 {
@@ -27,16 +28,23 @@ struct BattleStateFlags
 struct BattleContext
 {
     BattleContext(std::vector<std::unique_ptr<Player>>& vec_players)
-        : playerOne( vec_players[0].get() ),
-          playerTwo( vec_players[1].get() )
-    {}
+        : playerOne(vec_players[0].get()),
+        playerTwo(vec_players[1].get())
+    {
+    }
 
     BattleStateFlags flags;
 
+    const int HP_BAR_WIDTH{ 400 };
+
     int damageTaken{};
+    int pixelsLost{};
 
     Player* playerOne;
     Player* playerTwo;
+
+    AIPlayer* aiPlayerOne{ nullptr };
+    AIPlayer* aiPlayerTwo{ nullptr };
 
     BattlePokemon* playerOneCurrentPokemon{ nullptr };
     BattlePokemon* playerTwoCurrentPokemon{ nullptr };
@@ -55,4 +63,5 @@ struct BattleContext
     BattlePokemon::pokemonMove* selectedMove{ nullptr };
 
     int initialPowerMultiplier{ 10 };
+    int effectiveness{ 4096 };
 };

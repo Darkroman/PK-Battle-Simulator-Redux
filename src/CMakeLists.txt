@@ -23,6 +23,7 @@ set(SOURCES
     "entities/ai strategies/EasyAIStrategy.cpp"
 
     # battle
+    battle/BattleAIManager.cpp
     battle/BattleCalculations.cpp
     battle/BattleManager.cpp
     battle/MoveExecutor.cpp

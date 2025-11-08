@@ -59,13 +59,16 @@ void MoveResultsText::DisplayFailedTextDialog()
 
 void MoveResultsText::DisplaySubstituteDamageTextDialog(Player* player, BattlePokemon* pokemon)
 {
-	if (pokemon->GetSubstituteHP() > 0 && m_context.flags.hitSubstitute)
+	if (m_context.flags.hitSubstitute && pokemon->HasSubstitute())
 	{
-		std::cout << "The substitute took damage for " << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "!\n";
-	}
-	else if (pokemon->GetSubstituteHP() <= 0 && pokemon->HasSubstitute() && m_context.flags.hitSubstitute)
-	{
-		std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "'s substitute faded!\n";
+		if (pokemon->GetSubstituteHP() > 0)
+		{
+			std::cout << "The substitute took damage for " << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "!\n";
+		}
+		else
+		{
+			std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "'s substitute faded!\n";
+		}
 	}
 }
 

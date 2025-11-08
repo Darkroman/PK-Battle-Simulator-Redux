@@ -23,6 +23,11 @@ void SwitchExecutor::ExecuteSwitch(Player* player, BattlePokemon*& pokemon)
 		}
 
 		m_context.playerOneCurrentPokemon = pokemon;
+
+		if (m_context.aiPlayerTwo)
+		{
+			m_context.aiPlayerTwo->UpdateActivePokemon(m_context.playerOneCurrentPokemon);
+		}
 	}
 	else if (player == m_context.playerTwo)
 	{
@@ -35,6 +40,11 @@ void SwitchExecutor::ExecuteSwitch(Player* player, BattlePokemon*& pokemon)
 		}
 
 		m_context.playerTwoCurrentPokemon = pokemon;
+
+		if (m_context.aiPlayerOne)
+		{
+			m_context.aiPlayerOne->UpdateActivePokemon(m_context.playerTwoCurrentPokemon);
+		}
 	}
 
 	player->SetIsSwitching(false);

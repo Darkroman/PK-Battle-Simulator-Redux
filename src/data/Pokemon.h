@@ -51,16 +51,16 @@ public:
 
 private:
     int  m_nationalDexNumber;
-    std::string       m_name;
+    std::string_view  m_name;
     int             m_basehp;
     int         m_baseattack;
     int        m_basedefense;
     int  m_basespecialattack;
     int m_basespecialdefense;
     int          m_basespeed;
-    std::string      m_type1;
+    std::string_view m_type1;
     PokemonType     m_type1e;
-    std::string      m_type2;
+    std::string_view m_type2;
     PokemonType     m_type2e;
     int             m_weight;
 

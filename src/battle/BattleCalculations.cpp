@@ -36,8 +36,18 @@ int BattleCalculations::MultiplyEffectiveness(uint16_t effect1, uint16_t effect2
 	return (product >> 12);
 }
 
-int BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* currentMove, BattlePokemon* target)
+void BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* currentMove, BattlePokemon* target)
 {
+	using Effectiveness = BattleStateFlags::Effectiveness;
+
+	m_context.effectiveness = 4096;
+	m_context.flags.currentEffectiveness = Effectiveness::Normal;
+
+	if (currentMove->GetMoveEffectEnum() == MoveEffect::Struggle)
+	{
+		return;
+	}
+
 	size_t moveType = static_cast<size_t>(currentMove->GetMoveTypeEnum());
 	size_t defensiveTypeOne = static_cast<size_t>(target->GetTypeOneEnum());
 	size_t defensiveTypeTwo = static_cast<size_t>(target->GetTypeTwoEnum());
@@ -46,8 +56,7 @@ int BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* c
 	uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
 
 	int moveEffectiveness = MultiplyEffectiveness(effect1, effect2);
-
-	using Effectiveness = BattleStateFlags::Effectiveness;
+	m_context.effectiveness = moveEffectiveness;
 
 	if (moveEffectiveness == 0)
 	{
@@ -70,8 +79,6 @@ int BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove* c
 	{
 		m_context.flags.currentEffectiveness = Effectiveness::OHKO;
 	}
-
-	return moveEffectiveness;
 }
 
 bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
@@ -117,20 +124,11 @@ bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove* currentM
 	}
 }
 
-int BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target)
+int BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target, bool isAI)
 {
-	m_context.flags.hitSubstitute = false;
-
-	m_context.damageTaken = 0;
+	auto effectiveness = m_context.effectiveness;
 
 	int baseDamage{ 0 };
-
-	int effectiveness = CalculateTypeEffectiveness(currentMove, target);
-
-	if (currentMove->GetMoveEffectEnum() == MoveEffect::Struggle)
-	{
-		effectiveness = 4096;
-	}
 
 	if ((currentMove->GetMoveEffectEnum() == MoveEffect::OHKO) && effectiveness != 0)
 	{
@@ -227,7 +225,7 @@ int BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pok
 	std::uniform_int_distribution<int> dist(0, 255);
 	int roll = dist(m_rng.GetGenerator());
 	int randPercent = 100 - (roll % 16);
-	int finalDamage = (baseDamage * randPercent) / 100;
+	int finalDamage = isAI ? (baseDamage * 92) / 100 : (baseDamage * randPercent) / 100;
 
 	bool hasStab = (currentMove->GetMoveTypeEnum() == source->GetTypeOneEnum() ||
 		currentMove->GetMoveTypeEnum() == source->GetTypeTwoEnum())
@@ -280,10 +278,14 @@ int BattleCalculations::CalculateDamage(Player* targetPlayer, BattlePokemon::pok
 
 void BattleCalculations::ApplyDamage(Player* targetPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source, BattlePokemon* target, int damage)
 {
+	const int HP_BAR_WIDTH = m_context.HP_BAR_WIDTH;
+
 	if (damage == 0)
 	{
 		return;
 	}
+
+	int currentPixel = target->GetCurrentHP() * HP_BAR_WIDTH / target->GetMaxHP();
 
 	if (target->HasSubstitute() && !currentMove->CanBypassSubstitute())
 	{
@@ -295,6 +297,9 @@ void BattleCalculations::ApplyDamage(Player* targetPlayer, BattlePokemon::pokemo
 	{
 		target->DamageCurrentHP(damage);
 		m_context.flags.hitSubstitute = false;
+		m_context.damageTaken = damage;
+		int newPixel = target->GetCurrentHP() * HP_BAR_WIDTH / target->GetMaxHP();
+		m_context.pixelsLost = currentPixel - newPixel;
 	}
 
 	bool isMultiStrike = currentMove->GetMoveEffectEnum() == MoveEffect::MultiHit ||
@@ -305,8 +310,6 @@ void BattleCalculations::ApplyDamage(Player* targetPlayer, BattlePokemon::pokemo
 	{
 		target->AddBideDamage(damage);
 	}
-
-	m_context.damageTaken = damage;
 }
 
 // Calculate power of low kick based on target Pokemon's weight (in hectograms)

@@ -60,6 +60,24 @@ void RunGame()
         context.playerOne = players[0].get();
         context.playerTwo = players[1].get();
 
+        if (context.playerOne->IsHuman())
+        {
+            context.aiPlayerOne = nullptr;
+        }
+        else
+        {
+            context.aiPlayerOne = static_cast<AIPlayer*>(context.playerOne);
+        }
+
+        if (context.playerTwo->IsHuman())
+        {
+            context.aiPlayerTwo = nullptr;
+        }
+        else
+        {
+            context.aiPlayerTwo = static_cast<AIPlayer*>(context.playerTwo);
+        }
+            
         BattleManager battleManager(context, rng, battleMenu, moveResultsText, statusEffectText);
 
         exit = battleManager.RunBattleLoop();

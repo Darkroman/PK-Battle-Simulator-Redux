@@ -3,8 +3,12 @@
 #include "../ui/interfaces/IBattleMenuUI.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
+#include "../entities/AIPlayer.h"
+#include "BattleAIManager.h"
 
 #include "BattleManager.h"
+
+#include <iostream>
 
 BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleMenuUI& battleMenuUI, IMoveResultsUI& moveResultsUI, IStatusEffectUI& statusEffectUI)
 	: m_context(context)
@@ -27,10 +31,14 @@ bool BattleManager::RunBattleLoop()
 	int turnCount{ 0 };
 	bool winCondition{ false };
 
+	BattleAIProcedures::InitAIPlayers(m_context);
+
 	m_battleMenuUI.ThrowOutFirstPokemon();
 
 	while (winCondition == false)
 	{
+		BattleAIProcedures::UpdateEnemyActivePokemon(m_context);
+
 		++turnCount;
 		m_battleMenuUI.DisplayTurnNumber(turnCount);
 
@@ -57,12 +65,16 @@ bool BattleManager::RunBattleLoop()
 		m_turnProcessor.ExecuteTurn(winCondition);
 		if (winCondition) { continue; }
 
+		BattleAIProcedures::RefineEnemyModelFirstTurn(m_context);
+
 		m_battleMenuUI.NewLine();
 
 		m_turnProcessor.SwapRoles();
 
 		m_turnProcessor.ExecuteTurn(winCondition);
 		if (winCondition) { continue; }
+
+		BattleAIProcedures::RefineEnemyModelSecondTurn(m_context);
 
 		m_battleMenuUI.NewLine();
 
@@ -91,6 +103,8 @@ void BattleManager::ResetValues()
 {
 	m_context.playerOne->ResetValues();
 	m_context.playerTwo->ResetValues();
+	m_context.aiPlayerOne = nullptr;
+	m_context.aiPlayerTwo = nullptr;
 
 	for (size_t i = 1; i <= m_context.playerOne->GetPokemonCount(); ++i)
 	{

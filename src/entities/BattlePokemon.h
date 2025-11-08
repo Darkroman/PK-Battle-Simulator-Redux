@@ -41,6 +41,8 @@ public:
         int    GetPower() const;
         int GetAccuracy() const;
 
+        void DeductPP();
+
         bool        DoesMakeContact() const;
         bool    IsAffectedByProtect() const;
         bool  IsAffectedByMagicCoat() const;

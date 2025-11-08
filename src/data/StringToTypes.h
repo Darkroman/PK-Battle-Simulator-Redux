@@ -18,7 +18,7 @@ Category ConvertStringToCategory(std::string_view);
 
 enum class PokemonType // Used in Moves, Pokemon, and BattlePokemon
 {
-    Normal,
+    Normal = 0,
     Fire,
     Water,
     Electric,

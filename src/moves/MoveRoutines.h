@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "../moves/MoveEffectEnums.h"
+
 struct BattleContext;
 class BattleCalculations;
 class StatusEffectProcessor;
@@ -46,546 +48,645 @@ struct MoveRoutineDeps {
 	{}
 };
 
-class IMoveRoutine
+void InflictNVStatus(Status, int, MoveRoutineDeps&);
+
+void BasicDamageRoutine(MoveRoutineDeps&);
+
+class Noop
 {
 public:
-	virtual void DoMove(MoveRoutineDeps&) = 0;
-	virtual ~IMoveRoutine() = default;
+	void DoMove(MoveRoutineDeps&);
+};
 
-	void InflictNVStatus(Status, int, MoveRoutineDeps&);
-	void BasicDamageRoutine(MoveRoutineDeps&);
+class NormalHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class IncreasedCritical
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class MultiHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class BurnHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class FreezeHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class ParalyzeHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class OHKO
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class RazorWind
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class AttackUp2
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Gust
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class ForceSwitch
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Fly
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class PartialTrap
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Stomp
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class DoubleHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class JumpKick
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class FlinchHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class AccuracyDown
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class BodySlam
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class RecoilQuarter
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Rampage
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class RecoilThird
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class DefenseDown
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class PoisonHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Twineedle
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class AttackDown
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SleepMove
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Confuse
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SonicBoom
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Disable
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SpecialDefenseDownHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Mist
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class ConfuseHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SpeedDownHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class AttackDownHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class RechargeAttack
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class LowKick
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Counter
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SeismicToss
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Leech
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class LeechSeed
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Growth
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SolarBeam
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class PoisonPowder
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class StunSpore
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SleepPowder
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SpeedDown2
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class DragonRage
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Paralyze
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Earthquake
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Dig
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Toxic
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class AttackUp
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SpeedUp2
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Rage
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Teleport
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class NightShade
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Mimic
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class DefenseDown2
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class EvasionUp
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class HealHalfHP
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class DefenseUp
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Minimize
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class DefenseUp2
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class LightScreen
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Haze
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Reflect
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class FocusEnergy
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Bide
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Metronome
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class MirrorMove
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Explosion
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class AlwaysHit
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SkullBash
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SpecialDefenseUp2
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class DreamEater
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class PoisonGas
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SkyAttack
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Transform
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Psywave
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Splash
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Rest
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Conversion
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class TriAttack
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class SuperFang
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Substitute
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+class Struggle
+{
+public:
+	void DoMove(MoveRoutineDeps&);
+};
+
+using MoveRoutineTypes = std::variant<
+	Noop,
+	NormalHit,
+	IncreasedCritical,
+	MultiHit,
+	BurnHit,
+	FreezeHit,
+	ParalyzeHit,
+	OHKO,
+	RazorWind,
+	AttackUp2,
+	Gust,
+	ForceSwitch,
+	Fly,
+	PartialTrap,
+	Stomp,
+	DoubleHit,
+	JumpKick,
+	FlinchHit,
+	AccuracyDown,
+	BodySlam,
+	RecoilQuarter,
+	Rampage,
+	RecoilThird,
+	DefenseDown,
+	PoisonHit,
+	Twineedle,
+	AttackDown,
+	SleepMove,
+	Confuse,
+	SonicBoom,
+	Disable,
+	SpecialDefenseDownHit,
+	Mist,
+	ConfuseHit,
+	SpeedDownHit,
+	AttackDownHit,
+	RechargeAttack,
+	LowKick,
+	Counter,
+	SeismicToss,
+	Leech,
+	LeechSeed,
+	Growth,
+	SolarBeam,
+	PoisonPowder,
+	StunSpore,
+	SleepPowder,
+	SpeedDown2,
+	DragonRage,
+	Paralyze,
+	Earthquake,
+	Dig,
+	Toxic,
+	AttackUp,
+	SpeedUp2,
+	Rage,
+	Teleport,
+	NightShade,
+	Mimic,
+	DefenseDown2,
+	EvasionUp,
+	HealHalfHP,
+	DefenseUp,
+	Minimize,
+	DefenseUp2,
+	LightScreen,
+	Haze,
+	Reflect,
+	FocusEnergy,
+	Bide,
+	Metronome,
+	MirrorMove,
+	Explosion,
+	AlwaysHit,
+	SkullBash,
+	SpecialDefenseUp2,
+	DreamEater,
+	PoisonGas,
+	SkyAttack,
+	Transform,
+	Psywave,
+	Splash,
+	Rest,
+	Conversion,
+	TriAttack,
+	SuperFang,
+	Substitute,
+	Struggle
+> ;
+
+class ExecuteMoveRoutine
+{
+public:
+	template <typename T>
+	explicit ExecuteMoveRoutine(T&& routine) : routine_variant(std::forward<T>(routine)) {}
+
+	void DoMove(MoveRoutineDeps&);
+
+	static void Execute(MoveEffect, MoveRoutineDeps&);
+
+private:
+	MoveRoutineTypes routine_variant;
 };
 
 class MoveRoutineFactory
 {
 public:
-	static std::unique_ptr<IMoveRoutine> Call(MoveEffect);
-};
-
-class Noop : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class NormalHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class IncreasedCritical : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class MultiHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class BurnHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class FreezeHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class ParalyzeHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class OHKO : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class RazorWind : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class AttackUp2 : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Gust : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class ForceSwitch : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Fly : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class PartialTrap : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Stomp : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class DoubleHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class JumpKick : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class FlinchHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class AccuracyDown : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class BodySlam : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class RecoilQuarter : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Rampage : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class RecoilThird : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class DefenseDown : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class PoisonHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Twineedle : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class AttackDown : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SleepMove : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Confuse : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SonicBoom : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Disable : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SpecialDefenseDownHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Mist : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class ConfuseHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SpeedDownHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class AttackDownHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class RechargeAttack : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class LowKick : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Counter : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SeismicToss : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Leech : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class LeechSeed : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Growth : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SolarBeam : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class PoisonPowder : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class StunSpore : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SleepPowder : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SpeedDown2 : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class DragonRage : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Paralyze : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Earthquake : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Dig : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Toxic : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class AttackUp : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SpeedUp2 : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Rage : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Teleport : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class NightShade : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Mimic : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class DefenseDown2 : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class EvasionUp : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class HealHalfHP : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class DefenseUp : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Minimize : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class DefenseUp2 : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class LightScreen : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Haze : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Reflect : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class FocusEnergy : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Bide : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Metronome : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class MirrorMove : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Explosion : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class AlwaysHit : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SkullBash : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SpecialDefenseUp2 : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class DreamEater : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class PoisonGas : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SkyAttack : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Transform : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Psywave : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Splash : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Rest : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Conversion : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class TriAttack : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class SuperFang : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Substitute : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
-};
-
-class Struggle : public IMoveRoutine
-{
-public:
-	void DoMove(MoveRoutineDeps&) override;
+	static ExecuteMoveRoutine Call(MoveEffect ID);
 };

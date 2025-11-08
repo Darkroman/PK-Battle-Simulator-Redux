@@ -789,8 +789,20 @@ void Menu::ChangePlayerOneType()
 			}
 			/*
 			case 3:
-			{	//players[0]->SwitchTypeToMediumAI();
-				std::cout << "Switched Player One to Medium A.I.\n\n";
+			{	std::array<BattlePokemon, 6> oldBelt = playerStorage[0]->CopyBelt();
+				std::string_view playerName = playerStorage[0]->GetPlayerNameView();
+
+				auto strategy = std::make_unique<MediumAIStrategy>(m_rng);
+				auto* strategyPtr = strategy.get();
+				strategies.push_back(std::move(strategy));
+
+				auto newAI = std::make_unique<AIPlayer>(playerName, *strategyPtr);
+				players[0] = newAI.get();
+				playerStorage[0] = std::move(newAI);
+
+				playerStorage[0]->AssignBelt(oldBelt);
+
+				std::cout << "Switched Player One to Easy A.I.\n\n";
 				break;
 			}
 			*/

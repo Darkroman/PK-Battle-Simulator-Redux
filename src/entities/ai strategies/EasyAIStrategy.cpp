@@ -1,4 +1,5 @@
 #include "../../battle/RandomEngine.h"
+#include "../AIPlayer.h"
 #include "../Player.h"
 #include "EasyAIStrategy.h"
 
@@ -7,7 +8,7 @@
 EasyAIStrategy::EasyAIStrategy(RandomEngine& rng)
     : m_rng(rng) {}
 
-BattlePokemon::pokemonMove* EasyAIStrategy::ChooseMove(Player& self, BattlePokemon& selfMon)
+BattlePokemon::pokemonMove* EasyAIStrategy::ChooseMove(AIPlayer& self, BattlePokemon& selfMon)
 {
     std::deque<BattlePokemon::pokemonMove*> viableMoves;
 
@@ -21,7 +22,7 @@ BattlePokemon::pokemonMove* EasyAIStrategy::ChooseMove(Player& self, BattlePokem
     }
 
     if (viableMoves.empty())
-        return selfMon.Struggle(); // fallback
+        return selfMon.Struggle();
 
     std::uniform_int_distribution<int> dist(0, static_cast<int>(viableMoves.size()) - 1);
     int choice = dist(m_rng.GetGenerator());
