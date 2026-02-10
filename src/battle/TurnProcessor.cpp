@@ -112,7 +112,6 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 		}
 	}
 	
-
 	ctx.pixelsLost = 0;
 	ctx.initialPowerMultiplier = 10;
 	ctx.effectiveness = 4096;

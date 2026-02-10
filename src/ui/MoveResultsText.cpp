@@ -1,191 +1,352 @@
-#include <iostream>
-
-#include "../battle/BattleContext.h"
+#include <format>
 
 #include "MoveResultsText.h"
+#include "interfaces/ITextSink.h"
 
-MoveResultsText::MoveResultsText(BattleContext& context) : m_context(context) {}
-
-void MoveResultsText::UsedTextDialog(Player* currentPlayer, BattlePokemon::pokemonMove* currentMove, BattlePokemon* source)
+void MoveResultsText::UsedTextDialog(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view currentMoveName) const
 {
-	std::cout << currentPlayer->GetPlayerNameView() << "'s " << source->GetNameView() << " used " << currentMove->GetName() << "\n";
+	m_sink.Emit(std::format("{}'s {} used {}", attackingPlayerName, attackingPokemonName, currentMoveName));
 }
 
-void MoveResultsText::DisplayCritTextDialog()
+void MoveResultsText::DisplayCritTextDialog(bool isCriticalHit) const
 {
-	if (m_context.flags.isCriticalHit && m_context.flags.hit)
+	if (isCriticalHit)
 	{
-		std::cout << "Critical hit!\n";
+		m_sink.Emit(std::format("Critical hit!"));
 	}
 }
 
-void MoveResultsText::DisplayEffectivenessTextDialog(Player* targetPlayer, BattlePokemon* targetPokemon)
+void MoveResultsText::DisplayEffectivenessTextDialog(std::string_view defendingPlayerName, std::string_view defendingPokemonName, EffectivenessText e) const
 {
-	if (m_context.flags.currentEffectiveness == BattleStateFlags::Effectiveness::Less && m_context.flags.hit)
-	{
-		std::cout << "It was not very effective...\n";
-	}
+	using E = EffectivenessText;
 
-	if (m_context.flags.currentEffectiveness == BattleStateFlags::Effectiveness::Super && m_context.flags.hit)
+	switch (e)
 	{
-		std::cout << "It was super effective!\n";
-	}
+		case E::Less:
+			m_sink.Emit(std::format("It was not very effective..."));
+			break;
 
-	if (m_context.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
-	{
-		std::cout << "It doesn't affect " << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << "...\n";
-	}
+		case E::Super:
+			m_sink.Emit(std::format("It was super effective!"));
+			break;
 
-	if (m_context.flags.currentEffectiveness == BattleStateFlags::Effectiveness::OHKO && m_context.flags.hit)
-	{
-		std::cout << "It was a one-hit KO!\n";
+		case E::No:
+			m_sink.Emit(std::format("It doesn't affect {}'s {}...", defendingPlayerName, defendingPokemonName));
+			break;
+
+		case E::OHKO:
+			m_sink.Emit(std::format("It was a one-hit KO!"));
+			break;
+
+		default:
+			return;
 	}
 }
 
-void MoveResultsText::DisplayAttackMissedTextDialog(Player* player, BattlePokemon* pokemon)
+void MoveResultsText::DisplayAttackMissedTextDialog(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "'s attack missed!\n";
+	m_sink.Emit(std::format("{}'s {}'s attack missed!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayAttackAvoidedTextDialog(Player* player, BattlePokemon* pokemon)
+void MoveResultsText::DisplayAttackAvoidedTextDialog(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
 {
-	std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << " avoided the attack!\n";
+	m_sink.Emit(std::format("{}'s {} avoided the attack!", defendingPlayerName, defendingPokemonName));
 }
 
-void MoveResultsText::DisplayFailedTextDialog()
+void MoveResultsText::DisplayFailedTextDialog() const
 {
-	std::cout << "But it failed!\n";
+	m_sink.Emit(std::format("But it failed!"));
 }
 
-void MoveResultsText::DisplaySubstituteDamageTextDialog(Player* player, BattlePokemon* pokemon)
+void MoveResultsText::DisplaySubstituteDamageTextDialog(std::string_view defendingPlayerName, std::string_view defendingPokemonName, int substituteHP, bool hasSubstitute, bool hitSubstitute) const
 {
-	if (m_context.flags.hitSubstitute && pokemon->HasSubstitute())
+	if (hitSubstitute && hasSubstitute)
 	{
-		if (pokemon->GetSubstituteHP() > 0)
+		if (substituteHP > 0)
 		{
-			std::cout << "The substitute took damage for " << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "!\n";
+			m_sink.Emit(std::format("The substitute took damage for {}'s {}!", defendingPlayerName, defendingPokemonName));
 		}
 		else
 		{
-			std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "'s substitute faded!\n";
+			m_sink.Emit(std::format("{}'s {}'s substitute faded!", defendingPlayerName, defendingPokemonName));
 		}
 	}
 }
 
-void MoveResultsText::BoundMoveText(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* sourcePokemon, BattlePokemon* targetPokemon, BattlePokemon::pokemonMove* currentMove)
+void MoveResultsText::BoundMoveText(std::string_view attackingPlayerName, std::string_view defendingPlayerName, std::string_view attackingPokemonName, std::string_view defendingPokemonName, size_t moveIndex) const
 {
-	if (currentMove->GetMoveIndex() == 20)
+	switch (moveIndex)
 	{
-		std::cout << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << " was squeezed by " << sourcePlayer->GetPlayerNameView() << "'s " << sourcePokemon->GetNameView() << "!\n";
-	}
+		case 20:
+			m_sink.Emit(std::format("{}'s {} was squeezed by {}'s {}!", defendingPlayerName, defendingPokemonName, attackingPlayerName, attackingPokemonName));
+			break;
 
-	else if (currentMove->GetMoveIndex() == 35)
-	{
-		std::cout << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << " was wrapped by " << sourcePlayer->GetPlayerNameView() << "'s " << sourcePokemon->GetNameView() << "!\n";
-	}
+		case 35:
+			m_sink.Emit(std::format("{}'s {} was wrapped by {}'s {}!", defendingPlayerName, defendingPokemonName, attackingPlayerName, attackingPokemonName));
+			break;
 
-	else if (currentMove->GetMoveIndex() == 83)
-	{
-		std::cout << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << " became trapped in the fiery vortex!\n";
-	}
+		case 83:
+			m_sink.Emit(std::format("{}'s {} became trapped in the fiery vortex!", defendingPlayerName, defendingPokemonName));
+			break;
 
-	else if (currentMove->GetMoveIndex() == 128)
-	{
-		std::cout << sourcePlayer->GetPlayerNameView() << "'s " << sourcePokemon->GetNameView() << " clamped down on " << targetPlayer->GetPlayerNameView() << "'s " << targetPokemon->GetNameView() << "!\n";
+		case 128:
+			m_sink.Emit(std::format("{}'s {} clamped down on {}'s {}!", attackingPlayerName, attackingPokemonName, defendingPlayerName, defendingPokemonName));
+			break;
+
+		default:
+			m_sink.Emit(std::format("Text not found for move index number {}", moveIndex));
 	}
 }
 
-void MoveResultsText::DisplayNoopMsg()
+void MoveResultsText::DisplayNoopMsg() const
 {
-	std::cout << "This isn't implemented yet!\n\n";
+	m_sink.Emit(std::format("This isn't implemented yet!"));
 }
 
-void MoveResultsText::DisplayDirectDamageInflictedMsg(int damage)
+void MoveResultsText::DisplayDirectDamageInflictedMsg(int damage) const
 {
 	if (damage > 0)
 	{
-		std::cout << damage << " damage inflicted.\n";
+		m_sink.Emit(std::format("{} damage inflicted.", damage));
 	}
 }
 
-void MoveResultsText::DisplayMultiAttackMsg(int timesHit)
+void MoveResultsText::DisplayMultiAttackMsg(std::string_view defendingPokemonName, int timesHit) const
 {
-	std::cout << m_context.defendingPokemon->GetNameView() << " was hit " << timesHit << " times!\n";
+	m_sink.Emit(std::format("{} was hit {} times!", defendingPokemonName, timesHit));
 }
 
-void MoveResultsText::DisplayRazorWindChargeMsg()
+void MoveResultsText::DisplayRazorWindChargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " made a whirlwind!\n";
+	m_sink.Emit(std::format("{}'s {} made a whirlwind!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayEnemySwitchMsg(BattlePokemon& pokemon)
+void MoveResultsText::DisplayEnemySwitchMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << "The opposing " << pokemon.GetNameView() << " was dragged out!\n";
+	m_sink.Emit(std::format("{} was dragged out!", attackingPokemonName));
 }
 
-void MoveResultsText::DisplayFlyChargeMsg()
+void MoveResultsText::DisplayFlyChargeMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPokemon->GetNameView() << " flew up high in the sky!\n";
+	m_sink.Emit(std::format("{} flew up high in the sky!", attackingPokemonName));
 }
 
-void MoveResultsText::DisplayJumpKickCrashMsg()
+void MoveResultsText::DisplayJumpKickCrashMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " kept going and crashed!\n";
+	m_sink.Emit(std::format("{}'s {} kept going and crashed!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayRecoilMsg()
+void MoveResultsText::DisplayRecoilMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " was damaged by the recoil!\n";
+	m_sink.Emit(std::format("{}'s {} was damaged by the recoil!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayRechargeMsg()
+void MoveResultsText::DisplayRechargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " must recharge!\n";
+	m_sink.Emit(std::format("{}'s {} must recharge!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayEnergyDrainedMsg()
+void MoveResultsText::DisplayEnergyDrainedMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
 {
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " had its energy drained!\n";
+	m_sink.Emit(std::format("{}'s {} had its energy drained!", defendingPlayerName, defendingPokemonName));
 }
 
-void MoveResultsText::DisplaySolarBeamChargeMsg()
+void MoveResultsText::DisplaySolarBeamChargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " absorbed light!\n";
+	m_sink.Emit(std::format("{}'s {} absorbed light!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayDigChargeMsg()
+void MoveResultsText::DisplayDigChargeMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPokemon->GetNameView() << " burrowed its way under the ground!\n";
+	m_sink.Emit(std::format("{} burrowed its way under the ground!", attackingPokemonName));
 }
 
-void MoveResultsText::DisplayRecoveredHPRestoredMsg(int healAmount)
+void MoveResultsText::DisplayRecoveredHPRestoredMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< " had its HP restored!\n";
+	m_sink.Emit(std::format("{}'s {} had its HP restored!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayHPFullMsg()
+void MoveResultsText::DisplayHPFullMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< " HP is full!\n";
+	m_sink.Emit(std::format("{}'s {}'s HP is full!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplaySkullBashChargeMsg()
+void MoveResultsText::DisplaySkullBashChargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " tucked in its head!\n";
+	m_sink.Emit(std::format("{}'s {} tucked in its head!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplaySkyAttackChargeMsg()
+void MoveResultsText::DisplaySkyAttackChargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " became cloaked in a harsh light!\n";
+	m_sink.Emit(std::format("{}'s {} became cloaked in a harsh light!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplaySplashMsg()
+void MoveResultsText::DisplaySplashMsg() const
 {
-	std::cout << "But nothing happened!\n";
+	m_sink.Emit(std::format("But nothing happened!"));
 }
 
-void MoveResultsText::DisplayRestMsg()
+void MoveResultsText::DisplayRestMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " slept and became healthy!\n";
+	m_sink.Emit(std::format("{}'s {} slept and became healthy!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplayNVStatusMsg(std::string_view statusMessage) const
+{
+	m_sink.Emit(std::format("{}", statusMessage));
+}
+
+void MoveResultsText::DisplayBecameConfuseMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} became confused!", defendingPlayerName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayAlreadyPoisonedMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} is already poisoned!", defendingPlayerName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayAlreadyParalyzedMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} is already paralyzed!", defendingPlayerName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayAlreadyAsleepMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} is already asleep!", defendingPlayerName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayDoesntAffectMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("It doesn't affect {}'s {}...", defendingPlayerName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayStatRaised2Msg(std::string_view statName, std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s {} rose sharply!", attackingPlayerName, attackingPokemonName, statName));
+}
+
+void MoveResultsText::DisplayStatRaised1Msg(std::string_view statName, std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s {} rose!", attackingPlayerName, attackingPokemonName, statName));
+}
+
+void MoveResultsText::DisplayStatRaiseFailMsg(std::string_view statName, std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} can't raise its {} any higher!", attackingPlayerName, attackingPokemonName, statName));
+}
+
+void MoveResultsText::DisplayStatLowered2Msg(std::string_view statName, std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s {} fell harshly!", defendingPlayerName, defendingPokemonName, statName));
+}
+
+void MoveResultsText::DisplayStatLowered1Msg(std::string_view statName, std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s {} fell!", defendingPlayerName, defendingPokemonName, statName));
+}
+
+void MoveResultsText::DisplayStatLoweredFailMsg(std::string_view statName, std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s {} won't go any lower!", defendingPlayerName, defendingPokemonName, statName));
+}
+
+void MoveResultsText::DisplayFocusEnergyMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} is getting pumped!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplayProtectedByMistMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} is protected by the mist!", defendingPlayerName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayMistMsg(std::string_view attackingPlayerName) const
+{
+	m_sink.Emit(std::format("{}'s team became shrouded in mist!", attackingPlayerName));
+}
+
+void MoveResultsText::DisplayLightScreenMsg(std::string_view attackingPlayerName) const
+{
+	m_sink.Emit(std::format("Light screen made {}'s team stronger against special moves!", attackingPlayerName));
+}
+
+void MoveResultsText::DisplayHazeMsg() const
+{
+	m_sink.Emit(std::format("All stat changes were eliminated!"));
+}
+
+void MoveResultsText::DisplayReflectMsg(std::string_view attackingPlayerName) const
+{
+	m_sink.Emit(std::format("Reflect made {}'s team stronger against physical moves!", attackingPlayerName));
+}
+
+void MoveResultsText::DisplayThrashDisabledMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s Thrash is disabled!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplayMoveDisabledMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName, std::string_view moveName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s {} was disabled!", defendingPlayerName, defendingPokemonName, moveName));
+}
+
+void MoveResultsText::DisplayAlreadyHasSubstituteMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} already has a substitute!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplayNotEnoughHPSubstituteMsg() const
+{
+	m_sink.Emit(std::format("But it does not have enough HP left to make a substitute!"));
+}
+
+void MoveResultsText::DisplayPutInSubstituteMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} put in a substitute!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplaySeededMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} was seeded!", defendingPlayerName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayLearnedMimicMoveMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view lastUsedMoveName) const
+{
+	m_sink.Emit(std::format("{}'s {} learned {}!", attackingPlayerName, attackingPokemonName, lastUsedMoveName));
+}
+
+void MoveResultsText::DisplayTransformMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} transformed into {}!", attackingPlayerName, attackingPokemonName, defendingPokemonName));
+}
+
+void MoveResultsText::DisplayMetronomeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view moveName) const
+{
+	m_sink.Emit(std::format("Waggling its finger let {}'s {} use {}", attackingPlayerName, attackingPokemonName, moveName));
+}
+
+void MoveResultsText::DisplayConversionMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view attackingPokemonNewType) const
+{
+	m_sink.Emit(std::format("{}'s {}'s type changed to {}!", attackingPlayerName, attackingPokemonName, attackingPokemonNewType));
+}
+
+void MoveResultsText::DisplayBideUnleashedMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} unleashed its energy!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplayBideStoringEnergyMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} is storing energy!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplayBideDisabledMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s Bide is disabled!", attackingPlayerName, attackingPokemonName));
+}
+
+void MoveResultsText::DisplayNoMovesLeftStruggleMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} has no moves left!", attackingPlayerName, attackingPokemonName));
 }

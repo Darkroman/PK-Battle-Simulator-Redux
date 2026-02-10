@@ -11,7 +11,6 @@ public:
         StatusEffectProcessor& statusProcessor,
         IMoveResultsUI& resultsUI,
         IBattleMenuUI& battleMenuUI,
-        IStatusEffectUI& statusEffectUI,
         RandomEngine& rng,
         SwitchExecutor& switchExecutor
     );

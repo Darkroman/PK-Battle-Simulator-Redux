@@ -32,9 +32,6 @@ public:
     std::vector<Move>::const_iterator cMovedexBegin() const;
     std::vector<Move>::const_iterator   cMovedexEnd() const;
 
-    void DisplayPokemon() const;
-    void   DisplayMoves() const;
-
     static Database& GetInstance();
 
 private:

@@ -7,6 +7,15 @@
 
    </summary>
    
+### 2/10/2026
+- Some major UI refactoring. 
+- UI fully separated from core game logic (MoveResultsUI & StatusEffectUI) for clearer messages
+- Move routines now consistently display results through MoveResultsUI
+- Fixed post-turn and status effect logic (thrash/rampage, leech, bound, disable, etc.)
+- Corrected minor move text bugs (Sky Attack now shows correct start text)
+- Improved overall message consistency between attacker and defender
+- Player Impact: Battles now show more accurate, consistent messages; status effects and multi-turn moves behave as expected.
+
 ### 11/8/2025
 - Changed MoveRoutines to use std::variant rather than using runtime polymorphism. Less verbose, and (very slightly) faster (AI only battles seemed snappier). I did also test with void* type erasure and even simple function pointer array lookups and it seemed std::variant was the snappiest feeling one.
 - Added in some AI routines to observe and update its memory based on outcome of battle turns. The features have been implemented but they're not in use by the AI yet to determine what to do in battle.
@@ -87,7 +96,7 @@ Bug fixes:
 ## BUILD NOTES
 
   </summary>
-This was coded in VS2022 Community, utilizing up to the C++20 standard features (std::filesystem, std::string_view and std::ranges). Uploaded in this repository is a simple CMake build. Only tested on Windows.
+This was coded in VS2022 Community, utilizing up to the C++23 standard features (std::filesystem, std::string_view and std::ranges). Uploaded in this repository is a simple CMake build. Only tested on Windows.
 </details>
 
 <details open>

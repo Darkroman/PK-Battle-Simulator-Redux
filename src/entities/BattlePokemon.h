@@ -4,6 +4,8 @@
 #include <ranges>
 #include <string>
 
+#include "../common/PartyEditResults.h"
+
 class Pokemon;
 class Move;
 enum class PokemonType;
@@ -20,6 +22,7 @@ public:
         pokemonMove();
 
         bool IsActive() const;
+        bool IsDisabled() const;
 
         void SetMovePointer(Move*);
         Move* GetMovePointer() const;
@@ -108,12 +111,10 @@ public:
     //BattlePokemon();
     Pokemon* GetPokemonDatabasePointer() const;
 
-    void SetPokemon(size_t);
-    void SetPokemon(std::string_view);
+    SetPokemonOutcome SetPokemon(std::string_view);
     void ReleasePokemon();
 
-    void SetMove(size_t, size_t);
-    void SetMove(size_t, std::string_view);
+    SetMoveOutcome SetMove(size_t, std::string_view);
 
     void SetNickname(std::string_view);
     bool HasNickname() const;
@@ -128,12 +129,12 @@ public:
     void SetSpecialDefenseIV(int);
     void SetSpeedIV(int);
 
-    bool SetHPEV(int);
-    bool SetAttackEV(int);
-    bool SetDefenseEV(int);
-    bool SetSpecialAttackEV(int);
-    bool SetSpecialDefenseEV(int);
-    bool SetSpeedEV(int);
+    SetEVResult SetHPEV(int);
+    SetEVResult SetAttackEV(int);
+    SetEVResult SetDefenseEV(int);
+    SetEVResult SetSpecialAttackEV(int);
+    SetEVResult SetSpecialDefenseEV(int);
+    SetEVResult SetSpeedEV(int);
 
     int GetHPEV() const;
     int GetAttackEV() const;
@@ -141,6 +142,8 @@ public:
     int GetSpecialAttackEV() const;
     int GetSpecialDefenseEV() const;
     int GetSpeedEV() const;
+
+    bool ExceedsMaxAllowedEVs(int);
 
     int GetHPIV() const;
     int GetAttackIV() const;
@@ -150,15 +153,10 @@ public:
     int GetSpeedIV() const;
 
 private:
-    bool ExceedsMaxAllowedEVs(int);
 
     void UpdateStats();
 
 public:
-    void DisplayStats() const;
-    void DisplayLearnableMoves() const;
-    void DisplayIVs() const;
-    void DisplayEVs() const;
 
     const std::string& GetPokemonName() const;
     std::string_view GetPokemonNameView() const;
@@ -173,10 +171,11 @@ public:
     void DisplayMovesInBattle() const;
 
     BattlePokemon::pokemonMove* GetMove(size_t);
+    const BattlePokemon::pokemonMove* GetMove(size_t) const;
     int GetPP(size_t) const;
     int GetMaxPP(size_t) const;
 
-    bool HasPokemon();
+    bool HasPokemon() const;
     bool HasMove(size_t);
 
     void IncrementMoveCount();

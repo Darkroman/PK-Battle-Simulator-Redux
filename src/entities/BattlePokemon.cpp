@@ -1,9 +1,7 @@
-#include <iostream>
-#include <iomanip>
-
 #include "../data/Pokemon.h"
 #include "../data/Move.h"
 #include "../data/Database.h"
+#include "../common/InputValidation.h"
 
 #include "BattlePokemon.h"
 
@@ -64,50 +62,53 @@ Pokemon* BattlePokemon::GetPokemonDatabasePointer() const
     return mp_pokemon;
 }
 
-void BattlePokemon::SetPokemon(size_t pknum)
+SetPokemonOutcome BattlePokemon::SetPokemon(std::string_view pkname)
 {
-    if (pknum < 1 || pknum > 151)
-    {
-        std::cout << "Invalid input!\n";
-        return;
-    }
-    --pknum;
-
-    if (mp_pokemon != nullptr)
-    {
-        ResetStatsAndMoves();
-    }
-
-    mp_pokemon = Database::GetInstance().GetPointerToPokedexNumber(pknum);
-    m_name = mp_pokemon->GetName();
-    m_type1 = mp_pokemon->GetFirstType();
-    m_type1e = mp_pokemon->GetFirstTypeEnum();
-    m_type2 = mp_pokemon->GetSecondType();
-    m_type2e = mp_pokemon->GetSecondTypeEnum();
-
-    ResetValues();
-    
-    UpdateStats();
-}
-
-void BattlePokemon::SetPokemon(std::string_view pkname)
-{
-    auto FoundPokemon = [&pkname](std::string_view n) { return n == pkname; };
+    SetPokemonOutcome outcome{};
 
     size_t result{};
-    if (auto it = std::ranges::find_if(Database::GetInstance().GetPokedexVector(), FoundPokemon, &Pokemon::GetName); it != Database::GetInstance().cPokedexEnd())
+    auto& db = Database::GetInstance();
+
+    if (IsDigits(pkname))
     {
-       result = std::ranges::distance(Database::GetInstance().cPokedexBegin(), it);
+        try 
+        {
+            result = std::stoul(std::string(pkname));
+
+            if (result == 0 || result > 151)
+            {
+                outcome.result = SetPokemonResult::InvalidRange;
+                return outcome;
+            }
+
+            result--;
+        }
+        catch (...)
+        {
+            outcome.result = SetPokemonResult::InvalidRange;
+            return outcome;
+        }
     }
     else
     {
-        std::cout << "That Pokemon doesn't exist!\n";
-        return;
+        auto FoundPokemon = [&pkname](std::string_view n) { return n == pkname; };
+
+        if (auto it = std::ranges::find_if(db.GetPokedexVector(), FoundPokemon, &Pokemon::GetName); it != db.cPokedexEnd())
+        {
+            result = std::ranges::distance(db.cPokedexBegin(), it);
+        }
+        else
+        {
+            outcome.pokemonName = pkname;
+            outcome.result = SetPokemonResult::InvalidPokemon;
+
+            return outcome;
+        }
     }
 
     ResetStatsAndMoves();
 
-    mp_pokemon = Database::GetInstance().GetPointerToPokedexNumber(result);
+    mp_pokemon = db.GetPointerToPokedexNumber(result);
     m_name = mp_pokemon->GetName();
     m_type1 = mp_pokemon->GetFirstType();
     m_type1e = mp_pokemon->GetFirstTypeEnum();
@@ -118,6 +119,10 @@ void BattlePokemon::SetPokemon(std::string_view pkname)
     ResetValues();
 
     UpdateStats();
+
+    outcome.pokemonName = m_name;
+    outcome.result = SetPokemonResult::Success;
+    return outcome;
 }
 
 void BattlePokemon::ReleasePokemon()
@@ -125,76 +130,82 @@ void BattlePokemon::ReleasePokemon()
     ResetStatsAndMoves();
 }
 
-void BattlePokemon::SetMove(size_t moveslot, size_t movenum)
+SetMoveOutcome BattlePokemon::SetMove(size_t moveslot, std::string_view movename)
 {
     --moveslot;
-    --movenum;
-    bool CanLearnMove = false;
-    CanLearnMove = mp_pokemon->CheckPokemonMoveList(movenum);
 
-    for (auto& i : m_array_moves)
+    SetMoveOutcome outcome{};
+
+    if (moveslot > 3)
     {
-        if (Database::GetInstance().GetPointerToMovedexNumber(movenum) == i.GetMovePointer())
+        outcome.result = SetMoveResult::InvalidSlot;
+        return outcome;
+    }
+
+    size_t result{};
+    auto& db = Database::GetInstance();
+
+    if (IsDigits(movename))
+    {
+        try
         {
-            std::cout << this->m_name << " already knows " << Database::GetInstance().GetPointerToMovedexNumber(movenum)->GetName() << "!\n";
-            return;
+            result = std::stoul(std::string(movename));
+
+            if (result == 0 || result > 165)
+            {
+                outcome.result = SetMoveResult::InvalidRange;
+                return outcome;
+            }
+
+            result--;
+        }
+        catch (...)
+        {
+            outcome.result = SetMoveResult::InvalidRange;
+            return outcome;
+        }
+    }
+    else
+    {
+        auto FoundMove = [&movename](std::string_view n) { return n == movename; };
+
+        if (auto it = std::ranges::find_if(db.GetMovedexVector(), FoundMove, &Move::GetName); it != db.cMovedexEnd())
+        {
+            result = std::ranges::distance(db.cMovedexBegin(), it);
+        }
+        else
+        {
+            outcome.moveName = movename;
+            outcome.result = SetMoveResult::InvalidMove;
+            return outcome;
         }
     }
 
-    if (!CanLearnMove)
+    auto* movePtr = db.GetPointerToMovedexNumber(result);
+    if (!mp_pokemon->CheckPokemonMoveList(result))
     {
-        //std::cout << this->m_name << " cannot learn " << Database::GetInstance().GetPointerToMovedexNumber(movenum)->GetName() << "!\n";
-        return;
+        outcome.moveName = movePtr->GetName();
+        outcome.result = SetMoveResult::NotLearnable;
+        return outcome;
     }
-    else
-    {
-        m_array_moves[moveslot].SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(movenum));
-        m_array_moves[moveslot].m_currentPP = m_array_moves[moveslot].GetPP();
-        m_array_moves[moveslot].m_maxPP = m_array_moves[moveslot].GetPP();
-        //std::cout << this->m_name <<  " was able to learn move " << m_array_moves[moveslot].GetName() << " successfully!" << '\n';
-    }
-}
-
-void BattlePokemon::SetMove(size_t moveslot, std::string_view movename)
-{
-    --moveslot;
-
-    auto FoundMove = [&movename](std::string_view n) { return n == movename; };
-
-    size_t result{};
-    if (auto it = std::ranges::find_if(Database::GetInstance().GetMovedexVector(), FoundMove, &Move::GetName); it != Database::GetInstance().cMovedexEnd())
-    {
-        result = std::ranges::distance(Database::GetInstance().cMovedexBegin(), it);
-    }
-    else
-    {
-        std::cout << "That move doesn't exist!\n";
-        return;
-    }
-
-    bool CanLearnMove = false;
-    CanLearnMove = mp_pokemon->CheckPokemonMoveList(result);
 
     for (const auto& i : m_array_moves)
     {
-        if (Database::GetInstance().GetPointerToMovedexNumber(result) == i.GetMovePointer())
+        if (movePtr == i.GetMovePointer())
         {
-            std::cout << this->m_name << " already knows " << Database::GetInstance().GetPointerToMovedexNumber(result)->GetName() << "!\n";
-            return;
+            outcome.moveName = movePtr->GetName();
+            outcome.result = SetMoveResult::DuplicateMove;
+            return outcome;
         }
     }
 
-    if (!CanLearnMove)
-    {
-        std::cout << this->m_name << " cannot learn " << Database::GetInstance().GetPointerToMovedexNumber(result)->GetName() << "!\n";
-    }
-    else
-    {
-        m_array_moves[moveslot].SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(result));
-        m_array_moves[moveslot].m_currentPP = m_array_moves[moveslot].GetPP();
-        m_array_moves[moveslot].m_maxPP = m_array_moves[moveslot].GetPP();
-        //std::cout << this->m_name << " was able to learn move " << m_array_moves[moveslot].GetName() << " successfully!" << '\n';
-    }
+    m_array_moves[moveslot].SetMovePointer(movePtr);
+    m_array_moves[moveslot].m_currentPP = m_array_moves[moveslot].GetPP();
+    m_array_moves[moveslot].m_maxPP = m_array_moves[moveslot].GetPP();
+
+    outcome.moveName = m_array_moves[moveslot].GetName();
+    outcome.result = SetMoveResult::Success;
+    return outcome;
 }
 
 void BattlePokemon::SetNickname(std::string_view input)
@@ -223,151 +234,53 @@ std::string_view BattlePokemon::GetNickname() const
 
 void BattlePokemon::SetLevel(int input)
 {
-    bool exit = false;
-    while (exit == false)
-    {
-        if (input < 1 || input > 100)
-        {
-            std::cout << "Level can only be between 1 and 100!\n";
-            return;
-        }
-        else
-        {
-            m_level = input;
-            UpdateStats();
-            return;
-        }
-    }
+    m_level = input;
+    UpdateStats();
 }
 
 void BattlePokemon::SetHPIV(int input)
 {
-    if (input > 31)
-    {
-        std::cout << "Cannot exceed 31 IVs, setting HP IV to 31.\n";
-        m_hp_iv = 31;
-        UpdateStats();
-    }
-    else if (input < 0)
-    {
-        std::cout << "Cannot go below 0 IVs, setting HP IV to 0.\n";
-        m_hp_iv = 0;
-        UpdateStats();
-    }
-    else
-    {
-        m_hp_iv = input;
-        UpdateStats();
-    }
+    m_hp_iv = input;
+    UpdateStats();
 }
 
 void BattlePokemon::SetAttackIV(int input)
 {
-    if (input > 31)
-    {
-        std::cout << "Cannot exceed 31 IVs, setting Attack IV to 31.\n";
-        m_attack_iv = 31;
-        UpdateStats();
-    }
-    else if (input < 0)
-    {
-        std::cout << "Cannot go below 0 IVs, setting Attack IV to 0.\n";
-        m_attack_iv = 0;
-        UpdateStats();
-    }
-    else
-    {
-        m_attack_iv = input;
-        UpdateStats();
-    }
+    m_attack_iv = input;
+    UpdateStats();
 }
 
 void BattlePokemon::SetDefenseIV(int input)
 {
-    if (input > 31)
-    {
-        std::cout << "Cannot exceed 31 IVs, setting Defense IV to 31.\n";
-        m_defense_iv = 31;
-        UpdateStats();
-    }
-    else if (input < 0)
-    {
-        std::cout << "Cannot go below 0 IVs, setting Defense IV to 0.\n";
-        m_defense_iv = 0;
-        UpdateStats();
-    }
-    else
-    {
-        m_defense_iv = input;
-        UpdateStats();
-    }
+    m_defense_iv = input;
+    UpdateStats();
 }
 
 void BattlePokemon::SetSpecialAttackIV(int input)
 {
-    if (input > 31)
-    {
-        std::cout << "Cannot exceed 31 IVs, setting Special Attack IV to 31.\n";
-        m_specialattack_iv = 31;
-        UpdateStats();
-    }
-    else if (input < 0)
-    {
-        std::cout << "Cannot go below 0 IVs, setting Special Attack IV to 0.\n";
-        m_specialattack_iv = 0;
-        UpdateStats();
-    }
-    else
-    {
-        m_specialattack_iv = input;
-        UpdateStats();
-    }
+    m_specialattack_iv = input;
+    UpdateStats();
 }
 
 void BattlePokemon::SetSpecialDefenseIV(int input)
 {
-    if (input > 31)
-    {
-        std::cout << "Cannot exceed 31 IVs, setting Special Defense IV to 31.\n";
-        m_specialdefense_iv = 31;
-        UpdateStats();
-    }
-    else if (input < 0)
-    {
-        std::cout << "Cannot go below 0 IVs, setting Special Defense IV to 0.\n";
-        m_specialdefense_iv = 0;
-        UpdateStats();
-    }
-    else
-    {
-        m_specialdefense_iv = input;
-        UpdateStats();
-    }
+    m_specialdefense_iv = input;
+    UpdateStats();
 }
 
 void BattlePokemon::SetSpeedIV(int input)
 {
-    if (input > 31)
-    {
-        std::cout << "Cannot exceed 31 IVs, setting Speed IV to 31.\n";
-        m_speed_iv = 31;
-        UpdateStats();
-    }
-    else if (input < 0)
-    {
-        std::cout << "Cannot go below 0 IVs, setting Speed IV to 0.\n";
-        m_speed_iv = 0;
-        UpdateStats();
-    }
-    else
-    {
-        m_speed_iv = input;
-        UpdateStats();
-    }
+    m_speed_iv = input;
+    UpdateStats();
 }
 
-bool BattlePokemon::SetHPEV(int input)
+SetEVResult BattlePokemon::SetHPEV(int input)
 {
+    if (input < 0 || input > 252)
+    {
+        return SetEVResult::InvalidValue;
+    }
+
     int ev_value{ input };
     ev_value -= m_hp_ev;
 
@@ -377,18 +290,23 @@ bool BattlePokemon::SetHPEV(int input)
 
     if (ExceedsMaxAllowedEVs(ev_total_temp))
     {
-        return false;
+        return SetEVResult::ExceedsTotal;
     }
 
     m_hp_ev = input;
     m_ev_total += ev_value;
     UpdateStats();
 
-    return true;
+    return SetEVResult::Success;
 }
 
-bool BattlePokemon::SetAttackEV(int input)
+SetEVResult BattlePokemon::SetAttackEV(int input)
 {
+    if (input < 0 || input > 252)
+    {
+        return SetEVResult::InvalidValue;
+    }
+
     int ev_value{ input };
     ev_value -= m_attack_ev;
 
@@ -398,20 +316,25 @@ bool BattlePokemon::SetAttackEV(int input)
 
     if (ExceedsMaxAllowedEVs(ev_total_temp))
     {
-        return false;
+        return SetEVResult::ExceedsTotal;
     }
 
     m_attack_ev = input;
     m_ev_total += ev_value;
     UpdateStats();
 
-    return true;
+    return SetEVResult::Success;
 }
 
-bool BattlePokemon::SetDefenseEV(int input)
+SetEVResult BattlePokemon::SetDefenseEV(int input)
 {
+    if (input < 0 || input > 252)
+    {
+        return SetEVResult::InvalidValue;
+    }
+
     int ev_value{ input };
-    ev_value = ev_value - m_defense_ev;
+    ev_value -= m_defense_ev;
 
     int ev_total_temp{ 0 };
     ev_total_temp = m_ev_total;
@@ -419,18 +342,23 @@ bool BattlePokemon::SetDefenseEV(int input)
 
     if (ExceedsMaxAllowedEVs(ev_total_temp))
     {
-        return false;
+        return SetEVResult::ExceedsTotal;
     }
 
     m_defense_ev = input;
-    m_ev_total = m_ev_total + ev_value;
+    m_ev_total += ev_value;
     UpdateStats();
 
-    return true;
+    return SetEVResult::Success;
 }
 
-bool BattlePokemon::SetSpecialAttackEV(int input)
+SetEVResult BattlePokemon::SetSpecialAttackEV(int input)
 {
+    if (input < 0 || input > 252)
+    {
+        return SetEVResult::InvalidValue;
+    }
+
     int ev_value{ input };
     ev_value -= m_specialattack_ev;
 
@@ -440,18 +368,23 @@ bool BattlePokemon::SetSpecialAttackEV(int input)
 
     if (ExceedsMaxAllowedEVs(ev_total_temp))
     {
-        return false;
+        return SetEVResult::ExceedsTotal;
     }
 
     m_specialattack_ev = input;
     m_ev_total += ev_value;
     UpdateStats();
 
-    return true;
+    return SetEVResult::Success;
 }
 
-bool BattlePokemon::SetSpecialDefenseEV(int input)
+SetEVResult BattlePokemon::SetSpecialDefenseEV(int input)
 {
+    if (input < 0 || input > 252)
+    {
+        return SetEVResult::InvalidValue;
+    }
+
     int ev_value{ input };
     ev_value -= m_specialdefense_ev;
 
@@ -461,18 +394,23 @@ bool BattlePokemon::SetSpecialDefenseEV(int input)
 
     if (ExceedsMaxAllowedEVs(ev_total_temp))
     {
-        return false;
+        return SetEVResult::ExceedsTotal;
     }
 
     m_specialdefense_ev = input;
     m_ev_total += ev_value;
     UpdateStats();
 
-    return true;
+    return SetEVResult::Success;
 }
 
-bool BattlePokemon::SetSpeedEV(int input)
+SetEVResult BattlePokemon::SetSpeedEV(int input)
 {
+    if (input < 0 || input > 252)
+    {
+        return SetEVResult::InvalidValue;
+    }
+
     int ev_value{ input };
     ev_value -= m_speed_ev;
 
@@ -482,14 +420,14 @@ bool BattlePokemon::SetSpeedEV(int input)
 
     if (ExceedsMaxAllowedEVs(ev_total_temp))
     {
-        return false;
+        return SetEVResult::ExceedsTotal;
     }
 
     m_speed_ev = input;
     m_ev_total += ev_value;
     UpdateStats();
 
-    return true;
+    return SetEVResult::Success;
 }
 
 int BattlePokemon::GetHPEV() const
@@ -556,7 +494,6 @@ bool BattlePokemon::ExceedsMaxAllowedEVs(int ev_total_temp)
 {
     if (ev_total_temp > EV_TOTAL_ALLOWED)
     {
-        std::cout << "You are not allowed to exceed 510 total EVs\n";
         return true;
     }
     else
@@ -574,80 +511,6 @@ void BattlePokemon::UpdateStats()
     //m_specialattack = (((m_specialattack_iv + 2 * mp_pokemon->GetBaseSpecialAttack() + (m_specialattack_ev / 4)) * m_level / 100) + 5);
     //m_specialdefense = (((m_specialdefense_iv + 2 * mp_pokemon->GetBaseSpecialDefense() + (m_specialdefense_ev / 4)) * m_level / 100) + 5);
     //m_speed = (((m_speed_iv + 2 * mp_pokemon->GetBaseSpeed() + (m_speed_ev / 4)) * m_level / 100) + 5);
-}
-
-void BattlePokemon::DisplayStats() const
-{
-    std::cout << "Pokemon: " << m_name << '\n';
-    ((b_hasNickname == false) ? std::cout << "No nickname\n" : std::cout << "Nickname: " << m_nickname << '\n');
-    std::cout << "Type: " << m_type1 << "/" << m_type2 << '\n';
-    std::cout << "Level: " << m_level << '\n';
-    std::cout << "HP: " << GetMaxHP() << " -- [IV: " << m_hp_iv << "]" << " -- [EV: " << m_hp_ev << "]" << '\n';
-    std::cout << "Attack: " << GetAttack() << " -- [IV: " << m_attack_iv << "]" << " -- [EV: " << m_attack_ev << "]" << '\n';
-    std::cout << "Defense: " << GetDefense() << " -- [IV: " << m_defense_iv << "]" << " -- [EV: " << m_defense_ev << "]" << '\n';
-    std::cout << "Special Attack: " << GetSpecialAttack() << " -- [IV: " << m_specialattack_iv << "]" << " -- [EV: " << m_specialattack_ev << "]" << '\n';
-    std::cout << "Special Defense: " << GetSpecialDefense() << " -- [IV: " << m_specialdefense_iv << "]" << " -- [EV: " << m_specialdefense_ev << "]" << '\n';
-    std::cout << "Speed: " << GetSpeed() << " -- [IV: " << m_speed_iv << "]" << " -- [EV: " << m_speed_ev << "]" << '\n';
-}
-
-void BattlePokemon::DisplayLearnableMoves() const
-{
-    Move* move;
-
-    int colCount = 0;
-
-    for (auto index = mp_pokemon->MovelistBegin(); index != mp_pokemon->MovelistEnd(); ++index)
-    {
-        ++colCount;
-        auto moveNum = mp_pokemon->FetchMoveNumber(index);
-        
-        move = Database::GetInstance().GetPointerToMovedexNumber(moveNum);
-
-        //std::cout << move->GetMoveIndex() << ": " << move->GetName() << " --- ";
-
-        ++moveNum;
-        if (moveNum < 10)
-        {
-            std::cout << move->GetMoveIndex() << ":   ";
-            std::cout << std::setw(15) << std::left << move->GetName();
-        }
-        else if (moveNum >= 10 && moveNum <= 99)
-        {
-            std::cout << move->GetMoveIndex() << ":  ";
-            std::cout << std::setw(15) << std::left << move->GetName();
-        }
-        else if (moveNum > 99)
-        {
-            std::cout << move->GetMoveIndex() << ": ";
-            std::cout << std::setw(15) << std::left << move->GetName();
-        }
-
-        if (colCount % 6 == 0)
-        {
-            std::cout << '\n';
-        }
-    }
-    std::cout << '\n';
-}
-
-void BattlePokemon::DisplayIVs() const
-{
-    std::cout << "HP IV: " << m_hp_iv << '\n';
-    std::cout << "Attack IV: " << m_attack_iv << '\n';
-    std::cout << "Defense IV: " << m_defense_iv << '\n';
-    std::cout << "Special Attack IV: " << m_specialattack_iv << '\n';
-    std::cout << "Special Defense IV: " << m_specialdefense_iv << '\n';
-    std::cout << "Speed IV: " << m_speed_iv << "\n\n";
-}
-
-void BattlePokemon::DisplayEVs() const
-{
-    std::cout << "HP EV: " << m_hp_ev << '\n';
-    std::cout << "Attack EV: " << m_attack_ev << '\n';
-    std::cout << "Defense EV: " << m_defense_ev << '\n';
-    std::cout << "Special Attack EV: " << m_specialattack_ev << '\n';
-    std::cout << "Special Defense EV: " << m_specialdefense_ev << '\n';
-    std::cout << "Speed EV: " << m_speed_ev << "\n\n";
 }
 
 const std::string& BattlePokemon::GetPokemonName() const
@@ -685,43 +548,13 @@ int BattlePokemon::GetLevel() const
     return m_level;
 }
 
-void BattlePokemon::DisplayLearnedMoves() const
-{
-    for (const auto& i : m_array_moves)
-    {
-        if (i.IsActive())
-            std::cout << i.GetName() << "/";
-        else
-            std::cout << "---/";
-    }
-    std::cout << '\n';
-}
-
-void BattlePokemon::DisplayMovesInBattle() const
-{
-    int num = 1;
-
-    for (const auto& i: m_array_moves)
-    {
-        if (i.IsActive())
-        {
-            if (i.b_isDisabled)
-            {
-                std::cout << num << ". " << i.GetName() << " (Disabled!)\n";
-            }
-            else
-            {
-                std::cout << num << ". " << i.GetName() << " PP(" << i.m_currentPP << "/" << i.m_maxPP << ")" << "\n";
-            }
-            
-        }
-        else
-            std::cout << num << ". " << "---\n";
-        ++num;
-    }
-}
-
 BattlePokemon::pokemonMove* BattlePokemon::GetMove(size_t moveslot)
+{
+    --moveslot;
+    return &(m_array_moves[moveslot]);
+}
+
+const BattlePokemon::pokemonMove* BattlePokemon::GetMove(size_t moveslot) const
 {
     --moveslot;
     return &(m_array_moves[moveslot]);
@@ -740,6 +573,11 @@ Move* BattlePokemon::pokemonMove::GetMovePointer() const
 bool BattlePokemon::pokemonMove::IsActive() const
 {
     return mp_move != nullptr;
+}
+
+bool BattlePokemon::pokemonMove::IsDisabled() const
+{
+    return b_isDisabled;
 }
 
 size_t BattlePokemon::pokemonMove::GetMoveIndex() const
@@ -865,7 +703,7 @@ int BattlePokemon::GetMaxPP(size_t moveslot) const
     return m_array_moves[moveslot].m_maxPP;
 }
 
-bool BattlePokemon::HasPokemon()
+bool BattlePokemon::HasPokemon() const
 {
     return (mp_pokemon == nullptr) ? false : true;
 }

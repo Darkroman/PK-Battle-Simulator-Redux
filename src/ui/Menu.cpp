@@ -2,16 +2,19 @@
 
 #include "../entities/HumanPlayer.h"
 #include "../entities/AIPlayer.h"
+#include "../data/Database.h"
 #include "../save/SaveParty.h"
 #include "../save/LoadParty.h"
+#include "../ui/views/PokemonTextView.h"
+#include "../ui/views/DatabaseTextView.h"
 
 #include "Menu.h"
-#include "../data/InputValidation.h"
+#include "../common/InputValidation.h"
 #include "../battle/RandomEngine.h"
 #include "../entities/ai strategies/EasyAIStrategy.h"
 
-Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage, RandomEngine& rng)
-	: playerStorage(playerStorage), m_rng(rng)
+Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage, RandomEngine& rng, IAIStrategy& persistentStrategy)
+	: playerStorage(playerStorage), m_rng(rng), m_persistentStrategy(persistentStrategy)
 {
 	players[0] = playerStorage[0].get();
 	players[1] = playerStorage[1].get();
@@ -21,24 +24,61 @@ Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage, RandomEngine& rn
 #endif
 }
 
-void Menu::SetPlayerPokemon(Player* player, size_t beltslot, size_t pknum)
+SetPokemonResult Menu::SetPlayerPokemon(Player* player, size_t beltslot, std::string_view pkname)
 {
-	player->GetBelt(beltslot)->SetPokemon(pknum);
+	SetPokemonOutcome outcome{};
+
+	outcome = player->GetBelt(beltslot)->SetPokemon(pkname);
+
+	switch (outcome.result)
+	{
+		case SetPokemonResult::InvalidRange:
+			std::cout << "Could not add pokemon #: " << pkname << ".\n";
+			std::cout << "Please enter a number between 1 and 151, or valid name of a Pokemon.\n\n";
+			return outcome.result;
+
+		case SetPokemonResult::InvalidPokemon:
+			std::cout << "Could not add " << outcome.pokemonName << ".\n";
+			std::cout << "Please enter a number between 1 and 151, or valid name of a Pokemon.\n\n";
+			return outcome.result;
+
+		case SetPokemonResult::Success:
+			return outcome.result;
+	}
+	return outcome.result;
 }
 
-void Menu::SetPlayerPokemon(Player* player, size_t beltslot, std::string_view pkname)
+SetMoveResult Menu::SetPlayerPokemonMove(Player* player, size_t beltslot, size_t moveslot, std::string_view movename)
 {
-	player->GetBelt(beltslot)->SetPokemon(pkname);
-}
+	SetMoveOutcome outcome = player->GetBelt(beltslot)->SetMove(moveslot, movename);
 
-void Menu::SetPlayerPokemonMove(Player* player, size_t beltslot, size_t moveslot, size_t movenum)
-{
-	player->GetBelt(beltslot)->SetMove(moveslot, movenum);
-}
+	switch (outcome.result)
+	{
+	case SetMoveResult::InvalidSlot:
+		std::cout << "Invalid moveslot, must be between 1 and 4.\n\n";
+		return outcome.result;
 
-void Menu::SetPlayerPokemonMove(Player* player, size_t beltslot, size_t moveslot, std::string_view movename)
-{
-	player->GetBelt(beltslot)->SetMove(moveslot, movename);
+	case SetMoveResult::InvalidRange:
+		std::cout << "Could not add move #: " << movename << ". Please enter a number between 1 and 165, or valid name of a move.\n\n";
+		return outcome.result;
+
+	case SetMoveResult::InvalidMove:
+		std::cout << "Could not add move " << outcome.moveName << ".\n";
+		std::cout << "Please enter a number between 1 and 165, or valid name of a move.\n\n";
+		return outcome.result;
+
+	case SetMoveResult::NotLearnable:
+		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " cannot learn " << outcome.moveName << ".\n\n";
+		return outcome.result;
+
+	case SetMoveResult::DuplicateMove:
+		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " already has the move " << outcome.moveName << ".\n\n";
+		return outcome.result;
+
+	case SetMoveResult::Success:
+		return outcome.result;
+	}
+	return outcome.result;
 }
 
 bool Menu::SetPlayerPokemonNickname(Player* player, size_t beltslot)
@@ -100,7 +140,7 @@ bool Menu::SetPlayerPokemonHPIV(Player* player, size_t beltslot)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayIVs();
+		PokemonTextView::DisplayIVs(*player->GetBelt(beltslot));
 		std::cout << "Set HP IV between 0 and 31: ";
 		std::string input{};
 		std::cin >> input;
@@ -138,7 +178,7 @@ bool Menu::SetPlayerPokemonAttackIV(Player* player, size_t beltslot)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayIVs();
+		PokemonTextView::DisplayIVs(*player->GetBelt(beltslot));
 		std::cout << "Set Attack IV between 0 and 31: ";
 		std::string input{};
 		std::cin >> input;
@@ -176,7 +216,7 @@ bool Menu::SetPlayerPokemonDefenseIV(Player* player, size_t beltslot)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayIVs();
+		PokemonTextView::DisplayIVs(*player->GetBelt(beltslot));
 		std::cout << "Set Defense IV between 0 and 31: ";
 		std::string input{};
 		std::cin >> input;
@@ -214,7 +254,7 @@ bool Menu::SetPlayerPokemonSpecialAttackIV(Player* player, size_t beltslot)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayIVs();
+		PokemonTextView::DisplayIVs(*player->GetBelt(beltslot));
 		std::cout << "Set Special Attack IV between 0 and 31: ";
 		std::string input{};
 		std::cin >> input;
@@ -252,7 +292,7 @@ bool Menu::SetPlayerPokemonSpecialDefenseIV(Player* player, size_t beltslot)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayIVs();
+		PokemonTextView::DisplayIVs(*player->GetBelt(beltslot));
 		std::cout << "Set Special Defense IV between 0 and 31: ";
 		std::string input{};
 		std::cin >> input;
@@ -290,7 +330,7 @@ bool Menu::SetPlayerPokemonSpeedIV(Player* player, size_t beltslot)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayIVs();
+		PokemonTextView::DisplayIVs(*player->GetBelt(beltslot));
 		std::cout << "Set Speed IV between 0 and 31: ";
 		std::string input{};
 		std::cin >> input;
@@ -326,14 +366,60 @@ bool Menu::SetPlayerPokemonSpeedIV(Player* player, size_t beltslot)
 bool Menu::SetPlayerPokemonHPEV(Player* player, size_t beltslot)
 {
 	bool exit = false;
-	bool evCheck = false;
-	while (exit == false && evCheck == false)
+	SetEVResult result{};
+	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayEVs();
+		PokemonTextView::DisplayEVs(*player->GetBelt(beltslot));
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " currently has " << player->GetBelt(beltslot)->GetTotalEVs() << " EV points used.\n";
 		std::cout << "Set HP EV between 0 and 252: ";
 		std::string input{};
-		std::cin >> input;
+		std::getline(std::cin >> std::ws, input);
+
+		if (input == "00")
+		{
+			return true;
+		}
+
+		if (!IsDigits(input))
+		{
+			std::cout << "Invalid input! Please only enter a number.\n\n";
+			continue;
+		}
+
+		int value{ std::stoi(input) };
+		
+		int oldValue = player->GetBelt(beltslot)->GetHPEV();
+		result = player->GetBelt(beltslot)->SetHPEV(value);
+
+		switch (result)
+		{
+			case SetEVResult::InvalidValue:
+				std::cout << "Invalid number. Must be a number between 0 and 252.\n\n";
+				continue;
+
+			case SetEVResult::ExceedsTotal:
+				std::cout << "You are not allowed to exceed 510 total EVs.\n\n";
+				continue;
+
+			case SetEVResult::Success:
+				std::cout << "Changed HP EV from " << oldValue << " to " << value << ".\n\n";
+				return false;
+		}
+	}
+	return exit;
+}
+
+bool Menu::SetPlayerPokemonAttackEV(Player* player, size_t beltslot)
+{
+	bool exit = false;
+	SetEVResult result{};
+	while (exit == false)
+	{
+		PokemonTextView::DisplayEVs(*player->GetBelt(beltslot));
+		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " currently has " << player->GetBelt(beltslot)->GetTotalEVs() << " EV points used.\n";
+		std::cout << "Set Attack EV between 0 and 252: ";
+		std::string input{};
+		std::getline(std::cin >> std::ws, input);
 
 		if (input == "00")
 		{
@@ -348,49 +434,23 @@ bool Menu::SetPlayerPokemonHPEV(Player* player, size_t beltslot)
 
 		int value{ std::stoi(input) };
 
-		if (value < 0 || value > 252)
+		int oldValue = player->GetBelt(beltslot)->GetAttackEV();
+		result = player->GetBelt(beltslot)->SetAttackEV(value);
+
+		switch (result)
 		{
+		case SetEVResult::InvalidValue:
 			std::cout << "Invalid number. Must be a number between 0 and 252.\n\n";
 			continue;
-		}
 
-		evCheck = player->GetBelt(beltslot)->SetHPEV(value);
-	}
-	return exit;
-}
-
-bool Menu::SetPlayerPokemonAttackEV(Player* player, size_t beltslot)
-{
-	bool exit = false;
-	bool evCheck = false;
-	while (exit == false && evCheck == false)
-	{
-		player->GetBelt(beltslot)->DisplayEVs();
-		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " currently has " << player->GetBelt(beltslot)->GetTotalEVs() << " EV points used.\n";
-		std::cout << "Set Attack EV between 0 and 252: ";
-		std::string input{};
-		std::cin >> input;
-
-		if (input == "00")
-		{
-			return true;
-		}
-
-		if (!IsDigits(input))
-		{
-			std::cout << "Invalid input! Please only enter a number.\n";
+		case SetEVResult::ExceedsTotal:
+			std::cout << "You are not allowed to exceed 510 total EVs.\n\n";
 			continue;
+
+		case SetEVResult::Success:
+			std::cout << "Changed Attack EV from " << oldValue << " to " << value << ".\n\n";
+			return false;
 		}
-
-		int value{ std::stoi(input) };
-
-		if (value < 0 || value > 252)
-		{
-			std::cout << "Invalid number. Must be a number between 0 and 252.\n";
-			continue;
-		}
-
-		evCheck = player->GetBelt(beltslot)->SetAttackEV(value);
 	}
 	return exit;
 }
@@ -398,14 +458,14 @@ bool Menu::SetPlayerPokemonAttackEV(Player* player, size_t beltslot)
 bool Menu::SetPlayerPokemonDefenseEV(Player* player, size_t beltslot)
 {
 	bool exit = false;
-	bool evCheck = false;
-	while (exit == false && evCheck == false)
+	SetEVResult result{};
+	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayEVs();
+		PokemonTextView::DisplayEVs(*player->GetBelt(beltslot));
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " currently has " << player->GetBelt(beltslot)->GetTotalEVs() << " EV points used.\n";
 		std::cout << "Set Defense EV between 0 and 252: ";
 		std::string input{};
-		std::cin >> input;
+		std::getline(std::cin >> std::ws, input);
 
 		if (input == "00")
 		{
@@ -414,19 +474,29 @@ bool Menu::SetPlayerPokemonDefenseEV(Player* player, size_t beltslot)
 
 		if (!IsDigits(input))
 		{
-			std::cout << "Invalid input! Please only enter a number.\n";
+			std::cout << "Invalid input! Please only enter a number.\n\n";
 			continue;
 		}
 
 		int value{ std::stoi(input) };
 
-		if (value < 0 || value > 252)
+		int oldValue = player->GetBelt(beltslot)->GetDefenseEV();
+		result = player->GetBelt(beltslot)->SetDefenseEV(value);
+
+		switch (result)
 		{
-			std::cout << "Invalid number. Must be a number between 0 and 252.\n";
+		case SetEVResult::InvalidValue:
+			std::cout << "Invalid number. Must be a number between 0 and 252.\n\n";
 			continue;
+
+		case SetEVResult::ExceedsTotal:
+			std::cout << "You are not allowed to exceed 510 total EVs.\n\n";
+			continue;
+
+		case SetEVResult::Success:
+			std::cout << "Changed Defense EV from " << oldValue << " to " << value << ".\n\n";
+			return false;
 		}
-		
-		evCheck = player->GetBelt(beltslot)->SetDefenseEV(value);
 	}
 	return exit;
 }
@@ -434,14 +504,14 @@ bool Menu::SetPlayerPokemonDefenseEV(Player* player, size_t beltslot)
 bool Menu::SetPlayerPokemonSpecialAttackEV(Player* player, size_t beltslot)
 {
 	bool exit = false;
-	bool evCheck = false;
-	while (exit == false && evCheck == false)
+	SetEVResult result{};
+	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayEVs();
+		PokemonTextView::DisplayEVs(*player->GetBelt(beltslot));
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " currently has " << player->GetBelt(beltslot)->GetTotalEVs() << " EV points used.\n";
 		std::cout << "Set Special Attack EV between 0 and 252: ";
 		std::string input{};
-		std::cin >> input;
+		std::getline(std::cin >> std::ws, input);
 
 		if (input == "00")
 		{
@@ -450,19 +520,29 @@ bool Menu::SetPlayerPokemonSpecialAttackEV(Player* player, size_t beltslot)
 
 		if (!IsDigits(input))
 		{
-			std::cout << "Invalid input! Please only enter a number.\n";
+			std::cout << "Invalid input! Please only enter a number.\n\n";
 			continue;
 		}
 
 		int value{ std::stoi(input) };
 
-		if (value < 0 || value > 252)
-		{
-			std::cout << "Invalid number. Must be a number between 0 and 252.\n";
-			continue;
-		}
+		int oldValue = player->GetBelt(beltslot)->GetSpecialAttackEV();
+		result = player->GetBelt(beltslot)->SetSpecialAttackEV(value);
 
-		evCheck = player->GetBelt(beltslot)->SetSpecialAttackEV(value);
+		switch (result)
+		{
+		case SetEVResult::InvalidValue:
+			std::cout << "Invalid number. Must be a number between 0 and 252.\n\n";
+			continue;
+
+		case SetEVResult::ExceedsTotal:
+			std::cout << "You are not allowed to exceed 510 total EVs.\n\n";
+			continue;
+
+		case SetEVResult::Success:
+			std::cout << "Changed Special Attack EV from " << oldValue << " to " << value << ".\n\n";
+			return false;
+		}
 	}
 	return exit;
 }
@@ -470,14 +550,14 @@ bool Menu::SetPlayerPokemonSpecialAttackEV(Player* player, size_t beltslot)
 bool Menu::SetPlayerPokemonSpecialDefenseEV(Player* player, size_t beltslot)
 {
 	bool exit = false;
-	bool evCheck = false;
-	while (exit == false && evCheck == false)
+	SetEVResult result{};
+	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayEVs();
+		PokemonTextView::DisplayEVs(*player->GetBelt(beltslot));
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " currently has " << player->GetBelt(beltslot)->GetTotalEVs() << " EV points used.\n";
 		std::cout << "Set Special Defense EV between 0 and 252: ";
 		std::string input{};
-		std::cin >> input;
+		std::getline(std::cin >> std::ws, input);
 
 		if (input == "00")
 		{
@@ -486,19 +566,29 @@ bool Menu::SetPlayerPokemonSpecialDefenseEV(Player* player, size_t beltslot)
 
 		if (!IsDigits(input))
 		{
-			std::cout << "Invalid input! Please only enter a number.\n";
+			std::cout << "Invalid input! Please only enter a number.\n\n";
 			continue;
 		}
 
 		int value{ std::stoi(input) };
 
-		if (value < 0 || value > 252)
-		{
-			std::cout << "Invalid number. Must be a number between 0 and 252.\n";
-			continue;
-		}
+		int oldValue = player->GetBelt(beltslot)->GetSpecialDefenseEV();
+		result = player->GetBelt(beltslot)->SetSpecialDefenseEV(value);
 
-		evCheck = player->GetBelt(beltslot)->SetSpecialDefenseEV(value);
+		switch (result)
+		{
+		case SetEVResult::InvalidValue:
+			std::cout << "Invalid number. Must be a number between 0 and 252.\n\n";
+			continue;
+
+		case SetEVResult::ExceedsTotal:
+			std::cout << "You are not allowed to exceed 510 total EVs.\n\n";
+			continue;
+
+		case SetEVResult::Success:
+			std::cout << "Changed Special Defense EV from " << oldValue << " to " << value << ".\n\n";
+			return false;
+		}
 	}
 	return exit;
 }
@@ -506,14 +596,14 @@ bool Menu::SetPlayerPokemonSpecialDefenseEV(Player* player, size_t beltslot)
 bool Menu::SetPlayerPokemonSpeedEV(Player* player, size_t beltslot)
 {
 	bool exit = false;
-	bool evCheck = false;
-	while (exit == false && evCheck == false)
+	SetEVResult result{};
+	while (exit == false)
 	{
-		player->GetBelt(beltslot)->DisplayEVs();
+		PokemonTextView::DisplayEVs(*player->GetBelt(beltslot));
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << " currently has " << player->GetBelt(beltslot)->GetTotalEVs() << " EV points used.\n";
 		std::cout << "Set Speed EV between 0 and 252: ";
 		std::string input{};
-		std::cin >> input;
+		std::getline(std::cin >> std::ws, input);
 
 		if (input == "00")
 		{
@@ -522,19 +612,29 @@ bool Menu::SetPlayerPokemonSpeedEV(Player* player, size_t beltslot)
 
 		if (!IsDigits(input))
 		{
-			std::cout << "Invalid input! Please only enter a number.\n";
+			std::cout << "Invalid input! Please only enter a number.\n\n";
 			continue;
 		}
 
 		int value{ std::stoi(input) };
 
-		if (value < 0 || value > 252)
-		{
-			std::cout << "Invalid number. Must be a number between 0 and 252.\n";
-			continue;
-		}
+		int oldValue = player->GetBelt(beltslot)->GetSpeedEV();
+		result = player->GetBelt(beltslot)->SetSpeedEV(value);
 
-		evCheck = player->GetBelt(beltslot)->SetSpeedEV(value);
+		switch (result)
+		{
+		case SetEVResult::InvalidValue:
+			std::cout << "Invalid number. Must be a number between 0 and 252.\n\n";
+			continue;
+
+		case SetEVResult::ExceedsTotal:
+			std::cout << "You are not allowed to exceed 510 total EVs.\n\n";
+			continue;
+
+		case SetEVResult::Success:
+			std::cout << "Changed Speed EV from " << oldValue << " to " << value << ".\n\n";
+			return false;
+		}
 	}
 	return exit;
 }
@@ -612,11 +712,12 @@ bool Menu::RunMenu()
 			break;
 
 		case 9:
-			if (!IsPokemonSetupIncomplete())
+			if (IsPokemonSetupIncomplete())
 			{
-				return false; 
+				std::cout << "Wtf?\n";
+				continue;
 			}
-			break;
+			return false;
 
 		default:
 			std::cout << "Invalid input!\n\n";
@@ -652,7 +753,7 @@ void Menu::EditPlayerOnePokemon()
 
 	while (exit == false)
 	{
-		players[0]->DisplayPlayerPokemon();
+		PokemonTextView::DisplayPlayerPokemon(*players[0]);
 
 		std::cout << "---Edit Player One's Pokemon---\n";
 		std::cout << "1. Add Pokemon\n"
@@ -774,11 +875,7 @@ void Menu::ChangePlayerOneType()
 				std::array<BattlePokemon, 6> oldBelt = playerStorage[0]->CopyBelt();
 				std::string_view playerName = playerStorage[0]->GetPlayerNameView();
 
-				auto strategy = std::make_unique<EasyAIStrategy>(m_rng);
-				auto* strategyPtr = strategy.get();
-				strategies.push_back(std::move(strategy));
-
-				auto newAI = std::make_unique<AIPlayer>(playerName, *strategyPtr);
+				auto newAI = std::make_unique<AIPlayer>(playerName, m_persistentStrategy);
 				players[0] = newAI.get();
 				playerStorage[0] = std::move(newAI);
 
@@ -850,7 +947,7 @@ void Menu::EditPlayerTwoPokemon()
 
 	while (exit == false)
 	{
-		players[1]->DisplayPlayerPokemon();
+		PokemonTextView::DisplayPlayerPokemon(*players[1]);
 
 		std::cout << "---Edit Player Two's Pokemon---\n";
 		std::cout << "1. Add Pokemon\n"
@@ -966,11 +1063,7 @@ void Menu::ChangePlayerTwoType()
 			std::array<BattlePokemon, 6> oldBelt = playerStorage[1]->CopyBelt();
 			std::string_view playerName = playerStorage[1]->GetPlayerNameView();
 
-			auto strategy = std::make_unique<EasyAIStrategy>(m_rng);
-			auto* strategyPtr = strategy.get();
-			strategies.push_back(std::move(strategy));
-
-			auto newAI = std::make_unique<AIPlayer>(playerName, *strategyPtr);
+			auto newAI = std::make_unique<AIPlayer>(playerName, m_persistentStrategy);
 			players[1] = newAI.get();
 			playerStorage[1] = std::move(newAI);
 
@@ -1013,16 +1106,15 @@ bool Menu::AddPokemon(Player* player)
 		return false;
 	}
 
-	std::cin.ignore();
 	while (player->GetPokemonCount() < 6)
 	{
-		player->DisplayAllPokemon();
-		player->DisplayPlayerPokemon();
+		DatabaseTextView::DisplayAllPokemon(Database::GetInstance());
+		PokemonTextView::DisplayPlayerPokemon(*player);
 
 		std::cout << "Choose Pokemon by number or name, or 0 to go back: ";
 
 		std::string input{};
-		std::getline(std::cin, input);
+		std::getline(std::cin >> std::ws, input);
 
 		if (input == "0")
 		{
@@ -1035,51 +1127,31 @@ bool Menu::AddPokemon(Player* player)
 			return true;
 		}
 
-
 		size_t beltslot{ 1 };
-		size_t result{ 1 };
-		for (result = 1; result <= 6; ++result)
+		size_t slot{ 1 };
+		for (slot = 1; slot <= 6; ++slot)
 		{
-			if (!player->GetBelt(result)->HasPokemon())
+			if (!player->GetBelt(slot)->HasPokemon())
 			{
-				beltslot = result;
+				beltslot = slot;
 				break;
 			}
 		}
 
 		if (!IsDigits(input))
 		{
-			input[0] = std::toupper(input[0]);
-			std::transform(input.begin() + 1, input.end(), input.begin() + 1,
-				[](unsigned char c) { return std::tolower(c); }); 
-			SetPlayerPokemon(player, beltslot, input);
-
-			if (!player->GetBelt(beltslot)->HasPokemon())
-			{
-				std::cout << "Could not add " << input << ".\n";
-				std::cout << "Please enter a number between 1 and 151, or valid name of a Pokemon.\n\n";
-			}
-			else
-			{
-				player->IncrementPokemonCount();
-				std::cout << "Added " << player->GetBelt(beltslot)->GetPokemonNameView() << "\n\n";
-			}
+			input = NormalizeUserInput(input);
 		}
-		else
+
+		SetPokemonResult setResult = SetPlayerPokemon(player, beltslot, input);
+
+		if (setResult != SetPokemonResult::Success)
 		{
-			size_t value = std::stoi(input);
-
-			if (value < 0 || value > 151)
-			{
-				std::cout << "Invalid input! Please enter a number between 1 and 151, or valid name of a Pokemon.\n\n";
-			}
-			else
-			{
-				SetPlayerPokemon(player, beltslot, value);
-				player->IncrementPokemonCount();
-				std::cout << "Added " << player->GetBelt(beltslot)->GetPokemonNameView() << "\n\n";
-			}
+			continue;
 		}
+
+		player->IncrementPokemonCount();
+		std::cout << "Added " << player->GetBelt(beltslot)->GetPokemonNameView() << "\n\n";
 	}
 	return false;
 }
@@ -1093,12 +1165,12 @@ bool Menu::ChangePokemon(Player* player)
 
 	while (exit == false)
 	{
-		player->DisplayPlayerPokemon();
+		PokemonTextView::DisplayPlayerPokemon(*player);
 
 		std::cout << "Enter number of Pokemon slot to change, 0 to exit: ";
 
 		std::string beltinput{};
-		std::cin >> beltinput;
+		std::getline(std::cin >> std::ws, beltinput);
 
 		if (beltinput == "00")
 		{
@@ -1111,69 +1183,65 @@ bool Menu::ChangePokemon(Player* player)
 			continue;
 		}
 
-		int beltslot{ std::stoi(beltinput) };
+		size_t beltslot{ std::stoul(beltinput) };
 
-		if (beltslot < 0 || beltslot > 6)
-		{
-			std::cout << "Invalid input! Must be between 1 and 6. 0 to exit.\n\n";
-			continue;
-		}
-		else if (beltslot == 0)
+		if (beltslot == 0)
 		{
 			std::cout << "Going back to main menu...\n\n";
 			return false;
 		}
+
+		if (beltslot < 1 || beltslot > 6)
+		{
+			std::cout << "Invalid pokemon slot! Must be a number between 1 and 6.\n\n";
+			continue;
+		}
+
+		std::string OldPokemonName{};
+
+		if (player->GetBelt(beltslot)->HasPokemon())
+		{
+			OldPokemonName = player->GetBelt(beltslot)->GetPokemonName();
+		}
+
+		DatabaseTextView::DisplayAllPokemon(Database::GetInstance());
+
+		std::string pokemonInput{};
+		std::cout << "Choose a Pokemon: ";
+		std::getline(std::cin >> std::ws, pokemonInput);
+
+		if (pokemonInput == "00")
+		{
+			return true;
+		}
+
+		SetPokemonResult result{};
+
+		if (!IsDigits(pokemonInput))
+		{
+			pokemonInput = NormalizeUserInput(pokemonInput);
+		}
+
+		bool hadPokemon = player->GetBelt(beltslot)->HasPokemon();
+
+		result = SetPlayerPokemon(player, beltslot, pokemonInput);
+
+		if (result != SetPokemonResult::Success)
+		{
+			continue;
+		}
+
+		if (!hadPokemon)
+		{
+			player->IncrementPokemonCount();
+			std::cout << "Added " << player->GetBelt(beltslot)->GetPokemonNameView() << "\n\n";
+		}
 		else
 		{
-			std::string OldPokemonName = player->GetBelt(beltslot)->GetPokemonName();
-			player->DisplayAllPokemon();
-
-			std::string pokemonInput{};
-			std::cout << "Choose a Pokemon: ";
-			std::cin >> pokemonInput;
-
-			if (pokemonInput == "00")
-			{
-				return true;
-			}
-
-			if (!IsDigits(pokemonInput))
-			{
-				pokemonInput[0] = std::toupper(pokemonInput[0]);
-				std::transform(pokemonInput.begin() + 1, pokemonInput.end(), pokemonInput.begin() + 1,
-					[](unsigned char c) { return std::tolower(c); });
-
-				if (!player->GetBelt(beltslot)->HasPokemon())
-				{
-					player->IncrementPokemonCount();
-				}
-
-				SetPlayerPokemon(player, beltslot, pokemonInput);
-				std::cout << "Changed " << OldPokemonName << " to " << player->GetBelt(beltslot)->GetPokemonNameView() << "\n\n";
-			}
-			else
-			{
-				size_t value = std::stoi(pokemonInput);
-
-				if (value < 0 || value > 151)
-				{
-					std::cout << "Invalid input! Please enter a number between 1 and 151, or valid name of a Pokemon.\n\n";
-				}
-				else
-				{
-					if (!player->GetBelt(beltslot)->HasPokemon())
-					{
-						player->IncrementPokemonCount();
-					}
-
-					SetPlayerPokemon(player, beltslot, value);
-					std::cout << "Changed " << OldPokemonName << " to " << player->GetBelt(beltslot)->GetPokemonNameView() << "\n\n";
-				}
-			}
+			std::cout << "Changed " << OldPokemonName << " to " << player->GetBelt(beltslot)->GetPokemonNameView() << "\n\n";
 		}
 	}
 	return exit;
-	
 }
 
 bool Menu::DeletePokemon(Player* player)
@@ -1184,7 +1252,7 @@ bool Menu::DeletePokemon(Player* player)
 
 	while (exit == false)
 	{
-		player->DisplayPlayerPokemon();
+		PokemonTextView::DisplayPlayerPokemon(*player);
 
 		std::cout << "Enter number of Pokemon slot to release it, 0 to exit: ";
 
@@ -1241,7 +1309,7 @@ bool Menu::EditPokemonStats(Player* player)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->DisplayPlayerPokemon();
+		PokemonTextView::DisplayPlayerPokemon(*player);
 	
 		std::cout << "Choose which Pokemon to edit by entering number 1-6 or 0 to go back: ";
 
@@ -1296,7 +1364,7 @@ bool Menu::EditChosenPokemonStats(Player* player, size_t beltslot)
 		std::cout << "Editing " << player->GetBelt(beltslot)->GetPokemonNameView() << "'s stats\n";
 
 		std::cout << "----------\n";
-		player->GetBelt(beltslot)->DisplayStats();
+		PokemonTextView::DisplayStats(*player->GetBelt(beltslot));
 		std::cout << "----------\n\n";
 
 		std::cout << "IVs can only be set from 0 to 31. EVs from 0 to 252, and max allowed EVs per Pokemon is 510.\n\n";
@@ -1408,7 +1476,7 @@ bool Menu::EditPokemonMoves(Player* player)
 	bool exit = false;
 	while (exit == false)
 	{
-		player->DisplayPlayerPokemon();
+		PokemonTextView::DisplayPlayerPokemon(*player);
 
 		std::cout << "Choose which Pokemon to edit by entering number 1-6 or 0 to go back: ";
 
@@ -1460,7 +1528,8 @@ bool Menu::EditChosenPokemonMoves(Player* player, size_t beltslot)
 	while (exit == false)
 	{
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << ": ";
-		player->GetBelt(beltslot)->DisplayLearnedMoves();
+		//player->GetBelt(beltslot)->DisplayLearnedMoves();
+		PokemonTextView::DisplayLearnedMoves(*player->GetBelt(beltslot));
 
 		std::cout << "Choose an option\n\n";
 
@@ -1515,9 +1584,10 @@ bool Menu::AddMove(Player* player, size_t beltslot)
 
 	while (player->GetBelt(beltslot)->GetMoveCount() < 4)
 	{
-		player->GetBelt(beltslot)->DisplayLearnableMoves();
+		PokemonTextView::DisplayLearnableMoves(*player->GetBelt(beltslot));
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << ": ";
-		player->GetBelt(beltslot)->DisplayLearnedMoves();
+		//player->GetBelt(beltslot)->DisplayLearnedMoves();
+		PokemonTextView::DisplayLearnedMoves(*player->GetBelt(beltslot));
 		std::cout << '\n';
 
 		std::cout << "NOTE: move names are sensitive to spaces, and number is based on number given from displaying learnable moves\n";
@@ -1536,54 +1606,32 @@ bool Menu::AddMove(Player* player, size_t beltslot)
 			return false;
 		}
 
-		size_t result{ 1 };
+		size_t slot{ 1 };
 		size_t moveslot{ 1 };
-		for (result = 1; result <= 4; ++result)
+		for (slot = 1; slot <= 4; ++slot)
 		{
-			if (!player->GetBelt(beltslot)->HasMove(result))
+			if (!player->GetBelt(beltslot)->HasMove(slot))
 			{
-				moveslot = result;
+				moveslot = slot;
 				break;
 			}
 		}
 
 		if (!IsDigits(input))
 		{
-			CheckUserInput(input);
-
-			player->GetBelt(beltslot)->SetMove(moveslot, input);
-
-			if (!player->GetBelt(beltslot)->HasMove(moveslot))
-			{
-				std::cout << "Could not add " << input << ".\n";
-				std::cout << "Please enter a valid move name.\n\n";
-			}
-			else
-			{
-				player->GetBelt(beltslot)->IncrementMoveCount();
-				std::cout << "Added the move - " << input << "\n\n";
-			}
-
+			input = NormalizeUserInput(input);
 		}
-		else
+
+		SetMoveResult result = SetPlayerPokemonMove(player, beltslot, moveslot, input);
+
+		if (result != SetMoveResult::Success)
 		{
-			size_t value = std::stoi(input);
-
-			if (value < 0 || value > 165)
-			{
-				std::cout << "Invalid input! Please enter a number between 1 and 165, or valid name of a move.\n\n";
-			}
-			else
-			{
-				player->GetBelt(beltslot)->SetMove(moveslot, value);
-				if (player->GetBelt(beltslot)->HasMove(moveslot))
-				{
-					player->GetBelt(beltslot)->IncrementMoveCount();
-				}
-				std::cout << '\n';
-				
-			}
+			continue;
 		}
+
+		player->GetBelt(beltslot)->IncrementMoveCount();
+		std::cout << "Added move " << player->GetBelt(beltslot)->GetMoveName(moveslot) << ".\n\n";
+		
 	}
 	return exit;
 }
@@ -1597,12 +1645,12 @@ bool Menu::ChangeMove(Player* player, size_t beltslot)
 	while (exit == false)
 	{
 		std::cout << player->GetBelt(beltslot)->GetPokemonNameView() << ": ";
-		player->GetBelt(beltslot)->DisplayLearnedMoves();
+		PokemonTextView::DisplayLearnedMoves(*player->GetBelt(beltslot));
 
 		std::cout << "Enter number of move slot to change, 0 to exit: ";
 
 		std::string moveslot_input{};
-		std::cin >> moveslot_input;
+		std::getline(std::cin >> std::ws, moveslot_input);
 
 		if (moveslot_input == "00")
 		{
@@ -1615,76 +1663,57 @@ bool Menu::ChangeMove(Player* player, size_t beltslot)
 			continue;
 		}
 
-		int moveslot{ std::stoi(moveslot_input) };
-		std::string OldMoveName = "None";
+		size_t moveslot{ std::stoul(moveslot_input) };
 
-		if (moveslot < 0 || moveslot > 4)
+		if (moveslot > 4)
 		{
 			std::cout << "Invalid input! Must be between 1 and 4. 0 to exit.\n";
 			continue;
 		}
-		else if (moveslot == 0)
+
+		if (moveslot == 0)
 		{
 			std::cout << "Going back to main menu...\n";
 			return false;
 		}
+
+		std::string OldMoveName{};
+
+		if (player->GetBelt(beltslot)->HasMove(moveslot))
+		{
+			OldMoveName = player->GetBelt(beltslot)->GetMoveName(moveslot);
+		}
+
+		PokemonTextView::DisplayLearnableMoves(*player->GetBelt(beltslot));
+			
+		PokemonTextView::DisplayLearnedMoves(*player->GetBelt(beltslot));
+
+		std::string moveInput{};
+		std::cout << "Choose a move: ";
+		std::getline(std::cin >> std::ws, moveInput);
+
+		if (!IsDigits(moveInput))
+		{
+			moveInput = NormalizeUserInput(moveInput);
+		}
+
+		bool hadMove = player->GetBelt(beltslot)->HasMove(moveslot);
+
+		SetMoveResult moveResult = SetPlayerPokemonMove(player, beltslot, moveslot, moveInput);
+
+		if (moveResult != SetMoveResult::Success)
+		{
+			continue;
+		}
+
+		if (!hadMove)
+		{
+			player->GetBelt(beltslot)->IncrementMoveCount();
+			std::cout << "Added move " << player->GetBelt(beltslot)->GetMoveName(moveslot) << ".\n\n";
+		}
 		else
 		{
-			player->GetBelt(beltslot)->DisplayLearnableMoves();
-
-			if (player->GetBelt(beltslot)->HasMove(moveslot))
-			{
-				OldMoveName = player->GetBelt(beltslot)->GetMoveName(moveslot);
-			}
-			
-			player->GetBelt(beltslot)->DisplayLearnedMoves();
-
-			std::string moveInput{};
-			std::cout << "Choose a move: ";
-			std::getline(std::cin >> std::ws, moveInput);
-
-			if (!IsDigits(moveInput))
-			{
-				CheckUserInput(moveInput);
-
-				if (!player->GetBelt(beltslot)->HasMove(moveslot))
-				{
-					player->GetBelt(beltslot)->IncrementMoveCount();
-				}
-
-				player->GetBelt(beltslot)->SetMove(moveslot, moveInput);
-				if (OldMoveName != player->GetBelt(beltslot)->GetMoveName(moveslot))
-				{
-					std::cout << "Changed " << OldMoveName << " to " << player->GetBelt(beltslot)->GetMoveName(moveslot) << "\n";
-				}
-				
-			}
-			else
-			{
-				size_t value = std::stoi(moveInput);
-
-				if (value < 0 || value > 164)
-				{
-					std::cout << "Invalid input! Please enter a number between 1 and 164, or valid name of a move. 0 to exit\n";
-				}
-				else if (value == 0)
-				{
-					return false;
-				}
-				else
-				{
-					if (!player->GetBelt(beltslot)->HasMove(moveslot))
-					{
-						player->GetBelt(beltslot)->IncrementMoveCount();
-					}
-
-					player->GetBelt(beltslot)->SetMove(moveslot, value);
-					if (OldMoveName != player->GetBelt(beltslot)->GetMoveName(moveslot))
-					{
-						std::cout << "Changed " << OldMoveName << " to " << player->GetBelt(beltslot)->GetMoveName(moveslot) << "\n";
-					}
-				}
-			}
+			std::cout << "Changed " << OldMoveName << " to " << player->GetBelt(beltslot)->GetMoveName(moveslot) << "\n\n";
 		}
 	}
 	return exit;
@@ -1692,25 +1721,30 @@ bool Menu::ChangeMove(Player* player, size_t beltslot)
 
 void Menu::SetDefaultPokemon()
 {
-	players[0]->GetBelt(1)->SetPokemon("Gengar");
+	if (players[0]->GetBelt(1)->HasPokemon() && players[1]->GetBelt(1)->HasPokemon())
+	{
+		return;
+	}
+
+	players[0]->GetBelt(1)->SetPokemon("Alakazam");
 	players[1]->GetBelt(1)->SetPokemon("Venusaur");
 
 	if (players[0]->GetBelt(1)->GetCurrentHP() != 0)
 	{
+		players[0]->GetBelt(1)->SetMove(1, "Teleport");
+		players[1]->GetBelt(1)->SetMove(1, "Growth");
+
 		players[0]->IncrementPokemonCount();
 		players[1]->IncrementPokemonCount();
 
-		players[0]->GetBelt(1)->SetMove(1, "Psychic");
-		players[1]->GetBelt(1)->SetMove(1, "Razor Leaf");
-
 		players[0]->GetBelt(1)->IncrementMoveCount();
-		players[0]->GetBelt(1)->IncrementMoveCount();
-		players[0]->GetBelt(1)->IncrementMoveCount();
-		players[0]->GetBelt(1)->IncrementMoveCount();
+		//players[0]->GetBelt(1)->IncrementMoveCount();
+		//players[0]->GetBelt(1)->IncrementMoveCount();
+		//players[0]->GetBelt(1)->IncrementMoveCount();
 		players[1]->GetBelt(1)->IncrementMoveCount();
-		players[1]->GetBelt(1)->IncrementMoveCount();
-		players[1]->GetBelt(1)->IncrementMoveCount();
-		players[1]->GetBelt(1)->IncrementMoveCount();
+		//players[1]->GetBelt(1)->IncrementMoveCount();
+		//players[1]->GetBelt(1)->IncrementMoveCount();
+		//players[1]->GetBelt(1)->IncrementMoveCount();
 
 		players[0]->GetBelt(1)->SetLevel(100);
 		players[1]->GetBelt(1)->SetLevel(100);
@@ -1741,6 +1775,28 @@ void Menu::SetDefaultPokemon()
 		std::cout << "Failed to set default Pokemon!\n\n";
 		return;
 	}
+
+	int pokemonCount{};
+	for (size_t i = 1; i < 7; ++i)
+	{
+		if (players[0]->GetBelt(i)->HasPokemon())
+		{
+			++pokemonCount;
+		}
+	}
+
+	players[0]->SetPokemonCount(pokemonCount);
+
+	pokemonCount = 0;
+	for (size_t i = 1; i < 7; ++i)
+	{
+		if (players[1]->GetBelt(i)->HasPokemon())
+		{
+			++pokemonCount;
+		}
+	}
+
+	players[1]->SetPokemonCount(pokemonCount);
 }
 
 void Menu::SaveYourParty(std::array<Player*, 2> players)

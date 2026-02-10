@@ -23,7 +23,6 @@ struct MoveRoutineDeps {
 	StatusEffectProcessor& statusProcessor;
 	IMoveResultsUI& resultsUI;
 	IBattleMenuUI& battleUI;
-	IStatusEffectUI& statusUI;
 	RandomEngine& rng;
 	SwitchExecutor& switchExecutor;
 
@@ -33,7 +32,6 @@ struct MoveRoutineDeps {
 	StatusEffectProcessor& statusProc,
 	IMoveResultsUI& results,
 	IBattleMenuUI& BUI,
-	IStatusEffectUI& statusUI,
 	RandomEngine& randomEngine,
 	SwitchExecutor& switchExec)
 	
@@ -42,7 +40,6 @@ struct MoveRoutineDeps {
 	, statusProcessor(statusProc)
 	, resultsUI(results)
 	, battleUI(BUI)
-	, statusUI(statusUI)
 	, rng(randomEngine)
 	, switchExecutor(switchExec)
 	{}
@@ -671,22 +668,10 @@ using MoveRoutineTypes = std::variant<
 	Struggle
 > ;
 
-class ExecuteMoveRoutine
-{
-public:
-	template <typename T>
-	explicit ExecuteMoveRoutine(T&& routine) : routine_variant(std::forward<T>(routine)) {}
-
-	void DoMove(MoveRoutineDeps&);
-
-	static void Execute(MoveEffect, MoveRoutineDeps&);
-
-private:
-	MoveRoutineTypes routine_variant;
-};
+void Execute(MoveEffect, MoveRoutineDeps&);
 
 class MoveRoutineFactory
 {
 public:
-	static ExecuteMoveRoutine Call(MoveEffect ID);
+	static MoveRoutineTypes Make(MoveEffect ID);
 };

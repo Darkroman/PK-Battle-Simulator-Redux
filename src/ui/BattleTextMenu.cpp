@@ -1,23 +1,18 @@
 #include "BattleTextMenu.h"
 #include "../battle/BattleContext.h"
-#include "../data/InputValidation.h"
+#include "../common/InputValidation.h"
 #include "../entities/AIPlayer.h"
-#include "../data/Move.h"
+#include "views/PokemonTextView.h"
 
 #include <iostream>
 
-BattleTextMenu::BattleTextMenu(BattleContext& context) : m_context(context) {}
-
-void BattleTextMenu::ThrowOutFirstPokemon()
+void BattleTextMenu::ThrowOutFirstPokemon(const BattleContext& context) const
 {
-    std::cout << m_context.playerOne->GetPlayerNameView() << " chose " << m_context.playerOne->GetBelt(1)->GetPokemonNameView() << "!\n";
-    std::cout << m_context.playerTwo->GetPlayerNameView() << " chose " << m_context.playerTwo->GetBelt(1)->GetPokemonNameView() << "!\n\n";
-
-    m_context.playerOneCurrentPokemon = m_context.playerOne->GetBelt(1);
-    m_context.playerTwoCurrentPokemon = m_context.playerTwo->GetBelt(1);
+    std::cout << context.playerOne->GetPlayerNameView() << " chose " << context.playerOne->GetBelt(1)->GetPokemonNameView() << "!\n";
+    std::cout << context.playerTwo->GetPlayerNameView() << " chose " << context.playerTwo->GetBelt(1)->GetPokemonNameView() << "!\n\n";
 }
 
-void BattleTextMenu::DisplayFightingPokemon()
+void BattleTextMenu::DisplayFightingPokemon(const BattleContext& context) const
 {
     auto PrintPercent = [&](int currentHP, int maxHP)
     {
@@ -27,7 +22,7 @@ void BattleTextMenu::DisplayFightingPokemon()
             return;
         }
 
-        const int HP_BAR_WIDTH = m_context.HP_BAR_WIDTH;
+        const int HP_BAR_WIDTH = context.HP_BAR_WIDTH;
 
         int pixelsOfHP = currentHP * HP_BAR_WIDTH / maxHP;
         int quarterPercent = pixelsOfHP * 25;
@@ -55,73 +50,68 @@ void BattleTextMenu::DisplayFightingPokemon()
             }
         };
 
-    bool isOneAI = m_context.aiPlayerOne;
-    PrintPokemon(*m_context.playerOne, *m_context.playerOneCurrentPokemon, isOneAI);
+    bool isOneAI = context.aiPlayerOne;
+    PrintPokemon(*context.playerOne, *context.playerOneCurrentPokemon, isOneAI);
 
-    bool isTwoAI = m_context.aiPlayerTwo;
-    PrintPokemon(*m_context.playerTwo, *m_context.playerTwoCurrentPokemon, isTwoAI);
+    bool isTwoAI = context.aiPlayerTwo;
+    PrintPokemon(*context.playerTwo, *context.playerTwoCurrentPokemon, isTwoAI);
 }
 
-void BattleTextMenu::PlayerOneMakeSelection()
+BattleAction BattleTextMenu::PlayerOneMakeSelection(const BattleContext& context)
 {
-    if (m_context.playerOneCurrentPokemon->IsCharging() || m_context.playerOneCurrentPokemon->IsRecharging() ||
-        m_context.playerOneCurrentPokemon->IsThrashing() || m_context.playerOneCurrentPokemon->IsBiding())
+    BattleAction action{ BattleAction::None };
+
+    if (context.playerOneCurrentPokemon->IsCharging() || context.playerOneCurrentPokemon->IsRecharging() ||
+        context.playerOneCurrentPokemon->IsThrashing() || context.playerOneCurrentPokemon->IsBiding())
     {
-        return;
+        return BattleAction::None;
     }
 
-    if (!m_context.playerOne->IsHuman())
+    if (!context.playerOne->IsHuman())
     {
-        AIPlayer* aiPlayer = static_cast<AIPlayer*>(m_context.playerOne);
-        aiPlayer->ChooseAction(m_context.playerOneCurrentPokemon, m_context);
+        AIPlayer* aiPlayer = static_cast<AIPlayer*>(context.playerOne);
+        selectedMove = aiPlayer->ChooseAction(context.playerOneCurrentPokemon, context);
+        return BattleAction::Fight;
     }
     else
     {
-        std::cout << m_context.playerOne->GetPlayerNameView() << " choose your action\n";
-
-        MakeASelectionLoop(m_context.playerOne, m_context.playerOneCurrentPokemon);
-
-        if (m_context.playerOne->HasForfeited())
-            return;
+        std::cout << context.playerOne->GetPlayerNameView() << " choose your action\n";
+        return action = MakeASelectionLoop(*context.playerOne, *context.playerOneCurrentPokemon);
     }
-    m_context.playerOneCurrentMove = m_context.selectedMove;
-    m_context.selectedMove = nullptr;
 }
 
-void BattleTextMenu::PlayerTwoMakeSelection()
+BattleAction BattleTextMenu::PlayerTwoMakeSelection(const BattleContext& context)
 {
-    if (m_context.playerTwoCurrentPokemon->IsCharging() || m_context.playerTwoCurrentPokemon->IsRecharging() ||
-        m_context.playerTwoCurrentPokemon->IsThrashing() || m_context.playerTwoCurrentPokemon->IsBiding())
+    BattleAction action{ BattleAction::None };
+
+    if (context.playerTwoCurrentPokemon->IsCharging() || context.playerTwoCurrentPokemon->IsRecharging() ||
+        context.playerTwoCurrentPokemon->IsThrashing() || context.playerTwoCurrentPokemon->IsBiding())
     {
-        return;
+        return BattleAction::None;
     }
 
-    if (!m_context.playerTwo->IsHuman())
+    if (!context.playerTwo->IsHuman())
     {
-        AIPlayer* aiPlayer = static_cast<AIPlayer*>(m_context.playerTwo);
-        aiPlayer->ChooseAction(m_context.playerTwoCurrentPokemon, m_context);
+        AIPlayer* aiPlayer = static_cast<AIPlayer*>(context.playerTwo);
+        selectedMove = aiPlayer->ChooseAction(context.playerTwoCurrentPokemon, context);
+        return BattleAction::Fight;
     }
     else
     {
-        std::cout << m_context.playerTwo->GetPlayerNameView() << " choose your action\n";
+        std::cout << context.playerTwo->GetPlayerNameView() << " choose your action\n";
 
-        MakeASelectionLoop(m_context.playerTwo, m_context.playerTwoCurrentPokemon);
-
-        if (m_context.playerTwo->HasForfeited())
-            return;
+        return action = MakeASelectionLoop(*context.playerTwo, *context.playerTwoCurrentPokemon);
     }
-    m_context.playerTwoCurrentMove = m_context.selectedMove;
-    m_context.selectedMove = nullptr;
 }
 
-void BattleTextMenu::MakeASelectionLoop(Player* player, BattlePokemon* currentPokemon)
+BattleAction BattleTextMenu::MakeASelectionLoop(Player& player, BattlePokemon& currentPokemon)
 {
-    bool exit = false;
-    while (!exit)
+    BattleAction action = BattleAction::None;
+    while (action == BattleAction::None)
     {
         std::cout << "1. Fight \t";
         std::cout << "2. Switch Pokemon";
-        std::cout << ((player->CanSwitch()) ? " \t" : "(X) \t");
+        std::cout << ((player.CanSwitch()) ? " \t" : "(X) \t");
         std::cout << "3. Forfeit\n";
 
         std::string input;
@@ -139,46 +129,54 @@ void BattleTextMenu::MakeASelectionLoop(Player* player, BattlePokemon* currentPo
         switch (choice)
         {
         case 1:
-            exit = Fight(player, currentPokemon);
+            action = Fight(player, currentPokemon);
             break;
 
         case 2:
-            if (!player->CanSwitch())
+            if (!player.CanSwitch())
             {
                 std::cout << "You aren't able to switch Pokemon right now!\n";
                 break;
             }
-            exit = SwitchPokemonOption(player, currentPokemon);
+            action = SwitchPokemonOption(player, currentPokemon);
             break;
 
         case 3:
-            Forfeit(player);
-            exit = true;
+            action = Forfeit(player);
             break;
 
         default:
             std::cout << "Invalid input!\n\n";
             break;
         }
+
+        if (action == BattleAction::None)
+        {
+            continue;
+        }
+        else
+        {
+            return action;
+        }
     }
 }
 
-bool BattleTextMenu::Fight(Player* player, BattlePokemon* currentPokemon)
+BattleAction BattleTextMenu::Fight(Player& player, BattlePokemon& currentPokemon)
 {
     bool struggle = false;
 
     while (true)
     {
-        std::cout << currentPokemon->GetName() << "'s current moves\n";
-        currentPokemon->DisplayMovesInBattle();
+        std::cout << currentPokemon.GetName() << "'s current moves\n";
+        PokemonTextView::DisplayMovesInBattle(currentPokemon);
 
-        struggle = CheckPPCountForStruggle(currentPokemon);
+        //struggle = CheckPPCountForStruggle(currentPokemon);
 
         if (struggle)
         {
             std::cout << "You are out of PP for all moves. All you can do is Struggle.\n\n";
-            m_context.selectedMove = currentPokemon->Struggle();
-            return true;
+            //selectedMove = currentPokemon.Struggle();
+            return BattleAction::Struggle;
         }
 
         std::string input;
@@ -196,7 +194,7 @@ bool BattleTextMenu::Fight(Player* player, BattlePokemon* currentPokemon)
 
         if (choice == 0)
         {
-            return false;
+            return BattleAction::None;
         }
 
         if (choice > 4)
@@ -207,45 +205,45 @@ bool BattleTextMenu::Fight(Player* player, BattlePokemon* currentPokemon)
 
         if (choice > 0 && struggle)
         {
-            m_context.selectedMove = currentPokemon->Struggle();
-            return true;
+            //selectedMove = currentPokemon.Struggle();
+            return BattleAction::Struggle;
         }
 
-        if (!currentPokemon->GetMove(choice)->IsActive())
+        if (!currentPokemon.GetMove(choice)->IsActive())
         {
             std::cout << "There is no move there!\n\n";
             continue;
         }
 
-        if (currentPokemon->GetMove(choice)->b_isDisabled)
+        if (currentPokemon.GetMove(choice)->b_isDisabled)
         {
             std::cout << "This move is currently disabled!\n\n";
             continue;
         }
 
-        if (currentPokemon->GetPP(choice) <= 0)
+        if (currentPokemon.GetPP(choice) <= 0)
         {
             std::cout << "There's no PP left for this move!\n\n";
             continue;
         }
 
-        if (currentPokemon->GetMove(choice)->IsActive())
+        if (currentPokemon.GetMove(choice)->IsActive())
         {
-            m_context.selectedMove = currentPokemon->GetMove(choice);
-            std::cout << player->GetPlayerNameView() << " has chosen " << m_context.selectedMove->GetName() << "\n\n";
-            return true;
+            selectedMove = currentPokemon.GetMove(choice);
+            std::cout << player.GetPlayerNameView() << " has chosen " << selectedMove->GetName() << "\n\n";
+            return BattleAction::Fight;
         }
     }
 }
 
-bool BattleTextMenu::SwitchPokemonOption(Player* currentPlayer, BattlePokemon* currentPokemon)
+BattleAction BattleTextMenu::SwitchPokemonOption(Player& currentPlayer, BattlePokemon& currentPokemon)
 {
     std::cout << "Choose Pokemon to switch out! 0 to cancel.\n";
 
-    bool exit = false;
-    while (!exit)
+    BattleAction action{ BattleAction::None };
+    while (true)
     {
-        currentPlayer->DisplayPlayerPokemon();
+        PokemonTextView::DisplayPlayerPokemon(currentPlayer);
 
         std::string input;
         std::cout << "Option: ";
@@ -262,14 +260,14 @@ bool BattleTextMenu::SwitchPokemonOption(Player* currentPlayer, BattlePokemon* c
 
         int choice = std::stoi(input);
 
-        if (choice == 0 && currentPokemon->IsFainted())
+        if (choice == 0 && currentPokemon.IsFainted())
         {
-            std::cout << "Your " << currentPokemon->GetNameView() << " is fainted. You must select another pokemon to take its place!\n\n";
+            std::cout << "Your " << currentPokemon.GetNameView() << " is fainted. You must select another pokemon to take its place!\n\n";
             continue;
         }
         else if (choice == 0)
         {
-            return false;
+            return BattleAction::None;
         }
 
         if (choice > 6)
@@ -278,19 +276,19 @@ bool BattleTextMenu::SwitchPokemonOption(Player* currentPlayer, BattlePokemon* c
             continue;
         }
 
-        if (!currentPlayer->GetBelt(choice)->HasPokemon())
+        if (!currentPlayer.GetBelt(choice)->HasPokemon())
         {
             std::cout << "No Pokemon there!\n\n";
             continue;
         }
 
-        if (currentPlayer->GetBelt(choice)->IsFainted())
+        if (currentPlayer.GetBelt(choice)->IsFainted())
         {
             std::cout << "A fainted Pokemon cannot fight!\n\n";
             continue;
         }
 
-        if (currentPlayer->GetBelt(choice) == currentPokemon)
+        if (currentPlayer.GetBelt(choice) == &currentPokemon)
         {
             std::cout << "That pokemon is already in play!\n\n";
             continue;
@@ -298,61 +296,55 @@ bool BattleTextMenu::SwitchPokemonOption(Player* currentPlayer, BattlePokemon* c
 
         if (choice != 0)
         {
-            exit = true;
-
-            currentPlayer->SetIsSwitching(true);
-
-            currentPlayer->SetPokemonToSwitchTo(currentPlayer->GetBelt(choice));
-
-            return exit;
+            selectedPokemon = currentPlayer.GetBelt(choice);
+            return BattleAction::SwitchPokemon;
         }
     }
-    return exit;
 }
 
-void BattleTextMenu::SwitchOutMsg(Player* player, BattlePokemon* pokemon)
+BattleAction BattleTextMenu::Forfeit(Player& sourcePlayer)
 {
-    std::cout << player->GetPlayerNameView() << " switches out " << pokemon->GetNameView() << "\n";
+    std::cout << sourcePlayer.GetPlayerNameView() << " has forfeited!\n\n";
+    return BattleAction::Forfeit;
 }
 
-void BattleTextMenu::PlayerChoosesMsg(Player* player, BattlePokemon* pokemon)
+void BattleTextMenu::SwitchOutMsg(const Player& player, const BattlePokemon& pokemon) const
 {
-    std::cout << player->GetPlayerNameView() << " chooses " << pokemon->GetNameView() << "\n";
+    std::cout << player.GetPlayerNameView() << " switches out " << pokemon.GetNameView() << "\n";
 }
 
-void BattleTextMenu::Forfeit(Player* sourcePlayer)
+void BattleTextMenu::PlayerChoosesMsg(const Player& player, const BattlePokemon& pokemon) const
 {
-    std::cout << sourcePlayer->GetPlayerNameView() << " has forfeited!\n\n";
-    sourcePlayer->SetForfeit(true);
+    std::cout << player.GetPlayerNameView() << " chooses " << pokemon.GetNameView() << "\n";
 }
 
-bool BattleTextMenu::CheckPPCountForStruggle(BattlePokemon* pokemon)
+bool BattleTextMenu::CheckPPCountForStruggle(BattlePokemon& pokemon)
 {
     int zeroPPCount{ 0 }, disabledCount{ 0 };
 
     for (size_t i = 0; i < 4; ++i)
     {
-        if (pokemon->GetMove(i + 1)->IsActive())
+        if (pokemon.GetMove(i + 1)->IsActive())
         {
-            if (pokemon->GetMove(i + 1)->m_currentPP == 0)
+            if (pokemon.GetMove(i + 1)->m_currentPP == 0)
             {
                 ++zeroPPCount;
             }
-            if (pokemon->GetMove(i + 1)->b_isDisabled)
+            if (pokemon.GetMove(i + 1)->b_isDisabled)
             {
                 ++disabledCount;
             }
         }
     }
 
-    if (zeroPPCount + disabledCount >= pokemon->GetMoveCount())
+    if (zeroPPCount + disabledCount >= pokemon.GetMoveCount())
     {
         return true;
     }
     return false;
 }
 
-bool BattleTextMenu::AnnounceWinner()
+bool BattleTextMenu::AnnounceWinner(const BattleContext& context)
 {
     /*
     if (m_context.playerOne->HasWon() && m_context.playerTwo->HasWon())
@@ -365,29 +357,37 @@ bool BattleTextMenu::AnnounceWinner()
     }
     */
 
-    if (m_context.playerOne->HasWon())
+    if (context.playerOne->HasWon())
     {
-        std::cout << "\n" << m_context.playerOne->GetPlayerNameView() << " wins!\n\n";
-        m_context.playerOne->SetWinCondition(false);
+        std::cout << '\n' << context.playerOne->GetPlayerNameView() << " wins!\n\n";
         return false;
     }
 
-    if (m_context.playerTwo->HasWon())
+    if (context.playerTwo->HasWon())
     {
-        std::cout << "\n" << m_context.playerTwo->GetPlayerNameView() << " wins!\n\n";
-        m_context.playerTwo->SetWinCondition(false);
+        std::cout << '\n' << context.playerTwo->GetPlayerNameView() << " wins!\n\n";
         return false;
     }
 
     return false;
 }
 
-void BattleTextMenu::NewLine()
+void BattleTextMenu::NewLine() const
 {
     std::cout << '\n';
 }
 
-void BattleTextMenu::DisplayTurnNumber(int turnCount)
+void BattleTextMenu::DisplayTurnNumber(int turnCount) const
 {
     std::cout << "TURN #" << turnCount << "\n\n";
+}
+
+BattlePokemon::pokemonMove* BattleTextMenu::GetChosenMove() const
+{
+    return selectedMove;
+}
+
+BattlePokemon* BattleTextMenu::GetChosenPokemon() const
+{
+    return selectedPokemon;
 }

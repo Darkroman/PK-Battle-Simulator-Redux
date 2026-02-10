@@ -1,26 +1,37 @@
 #pragma once
 
+#include "../../battle/BattleAction.h"
+#include "../../entities/BattlePokemon.h"
+
+struct BattleContext;
 class Player;
-class BattlePokemon;
 
 class IBattleMenuUI
 {
 public:
     virtual ~IBattleMenuUI() = default;
 
-    virtual void ThrowOutFirstPokemon() = 0;
-    virtual void DisplayFightingPokemon() = 0;
-    virtual void PlayerOneMakeSelection() = 0;
-    virtual void PlayerTwoMakeSelection() = 0;
-    virtual bool SwitchPokemonOption(Player* currentPlayer, BattlePokemon* currentPokemon) = 0;
-    virtual void SwitchOutMsg(Player*, BattlePokemon*) = 0;
-    virtual void PlayerChoosesMsg(Player*, BattlePokemon*) = 0;
-    virtual bool AnnounceWinner() = 0;
+    virtual void ThrowOutFirstPokemon(const BattleContext&) const = 0;
+    virtual void DisplayFightingPokemon(const BattleContext&) const = 0;
+    virtual BattleAction PlayerOneMakeSelection(const BattleContext&) = 0;
+    virtual BattleAction PlayerTwoMakeSelection(const BattleContext&) = 0;
+    virtual void SwitchOutMsg(const Player&, const BattlePokemon&) const = 0;
+    virtual void PlayerChoosesMsg(const Player&, const BattlePokemon&) const = 0;
+    virtual bool AnnounceWinner(const BattleContext&) = 0;
 
-    virtual void NewLine() = 0;
-    virtual void DisplayTurnNumber(int) = 0;
+    virtual BattleAction MakeASelectionLoop(Player&, BattlePokemon&) = 0;
+    virtual BattleAction Fight(Player&, BattlePokemon&) = 0;
+    virtual BattleAction SwitchPokemonOption(Player&, BattlePokemon&) = 0;
+    virtual BattleAction Forfeit(Player& player) = 0;
+
+    virtual void NewLine() const = 0;
+    virtual void DisplayTurnNumber(int) const = 0;
+
+    virtual BattlePokemon::pokemonMove* GetChosenMove() const = 0;
+    virtual BattlePokemon* GetChosenPokemon() const = 0;
 
 protected:
-    virtual void MakeASelectionLoop(Player*, BattlePokemon*) = 0;
-    virtual bool Fight(Player*, BattlePokemon*) = 0;
+
+    BattlePokemon::pokemonMove* selectedMove{ nullptr };
+    BattlePokemon* selectedPokemon{ nullptr };
 };

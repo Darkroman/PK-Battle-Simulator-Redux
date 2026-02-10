@@ -46,7 +46,7 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 	if (m_context.currentMove->b_isDisabled && canPerform == true)
 	{
 		canPerform = false;
-		m_statusEffectUI.DisplayMoveIsDisabledMsg();
+		m_statusEffectUI.DisplayMoveIsDisabledMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView(), m_context.currentMove->GetName());
 	}
 
 	if (m_context.attackingPokemon->IsCharging() && canPerform == false)
@@ -86,13 +86,13 @@ bool StatusEffectProcessor::SleepStatus()
 		m_context.attackingPokemon->ResetSleepCounter();
 		m_context.attackingPokemon->SetSleepTurnCount(0);
 
-		m_statusEffectUI.DisplayWokenUpMsg();
+		m_statusEffectUI.DisplayWokenUpMsg(m_context.attackingPokemon->GetNameView());
 		return true;
 	}
 	else
 	{
 		m_context.attackingPokemon->IncrementSleepCounter();
-		m_statusEffectUI.DisplayIsAsleepMsg();
+		m_statusEffectUI.DisplayIsAsleepMsg(m_context.attackingPokemon->GetNameView());
 		return false;
 	}
 }
@@ -104,20 +104,20 @@ bool StatusEffectProcessor::FrozenStatus()
 
 	if (randomMod <= 80)
 	{
-		m_statusEffectUI.DisplayFrozenSolidMsg();
+		m_statusEffectUI.DisplayFrozenSolidMsg(m_context.attackingPokemon->GetNameView());
 		return false;
 	}
 	else
 	{
 		m_context.attackingPokemon->ChangeStatus(Status::Normal);
-		m_statusEffectUI.DisplayThawedMsg();
+		m_statusEffectUI.DisplayThawedMsg(m_context.attackingPokemon->GetNameView());
 		return true;
 	}
 }
 
 bool StatusEffectProcessor::FlinchStatus()
 {
-	m_statusEffectUI.DisplayFlinchMsg();
+	m_statusEffectUI.DisplayFlinchMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 	m_context.attackingPokemon->SetIsFlinched(false);
 
 	return false;
@@ -131,13 +131,13 @@ bool StatusEffectProcessor::ConfusedStatus()
 		m_context.attackingPokemon->ResetConfusedCounter();
 		m_context.attackingPokemon->SetConfusedTurnCount(0);
 
-		m_statusEffectUI.DisplayNoLongerConfusedMsg();
+		m_statusEffectUI.DisplayNoLongerConfusedMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 		return true;
 	}
 	else
 	{
 		m_context.attackingPokemon->IncrementConfusedCounter();
-		m_statusEffectUI.DisplayIsConfusedMsg();
+		m_statusEffectUI.DisplayIsConfusedMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 
 		std::uniform_int_distribution<int> randomModDistributor(1, 100);
 		int randomMod(randomModDistributor(m_rng.GetGenerator()));
@@ -184,7 +184,7 @@ bool StatusEffectProcessor::ParalysisStatus()
 
 	if (randomMod <= 25)
 	{
-		m_statusEffectUI.DisplayCantMoveParalysisMsg();
+		m_statusEffectUI.DisplayCantMoveParalysisMsg(m_context.attackingPokemon->GetNameView());
 		ResetPokemonTurnStatuses();
 
 		if (m_context.attackingPokemon->IsBiding())
@@ -218,7 +218,7 @@ void StatusEffectProcessor::ThrashStop()
 
 void StatusEffectProcessor::ThrashConfuse()
 {
-	m_statusEffectUI.DisplayThrashConfusionMsg();
+	m_statusEffectUI.DisplayThrashConfusionMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 
 	m_context.attackingPokemon->SetConfusedStatus(true);
 
@@ -269,13 +269,13 @@ void StatusEffectProcessor::RageCheck()
 
 		if (attackStage >= 6)
 		{
-			m_statusEffectUI.DisplayStatRaiseFailMsg("attack");
+			m_statusEffectUI.DisplayStatRaiseFailMsg("attack", m_context.defendingPlayer->GetPlayerNameView(), m_context.defendingPokemon->GetNameView());
 		}
 		else
 		{
 			++attackStage;
 			m_context.defendingPokemon->SetAttackStage(attackStage);
-			m_statusEffectUI.DisplayStatRaised1Msg("attack");
+			m_statusEffectUI.DisplayStatRaised1Msg("attack", m_context.defendingPlayer->GetPlayerNameView(), m_context.defendingPokemon->GetNameView());
 		}
 	}
 
@@ -289,14 +289,14 @@ void StatusEffectProcessor::RageCheck()
 	}
 	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->GetMoveEffectEnum() == MoveEffect::Rage && !m_context.currentMove->b_isDisabled)
 	{
-		m_statusEffectUI.DisplayRageStartedMsg();
+		m_statusEffectUI.DisplayRageStartedMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 	}
 }
 
 // If paralyze or confusion disrupts their charge (hyper beam, fly, dig, solar beam etc)
 void StatusEffectProcessor::ResetPokemonTurnStatuses()
 {
-	if (m_context.attackingPlayer->CanSwitch() == true || m_context.attackingPokemon->IsCharging() == false || m_context.attackingPokemon->IsRecharging() == false || m_context.attackingPokemon->IsSemiInvulnerable() == false)
+	if (!m_context.attackingPokemon->IsCharging() && !m_context.attackingPokemon->IsRecharging() && !m_context.attackingPokemon->IsSemiInvulnerable())
 	{
 		return;
 	}
@@ -314,7 +314,7 @@ void StatusEffectProcessor::CheckFaintCondition(Player* sourcePlayer, Player* ta
 	if ((target->GetCurrentHP() <= 0) && (!target->IsFainted()))
 	{
 		target->SetFainted(true);
-		m_statusEffectUI.DisplayFaintedMsg(*targetPlayer, *target);
+		m_statusEffectUI.DisplayFaintedMsg(targetPlayer->GetPlayerNameView(), target->GetNameView());
 		targetPlayer->IncrementFaintedCount();
 
 		if (source->IsBound())
@@ -324,14 +324,14 @@ void StatusEffectProcessor::CheckFaintCondition(Player* sourcePlayer, Player* ta
 			source->ResetBoundCounter();
 			source->SetBoundTurnCount(0);
 
-			m_statusEffectUI.DisplayFreedFromBoundMsg(sourcePlayer, source);
+			m_statusEffectUI.DisplayFreedFromBoundMsg(sourcePlayer->GetPlayerNameView(), source->GetNameView(), source->GetBoundMoveName());
 		}
 	}
 
 	if ((source->GetCurrentHP() <= 0) && (!source->IsFainted()))
 	{
 		source->SetFainted(true);
-		m_statusEffectUI.DisplayFaintedMsg(*sourcePlayer, *source);
+		m_statusEffectUI.DisplayFaintedMsg(sourcePlayer->GetPlayerNameView(), source->GetNameView());
 		sourcePlayer->IncrementFaintedCount();
 
 		if (target->IsBound())
@@ -341,7 +341,7 @@ void StatusEffectProcessor::CheckFaintCondition(Player* sourcePlayer, Player* ta
 			target->ResetBoundCounter();
 			target->SetBoundTurnCount(0);
 
-			m_statusEffectUI.DisplayFreedFromBoundMsg(targetPlayer, target);
+			m_statusEffectUI.DisplayFreedFromBoundMsg(targetPlayer->GetPlayerNameView(), target->GetNameView(), target->GetBoundMoveName());
 		}
 	}
 }

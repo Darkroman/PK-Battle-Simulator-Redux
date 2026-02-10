@@ -13,6 +13,7 @@ public:
 
     virtual bool IsHuman() const = 0;
 
+    const virtual std::array<BattlePokemon, 6> GetBeltArray() const;
     virtual std::array<BattlePokemon, 6> CopyBelt();
     virtual void AssignBelt(std::array<BattlePokemon, 6>&);
 
@@ -21,12 +22,11 @@ public:
     virtual void SetName(std::string_view);
 
     virtual BattlePokemon* GetBelt(size_t);
-    virtual void DisplayPlayerPokemon();
-    virtual void DisplayAllPokemon();
 
     virtual void IncrementPokemonCount();
     virtual void DecrementPokemonCount();
     virtual int GetPokemonCount() const;
+    virtual void SetPokemonCount(int);
 
     virtual int GetFaintedCount() const;
     virtual void IncrementFaintedCount();

@@ -19,6 +19,9 @@ class BattleManager
 public:
 	BattleManager(BattleContext& context, RandomEngine& rng, IBattleMenuUI& battleMenuUI, IMoveResultsUI& moveResultsUI, IStatusEffectUI& statusEffectUI);
 
+	void AssignFirstPokemon();
+	void ApplyPlayerOneAction(BattleAction);
+	void ApplyPlayerTwoAction(BattleAction);
 	bool RunBattleLoop();
 	void ResetValues();
 
@@ -36,4 +39,6 @@ private:
 	MoveExecutor m_moveExecutor;
 	TurnProcessor m_turnProcessor;
 	PostTurnEffectProcessor m_postTurnProcessor;
+
+	BattleAction e_battleAction{};
 };

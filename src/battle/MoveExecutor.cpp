@@ -8,7 +8,6 @@ MoveExecutor::MoveExecutor(
     StatusEffectProcessor& statusProcessor,
     IMoveResultsUI& resultsUI,
     IBattleMenuUI& battleMenuUI,
-    IStatusEffectUI& statusEffectUI,
     RandomEngine& rng,
     SwitchExecutor& switchExecutor
 )
@@ -18,7 +17,6 @@ MoveExecutor::MoveExecutor(
         statusProcessor,
         resultsUI,
         battleMenuUI,
-        statusEffectUI,
         rng,
         switchExecutor
     }
@@ -26,5 +24,5 @@ MoveExecutor::MoveExecutor(
 
 void MoveExecutor::ExecuteMove()
 {
-    ExecuteMoveRoutine::Execute(m_deps.context.currentMove->GetMoveEffectEnum(), m_deps);
+    Execute(m_deps.context.currentMove->GetMoveEffectEnum(), m_deps);
 }

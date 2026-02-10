@@ -39,6 +39,7 @@ public:
 
     bool CheckPokemonMoveList(size_t) const;
     size_t FetchMoveNumber(std::vector<size_t>::iterator);
+    size_t FetchMoveNumber(std::vector<size_t>::const_iterator) const;
 
     void ReserveMoveListVector();
     void EmplaceBackIntoMoveList(size_t);

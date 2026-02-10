@@ -6,13 +6,27 @@
 #include "../battle/StatusEffectProcessor.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../ui/interfaces/IBattleMenuUI.h"
-#include "../ui/interfaces/IStatusEffectUI.h"
 #include "../battle/RandomEngine.h"
 #include "../battle/SwitchExecutor.h"
 #include "../data/Move.h"
 #include "../data/StringToTypes.h"
+#include "../ui/EffectivenessText.h"
 
 #include "MoveRoutines.h"
+
+EffectivenessText ToEffectivenessText(BattleStateFlags::Effectiveness e)
+{
+	using E = BattleStateFlags::Effectiveness;
+
+	switch (e)
+	{
+		case E::Less:  return EffectivenessText::Less;
+		case E::Super: return EffectivenessText::Super;
+		case E::No:	   return EffectivenessText::No;
+		case E::OHKO:  return EffectivenessText::OHKO;
+		default:	   return EffectivenessText::Normal;
+	}
+}
 
 void InflictNVStatus(Status status, int chance, MoveRoutineDeps& deps)
 {
@@ -82,7 +96,7 @@ void InflictNVStatus(Status status, int chance, MoveRoutineDeps& deps)
 		ctx.defendingPokemon->ResetSleepCounter();
 	}
 
-	deps.statusUI.DisplayNVStatusMsg(statusMessage);
+	deps.resultsUI.DisplayNVStatusMsg(statusMessage);
 }
 
 void BasicDamageRoutine(MoveRoutineDeps& deps)
@@ -92,117 +106,110 @@ void BasicDamageRoutine(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 }
 
-void ExecuteMoveRoutine::DoMove(MoveRoutineDeps& deps)
+void Execute(MoveEffect ID, MoveRoutineDeps& deps)
 {
-	std::visit([&deps](auto&& routine) {
-		routine.DoMove(deps);
-		}, routine_variant);
+	auto routine{ MoveRoutineFactory::Make(ID) };
+	std::visit([&](auto&& r) {r.DoMove(deps); }, routine);
 }
 
-void ExecuteMoveRoutine::Execute(MoveEffect ID, MoveRoutineDeps& deps)
-{
-	ExecuteMoveRoutine routine = MoveRoutineFactory::Call(ID);
-	routine.DoMove(deps);
-}
-
-ExecuteMoveRoutine MoveRoutineFactory::Call(MoveEffect ID)
+MoveRoutineTypes MoveRoutineFactory::Make(MoveEffect ID)
 {
 	switch (ID)
 	{
-	case MoveEffect::NormalHit:          return ExecuteMoveRoutine(NormalHit{});
-	case MoveEffect::IncreasedCritical:  return ExecuteMoveRoutine(IncreasedCritical{});
-	case MoveEffect::MultiHit:           return ExecuteMoveRoutine(MultiHit{});
-	case MoveEffect::BurnHit:            return ExecuteMoveRoutine(BurnHit{});
-	case MoveEffect::FreezeHit:          return ExecuteMoveRoutine(FreezeHit{});
-	case MoveEffect::ParalyzeHit:        return ExecuteMoveRoutine(ParalyzeHit{});
-	case MoveEffect::OHKO:               return ExecuteMoveRoutine(OHKO{});
-	case MoveEffect::RazorWind:          return ExecuteMoveRoutine(RazorWind{});
-	case MoveEffect::AttackUp2:          return ExecuteMoveRoutine(AttackUp2{});
-	case MoveEffect::Gust:               return ExecuteMoveRoutine(Gust{});
-	case MoveEffect::ForceSwitch:        return ExecuteMoveRoutine(ForceSwitch{});
-	case MoveEffect::Fly:                return ExecuteMoveRoutine(Fly{});
-	case MoveEffect::PartialTrap:        return ExecuteMoveRoutine(PartialTrap{});
-	case MoveEffect::Stomp:              return ExecuteMoveRoutine(Stomp{});
-	case MoveEffect::DoubleHit:          return ExecuteMoveRoutine(DoubleHit{});
-	case MoveEffect::JumpKick:           return ExecuteMoveRoutine(JumpKick{});
-	case MoveEffect::FlinchHit:          return ExecuteMoveRoutine(FlinchHit{});
-	case MoveEffect::AccuracyDown:       return ExecuteMoveRoutine(AccuracyDown{});
-	case MoveEffect::BodySlam:           return ExecuteMoveRoutine(BodySlam{});
-	case MoveEffect::RecoilQuarter:      return ExecuteMoveRoutine(RecoilQuarter{});
-	case MoveEffect::Rampage:            return ExecuteMoveRoutine(Rampage{});
-	case MoveEffect::RecoilThird:        return ExecuteMoveRoutine(RecoilThird{});
-	case MoveEffect::DefenseDown:        return ExecuteMoveRoutine(DefenseDown{});
-	case MoveEffect::PoisonHit:          return ExecuteMoveRoutine(PoisonHit{});
-	case MoveEffect::Twineedle:          return ExecuteMoveRoutine(Twineedle{});
-	case MoveEffect::AttackDown:         return ExecuteMoveRoutine(AttackDown{});
-	case MoveEffect::SleepMove:          return ExecuteMoveRoutine(SleepMove{});
-	case MoveEffect::Confuse:            return ExecuteMoveRoutine(Confuse{});
-	case MoveEffect::SonicBoom:          return ExecuteMoveRoutine(SonicBoom{});
-	case MoveEffect::Disable:            return ExecuteMoveRoutine(Disable{});
-	case MoveEffect::SpecialDefenseDownHit: return ExecuteMoveRoutine(SpecialDefenseDownHit{});
-	case MoveEffect::Mist:               return ExecuteMoveRoutine(Mist{});
-	case MoveEffect::ConfuseHit:         return ExecuteMoveRoutine(ConfuseHit{});
-	case MoveEffect::SpeedDownHit:       return ExecuteMoveRoutine(SpeedDownHit{});
-	case MoveEffect::AttackDownHit:      return ExecuteMoveRoutine(AttackDownHit{});
-	case MoveEffect::RechargeAttack:     return ExecuteMoveRoutine(RechargeAttack{});
-	case MoveEffect::LowKick:            return ExecuteMoveRoutine(LowKick{});
-	case MoveEffect::Counter:            return ExecuteMoveRoutine(Counter{});
-	case MoveEffect::SeismicToss:        return ExecuteMoveRoutine(SeismicToss{});
-	case MoveEffect::Leech:              return ExecuteMoveRoutine(Leech{});
-	case MoveEffect::LeechSeed:          return ExecuteMoveRoutine(LeechSeed{});
-	case MoveEffect::Growth:             return ExecuteMoveRoutine(Growth{});
-	case MoveEffect::SolarBeam:          return ExecuteMoveRoutine(SolarBeam{});
-	case MoveEffect::PoisonPowder:       return ExecuteMoveRoutine(PoisonPowder{});
-	case MoveEffect::StunSpore:          return ExecuteMoveRoutine(StunSpore{});
-	case MoveEffect::SleepPowder:        return ExecuteMoveRoutine(SleepPowder{});
-	case MoveEffect::SpeedDown2:         return ExecuteMoveRoutine(SpeedDown2{});
-	case MoveEffect::DragonRage:         return ExecuteMoveRoutine(DragonRage{});
-	case MoveEffect::Paralyze:           return ExecuteMoveRoutine(Paralyze{});
-	case MoveEffect::Earthquake:         return ExecuteMoveRoutine(Earthquake{});
-	case MoveEffect::Dig:                return ExecuteMoveRoutine(Dig{});
-	case MoveEffect::Toxic:              return ExecuteMoveRoutine(Toxic{});
-	case MoveEffect::AttackUp:           return ExecuteMoveRoutine(AttackUp{});
-	case MoveEffect::SpeedUp2:           return ExecuteMoveRoutine(SpeedUp2{});
-	case MoveEffect::Rage:               return ExecuteMoveRoutine(Rage{});
-	case MoveEffect::Teleport:           return ExecuteMoveRoutine(Teleport{});
-	case MoveEffect::NightShade:         return ExecuteMoveRoutine(NightShade{});
-	case MoveEffect::Mimic:              return ExecuteMoveRoutine(Mimic{});
-	case MoveEffect::DefenseDown2:       return ExecuteMoveRoutine(DefenseDown2{});
-	case MoveEffect::EvasionUp:          return ExecuteMoveRoutine(EvasionUp{});
-	case MoveEffect::HealHalfHP:         return ExecuteMoveRoutine(HealHalfHP{});
-	case MoveEffect::DefenseUp:          return ExecuteMoveRoutine(DefenseUp{});
-	case MoveEffect::Minimize:           return ExecuteMoveRoutine(Minimize{});
-	case MoveEffect::DefenseUp2:         return ExecuteMoveRoutine(DefenseUp2{});
-	case MoveEffect::LightScreen:        return ExecuteMoveRoutine(LightScreen{});
-	case MoveEffect::Haze:               return ExecuteMoveRoutine(Haze{});
-	case MoveEffect::Reflect:            return ExecuteMoveRoutine(Reflect{});
-	case MoveEffect::FocusEnergy:        return ExecuteMoveRoutine(FocusEnergy{});
-	case MoveEffect::Bide:               return ExecuteMoveRoutine(Bide{});
-	case MoveEffect::Metronome:          return ExecuteMoveRoutine(Metronome{});
-	case MoveEffect::MirrorMove:         return ExecuteMoveRoutine(MirrorMove{});
-	case MoveEffect::Explosion:          return ExecuteMoveRoutine(Explosion{});
-	case MoveEffect::AlwaysHit:          return ExecuteMoveRoutine(AlwaysHit{});
-	case MoveEffect::SkullBash:          return ExecuteMoveRoutine(SkullBash{});
-	case MoveEffect::SpecialDefenseUp2:  return ExecuteMoveRoutine(SpecialDefenseUp2{});
-	case MoveEffect::DreamEater:         return ExecuteMoveRoutine(DreamEater{});
-	case MoveEffect::PoisonGas:          return ExecuteMoveRoutine(PoisonGas{});
-	case MoveEffect::SkyAttack:          return ExecuteMoveRoutine(SkyAttack{});
-	case MoveEffect::Transform:          return ExecuteMoveRoutine(Transform{});
-	case MoveEffect::Psywave:            return ExecuteMoveRoutine(Psywave{});
-	case MoveEffect::Splash:             return ExecuteMoveRoutine(Splash{});
-	case MoveEffect::Rest:               return ExecuteMoveRoutine(Rest{});
-	case MoveEffect::Conversion:         return ExecuteMoveRoutine(Conversion{});
-	case MoveEffect::TriAttack:          return ExecuteMoveRoutine(TriAttack{});
-	case MoveEffect::SuperFang:          return ExecuteMoveRoutine(SuperFang{});
-	case MoveEffect::Substitute:         return ExecuteMoveRoutine(Substitute{});
-	case MoveEffect::Struggle:           return ExecuteMoveRoutine(Struggle{});
+	case MoveEffect::NormalHit:             return NormalHit{};
+	case MoveEffect::IncreasedCritical:     return IncreasedCritical{};
+	case MoveEffect::MultiHit:              return MultiHit{};
+	case MoveEffect::BurnHit:               return BurnHit{};
+	case MoveEffect::FreezeHit:             return FreezeHit{};
+	case MoveEffect::ParalyzeHit:           return ParalyzeHit{};
+	case MoveEffect::OHKO:                  return OHKO{};
+	case MoveEffect::RazorWind:             return RazorWind{};
+	case MoveEffect::AttackUp2:             return AttackUp2{};
+	case MoveEffect::Gust:                  return Gust{};
+	case MoveEffect::ForceSwitch:           return ForceSwitch{};
+	case MoveEffect::Fly:                   return Fly{};
+	case MoveEffect::PartialTrap:           return PartialTrap{};
+	case MoveEffect::Stomp:                 return Stomp{};
+	case MoveEffect::DoubleHit:             return DoubleHit{};
+	case MoveEffect::JumpKick:              return JumpKick{};
+	case MoveEffect::FlinchHit:             return FlinchHit{};
+	case MoveEffect::AccuracyDown:          return AccuracyDown{};
+	case MoveEffect::BodySlam:              return BodySlam{};
+	case MoveEffect::RecoilQuarter:         return RecoilQuarter{};
+	case MoveEffect::Rampage:               return Rampage{};
+	case MoveEffect::RecoilThird:           return RecoilThird{};
+	case MoveEffect::DefenseDown:           return DefenseDown{};
+	case MoveEffect::PoisonHit:             return PoisonHit{};
+	case MoveEffect::Twineedle:             return Twineedle{};
+	case MoveEffect::AttackDown:            return AttackDown{};
+	case MoveEffect::SleepMove:             return SleepMove{};
+	case MoveEffect::Confuse:               return Confuse{};
+	case MoveEffect::SonicBoom:             return SonicBoom{};
+	case MoveEffect::Disable:               return Disable{};
+	case MoveEffect::SpecialDefenseDownHit: return SpecialDefenseDownHit{};
+	case MoveEffect::Mist:                  return Mist{};
+	case MoveEffect::ConfuseHit:            return ConfuseHit{};
+	case MoveEffect::SpeedDownHit:          return SpeedDownHit{};
+	case MoveEffect::AttackDownHit:         return AttackDownHit{};
+	case MoveEffect::RechargeAttack:        return RechargeAttack{};
+	case MoveEffect::LowKick:               return LowKick{};
+	case MoveEffect::Counter:               return Counter{};
+	case MoveEffect::SeismicToss:           return SeismicToss{};
+	case MoveEffect::Leech:                 return Leech{};
+	case MoveEffect::LeechSeed:             return LeechSeed{};
+	case MoveEffect::Growth:                return Growth{};
+	case MoveEffect::SolarBeam:             return SolarBeam{};
+	case MoveEffect::PoisonPowder:          return PoisonPowder{};
+	case MoveEffect::StunSpore:             return StunSpore{};
+	case MoveEffect::SleepPowder:           return SleepPowder{};
+	case MoveEffect::SpeedDown2:            return SpeedDown2{};
+	case MoveEffect::DragonRage:            return DragonRage{};
+	case MoveEffect::Paralyze:              return Paralyze{};
+	case MoveEffect::Earthquake:            return Earthquake{};
+	case MoveEffect::Dig:                   return Dig{};
+	case MoveEffect::Toxic:                 return Toxic{};
+	case MoveEffect::AttackUp:              return AttackUp{};
+	case MoveEffect::SpeedUp2:              return SpeedUp2{};
+	case MoveEffect::Rage:                  return Rage{};
+	case MoveEffect::Teleport:              return Teleport{};
+	case MoveEffect::NightShade:            return NightShade{};
+	case MoveEffect::Mimic:                 return Mimic{};
+	case MoveEffect::DefenseDown2:          return DefenseDown2{};
+	case MoveEffect::EvasionUp:             return EvasionUp{};
+	case MoveEffect::HealHalfHP:            return HealHalfHP{};
+	case MoveEffect::DefenseUp:             return DefenseUp{};
+	case MoveEffect::Minimize:              return Minimize{};
+	case MoveEffect::DefenseUp2:            return DefenseUp2{};
+	case MoveEffect::LightScreen:           return LightScreen{};
+	case MoveEffect::Haze:                  return Haze{};
+	case MoveEffect::Reflect:               return Reflect{};
+	case MoveEffect::FocusEnergy:           return FocusEnergy{};
+	case MoveEffect::Bide:                  return Bide{};
+	case MoveEffect::Metronome:             return Metronome{};
+	case MoveEffect::MirrorMove:            return MirrorMove{};
+	case MoveEffect::Explosion:             return Explosion{};
+	case MoveEffect::AlwaysHit:             return AlwaysHit{};
+	case MoveEffect::SkullBash:             return SkullBash{};
+	case MoveEffect::SpecialDefenseUp2:     return SpecialDefenseUp2{};
+	case MoveEffect::DreamEater:            return DreamEater{};
+	case MoveEffect::PoisonGas:             return PoisonGas{};
+	case MoveEffect::SkyAttack:             return SkyAttack{};
+	case MoveEffect::Transform:             return Transform{};
+	case MoveEffect::Psywave:               return Psywave{};
+	case MoveEffect::Splash:                return Splash{};
+	case MoveEffect::Rest:                  return Rest{};
+	case MoveEffect::Conversion:            return Conversion{};
+	case MoveEffect::TriAttack:             return TriAttack{};
+	case MoveEffect::SuperFang:             return SuperFang{};
+	case MoveEffect::Substitute:            return Substitute{};
+	case MoveEffect::Struggle:              return Struggle{};
 
-	default: return ExecuteMoveRoutine(Noop{});
+	default:								return Noop{};
 	}
 }
 
@@ -210,7 +217,8 @@ void Noop::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -223,7 +231,7 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -233,7 +241,7 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -241,16 +249,16 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -261,7 +269,7 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -271,7 +279,7 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -279,7 +287,7 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -291,9 +299,9 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	ctx.attackingPokemon->SetCriticalHitStage(oldCritStage);
 
@@ -306,7 +314,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -316,7 +324,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -324,7 +332,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -350,9 +358,9 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 		int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 		deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 		totalDamage += damage;
-		deps.resultsUI.DisplayCritTextDialog();
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
@@ -362,7 +370,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 
 	if (timesHit > 1)
 	{
-		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
+		deps.resultsUI.DisplayMultiAttackMsg(ctx.defendingPokemon->GetNameView(), timesHit);
 	}
 	
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
@@ -381,7 +389,7 @@ void BurnHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -391,7 +399,7 @@ void BurnHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -399,16 +407,16 @@ void BurnHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -421,7 +429,7 @@ void FreezeHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -431,7 +439,7 @@ void FreezeHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -439,16 +447,16 @@ void FreezeHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -461,7 +469,7 @@ void ParalyzeHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -471,7 +479,7 @@ void ParalyzeHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -479,16 +487,16 @@ void ParalyzeHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -501,7 +509,7 @@ void OHKO::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -511,7 +519,7 @@ void OHKO::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -519,16 +527,16 @@ void OHKO::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	// OHKO specific logic done in CalculateDamage()
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -541,13 +549,13 @@ void RazorWind::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.attackingPokemon->IsCharging())
 	{
-		deps.resultsUI.DisplayRazorWindChargeMsg();
+		deps.resultsUI.DisplayRazorWindChargeMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 		return;
 	}
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -560,7 +568,7 @@ void RazorWind::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -568,16 +576,16 @@ void RazorWind::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -588,7 +596,7 @@ void AttackUp2::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -598,17 +606,17 @@ void AttackUp2::DoMove(MoveRoutineDeps& deps)
 
 	if (attackStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("attack");
+		deps.resultsUI.DisplayStatRaiseFailMsg("attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else if (attackStage == 5)
 	{
 		ctx.attackingPokemon->SetAttackStage(6);
-		deps.statusUI.DisplayStatRaised1Msg("attack");
+		deps.resultsUI.DisplayStatRaised1Msg("attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else // attackStage < 5
 	{
 		ctx.attackingPokemon->SetAttackStage(attackStage + 2);
-		deps.statusUI.DisplayStatRaised2Msg("attack");
+		deps.resultsUI.DisplayStatRaised2Msg("attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -616,7 +624,7 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -626,7 +634,7 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 	
@@ -635,7 +643,7 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -647,9 +655,9 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -660,7 +668,7 @@ void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -677,7 +685,7 @@ void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -722,7 +730,7 @@ void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 		}
 	}
 
-	deps.resultsUI.DisplayEnemySwitchMsg(*newMon);
+	deps.resultsUI.DisplayEnemySwitchMsg(newMon->GetNameView());
 }
 
 void Fly::DoMove(MoveRoutineDeps& deps)
@@ -731,14 +739,14 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.attackingPokemon->IsCharging())
 	{
-		deps.resultsUI.DisplayFlyChargeMsg();
+		deps.resultsUI.DisplayFlyChargeMsg(ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPokemon->SetSemiInvulnerableFly(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 		return;
 	}
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -752,7 +760,7 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -760,16 +768,16 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -780,7 +788,7 @@ void PartialTrap::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -790,7 +798,7 @@ void PartialTrap::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -798,16 +806,16 @@ void PartialTrap::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -828,7 +836,7 @@ void PartialTrap::DoMove(MoveRoutineDeps& deps)
 		ctx.defendingPokemon->ResetBoundCounter();
 		ctx.defendingPokemon->SetBoundMoveName(ctx.currentMove->GetMoveIndex());
 
-		deps.resultsUI.BoundMoveText(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon, ctx.currentMove);
+		deps.resultsUI.BoundMoveText(ctx.attackingPlayer->GetPlayerNameView(), ctx.defendingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.defendingPokemon->GetNameView(), ctx.currentMove->GetMoveIndex());
 	}
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
@@ -838,7 +846,7 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -848,7 +856,7 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -867,7 +875,7 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -875,9 +883,9 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -901,7 +909,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -911,7 +919,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -919,7 +927,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -932,9 +940,9 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 		int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 		deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 		totalDamage += damage;
-		deps.resultsUI.DisplayCritTextDialog();
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
@@ -944,7 +952,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 
 	if (timesHit > 1)
 	{
-		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
+		deps.resultsUI.DisplayMultiAttackMsg(ctx.defendingPokemon->GetNameView(), timesHit);
 	}
 
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
@@ -961,7 +969,7 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -971,7 +979,7 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -979,21 +987,21 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 		int crashDamage = ctx.attackingPokemon->GetMaxHP() / 2;
 		ctx.attackingPokemon->DamageCurrentHP(crashDamage);
 
-		deps.resultsUI.DisplayJumpKickCrashMsg();
+		deps.resultsUI.DisplayJumpKickCrashMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1004,7 +1012,7 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1014,7 +1022,7 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1022,16 +1030,16 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1055,7 +1063,7 @@ void AccuracyDown::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1069,7 +1077,7 @@ void AccuracyDown::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		deps.statusUI.DisplayProtectedByMistMsg();
+		deps.resultsUI.DisplayProtectedByMistMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1077,7 +1085,7 @@ void AccuracyDown::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1086,11 +1094,11 @@ void AccuracyDown::DoMove(MoveRoutineDeps& deps)
 		int lowerAccuracy = ctx.defendingPokemon->GetAccuracyStage() - 1;
 		ctx.defendingPokemon->SetAccuracyStage(lowerAccuracy);
 
-		deps.statusUI.DisplayStatLowered1Msg("accuracy");
+		deps.resultsUI.DisplayStatLowered1Msg("accuracy", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 	else
 	{
-		deps.statusUI.DisplayStatLoweredFailMsg("accuracy");
+		deps.resultsUI.DisplayStatLoweredFailMsg("accuracy", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 }
 
@@ -1098,7 +1106,7 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1108,7 +1116,7 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1127,7 +1135,7 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -1135,9 +1143,9 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1150,7 +1158,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1160,7 +1168,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1168,7 +1176,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -1179,9 +1187,9 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1193,7 +1201,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
 
-	deps.resultsUI.DisplayRecoilMsg();
+	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 }
@@ -1207,7 +1215,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 		deps.statusProcessor.ThrashReset();
 	};
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -1220,14 +1228,14 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 
 		if (ctx.attackingPokemon->GetThrashCounter() == ctx.attackingPokemon->GetThrashTurnCount() && !ctx.attackingPokemon->IsConfused())
 		{
 			deps.statusProcessor.ThrashConfuse();
 		}
 
-		endRampage;
+		endRampage();
 
 		return;
 	}
@@ -1238,11 +1246,11 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 	{
 		if (!ctx.flags.hit)
 		{
-			deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+			deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		}
 		else
 		{
-			deps.statusUI.DisplayThrashDisabledMsg();
+			deps.resultsUI.DisplayThrashDisabledMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		}
 
 		if (ctx.attackingPokemon->GetThrashCounter() == ctx.attackingPokemon->GetThrashTurnCount() && !ctx.attackingPokemon->IsConfused())
@@ -1250,7 +1258,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 			deps.statusProcessor.ThrashConfuse();
 		}
 
-		endRampage;
+		endRampage();
 
 		return;
 	}
@@ -1271,9 +1279,9 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
@@ -1281,7 +1289,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 	{
 		deps.statusProcessor.ThrashConfuse();
 
-		endRampage;
+		endRampage();
 	}
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
@@ -1293,7 +1301,7 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	ctx.flags.hit = deps.calculations.CalculateHitChance(ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1303,13 +1311,13 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -1320,9 +1328,9 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1334,7 +1342,7 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
 
-	deps.resultsUI.DisplayRecoilMsg();
+	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 }
@@ -1343,7 +1351,7 @@ void DefenseDown::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1357,7 +1365,7 @@ void DefenseDown::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		deps.statusUI.DisplayProtectedByMistMsg();
+		deps.resultsUI.DisplayProtectedByMistMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1365,7 +1373,7 @@ void DefenseDown::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1374,11 +1382,11 @@ void DefenseDown::DoMove(MoveRoutineDeps& deps)
 		int lowerDefense = ctx.defendingPokemon->GetDefenseStage() - 1;
 		ctx.defendingPokemon->SetDefenseStage(lowerDefense);
 
-		deps.statusUI.DisplayStatLowered1Msg("defense");
+		deps.resultsUI.DisplayStatLowered1Msg("defense", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 	else
 	{
-		deps.statusUI.DisplayStatLoweredFailMsg("defense");
+		deps.resultsUI.DisplayStatLoweredFailMsg("defense", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 }
 
@@ -1386,7 +1394,7 @@ void PoisonHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1396,7 +1404,7 @@ void PoisonHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1404,16 +1412,16 @@ void PoisonHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1426,7 +1434,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1436,7 +1444,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1444,7 +1452,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -1457,9 +1465,9 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 		int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 		deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 		totalDamage += damage;
-		deps.resultsUI.DisplayCritTextDialog();
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 		InflictNVStatus(Status::Poisoned, ctx.currentMove->GetEffectChance(), deps);
 
@@ -1471,7 +1479,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 
 	if (timesHit > 1)
 	{
-		deps.resultsUI.DisplayMultiAttackMsg(timesHit);
+		deps.resultsUI.DisplayMultiAttackMsg(ctx.defendingPokemon->GetNameView(), timesHit);
 	}
 
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
@@ -1488,7 +1496,7 @@ void AttackDown::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1502,7 +1510,7 @@ void AttackDown::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		deps.statusUI.DisplayProtectedByMistMsg();
+		deps.resultsUI.DisplayProtectedByMistMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1510,7 +1518,7 @@ void AttackDown::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1519,11 +1527,11 @@ void AttackDown::DoMove(MoveRoutineDeps& deps)
 		int lowerAttack = ctx.defendingPokemon->GetAttackStage() - 1;
 		ctx.defendingPokemon->SetAttackStage(lowerAttack);
 
-		deps.statusUI.DisplayStatLowered1Msg("attack");
+		deps.resultsUI.DisplayStatLowered1Msg("attack", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 	else
 	{
-		deps.statusUI.DisplayStatLoweredFailMsg("attack");
+		deps.resultsUI.DisplayStatLoweredFailMsg("attack", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 }
 
@@ -1531,7 +1539,7 @@ void SleepMove::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1541,13 +1549,13 @@ void SleepMove::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
 	{
-		deps.statusUI.DisplayAlreadyAsleepMsg();
+		deps.resultsUI.DisplayAlreadyAsleepMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1564,7 +1572,7 @@ void Confuse::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1574,7 +1582,7 @@ void Confuse::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1591,14 +1599,14 @@ void Confuse::DoMove(MoveRoutineDeps& deps)
 	ctx.defendingPokemon->SetConfusedTurnCount(randomMod);
 	ctx.defendingPokemon->ResetConfusedCounter();
 
-	deps.statusUI.DisplayBecameConfuseMsg();
+	deps.resultsUI.DisplayBecameConfuseMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 }
 
 void SonicBoom::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1608,7 +1616,7 @@ void SonicBoom::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1616,7 +1624,7 @@ void SonicBoom::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -1629,7 +1637,7 @@ void SonicBoom::DoMove(MoveRoutineDeps& deps)
 	int finalDamage = std::min(baseDamage, maxDamage);
 
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1640,7 +1648,7 @@ void Disable::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1650,7 +1658,7 @@ void Disable::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -1668,7 +1676,7 @@ void Disable::DoMove(MoveRoutineDeps& deps)
 	ctx.defendingPokemon->SetDisabledStatus(true);
 	ctx.defendingPokemon->ResetDisabledCounter();
 
-	deps.statusUI.DisplayMoveDisabledMsg();
+	deps.resultsUI.DisplayMoveDisabledMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetLastUsedMove()->GetName());
 	
 }
 
@@ -1676,7 +1684,7 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1686,7 +1694,7 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1694,16 +1702,16 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 		
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1719,7 +1727,7 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 			int lowerSpecialDefense = ctx.defendingPokemon->GetSpecialDefenseStage() - 1;
 			ctx.defendingPokemon->SetSpecialDefenseStage(lowerSpecialDefense);
 
-			deps.statusUI.DisplayStatLowered1Msg("special defense");
+			deps.resultsUI.DisplayStatLowered1Msg("special defense", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		}
 	}
 
@@ -1730,7 +1738,7 @@ void Mist::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1738,7 +1746,7 @@ void Mist::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.attackingPlayer->HasMist())
 	{
-		deps.statusUI.DisplayMistMsg();
+		deps.resultsUI.DisplayMistMsg(ctx.attackingPlayer->GetPlayerNameView());
 		ctx.attackingPlayer->SetMist(true);
 	}
 	else
@@ -1751,7 +1759,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1761,7 +1769,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1769,15 +1777,15 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1790,7 +1798,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 			(!ctx.defendingPokemon->HasSubstitute() || ctx.currentMove->CanBypassSubstitute()) &&
 			ctx.defendingPokemon->GetCurrentHP() != 0)
 		{
-			deps.statusUI.DisplayBecameConfuseMsg();
+			deps.resultsUI.DisplayBecameConfuseMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 
 			ctx.defendingPokemon->SetConfusedStatus(true);
 
@@ -1808,7 +1816,7 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1818,7 +1826,7 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1826,16 +1834,16 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 		
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1851,7 +1859,7 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 			int lowerSpeed = ctx.defendingPokemon->GetSpeedStage() - 1;
 			ctx.defendingPokemon->SetSpeedStage(lowerSpeed);
 
-			deps.statusUI.DisplayStatLowered1Msg("speed");
+			deps.resultsUI.DisplayStatLowered1Msg("speed", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		}
 	}
 
@@ -1862,7 +1870,7 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1872,7 +1880,7 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1880,16 +1888,16 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1905,7 +1913,7 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 			int lowerAttack = ctx.defendingPokemon->GetAttackStage() - 1;
 			ctx.defendingPokemon->SetAttackStage(lowerAttack);
 
-			deps.statusUI.DisplayStatLowered1Msg("attack");
+			deps.resultsUI.DisplayStatLowered1Msg("attack", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		}
 	}
 
@@ -1918,13 +1926,13 @@ void RechargeAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.attackingPokemon->IsRecharging())
 	{
-		deps.resultsUI.DisplayRechargeMsg();
+		deps.resultsUI.DisplayRechargeMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetRecharging(false);
 		ctx.attackingPlayer->SetCanSwitch(true);
 		return;
 	}
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1934,7 +1942,7 @@ void RechargeAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1942,16 +1950,16 @@ void RechargeAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -1968,7 +1976,7 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -1978,7 +1986,7 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -1986,7 +1994,7 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -1994,9 +2002,9 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
@@ -2011,7 +2019,7 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 
 	ctx.damageTaken = 0;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2037,7 +2045,7 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2045,7 +2053,7 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -2056,7 +2064,7 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 	int finalDamage = std::min(counterDamage, maxDamage);
 
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2067,7 +2075,7 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2077,7 +2085,7 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2085,7 +2093,7 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -2098,7 +2106,7 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 	int finalDamage = std::min(baseDamage, maxDamage);
 
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2109,7 +2117,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2119,7 +2127,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2127,16 +2135,16 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 	
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	int leechedHealth{};
 
@@ -2164,7 +2172,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 	
 	if (!ctx.defendingPokemon->HasSubstitute() && leechedHealth > 0)
 	{
-		deps.resultsUI.DisplayEnergyDrainedMsg();
+		deps.resultsUI.DisplayEnergyDrainedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
@@ -2174,7 +2182,7 @@ void LeechSeed::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2184,7 +2192,7 @@ void LeechSeed::DoMove(MoveRoutineDeps& deps)
 
 	if (isImmune)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2192,7 +2200,7 @@ void LeechSeed::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2204,14 +2212,14 @@ void LeechSeed::DoMove(MoveRoutineDeps& deps)
 
 	ctx.defendingPokemon->SetSeededStatus(true);
 	
-	deps.statusUI.DisplaySeededMsg();
+	deps.resultsUI.DisplaySeededMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 }
 
 void Growth::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2222,24 +2230,24 @@ void Growth::DoMove(MoveRoutineDeps& deps)
 
 	if (attackStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("attack");
+		deps.resultsUI.DisplayStatRaiseFailMsg("attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else
 	{
 		++attackStage;
 		ctx.attackingPokemon->SetAttackStage(attackStage);
-		deps.statusUI.DisplayStatRaised1Msg("attack");
+		deps.resultsUI.DisplayStatRaised1Msg("attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 
 	if (specialAttackStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("special attack");
+		deps.resultsUI.DisplayStatRaiseFailMsg("special attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else
 	{
 		++specialAttackStage;
 		ctx.attackingPokemon->SetSpecialAttackStage(specialAttackStage);
-		deps.statusUI.DisplayStatRaised1Msg("special attack");
+		deps.resultsUI.DisplayStatRaised1Msg("special attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -2249,13 +2257,13 @@ void SolarBeam::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.attackingPokemon->IsCharging())
 	{
-		deps.resultsUI.DisplaySolarBeamChargeMsg();
+		deps.resultsUI.DisplaySolarBeamChargeMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 		return;
 	}
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2268,7 +2276,7 @@ void SolarBeam::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2276,16 +2284,16 @@ void SolarBeam::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2296,7 +2304,7 @@ void PoisonPowder::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2308,7 +2316,7 @@ void PoisonPowder::DoMove(MoveRoutineDeps& deps)
 
 	if (isImmune)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2316,13 +2324,13 @@ void PoisonPowder::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetStatus() == Status::Poisoned || ctx.defendingPokemon->GetStatus() == Status::Badly_Poisoned)
 	{
-		deps.statusUI.DisplayAlreadyPoisonedMsg();
+		deps.resultsUI.DisplayAlreadyPoisonedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2339,7 +2347,7 @@ void StunSpore::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2350,7 +2358,7 @@ void StunSpore::DoMove(MoveRoutineDeps& deps)
 
 	if (isImmune)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2358,13 +2366,13 @@ void StunSpore::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetStatus() == Status::Paralyzed)
 	{
-		deps.statusUI.DisplayAlreadyParalyzedMsg();
+		deps.resultsUI.DisplayAlreadyParalyzedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2381,7 +2389,7 @@ void SleepPowder::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2391,7 +2399,7 @@ void SleepPowder::DoMove(MoveRoutineDeps& deps)
 
 	if (isImmune)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2399,13 +2407,13 @@ void SleepPowder::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetStatus() == Status::Sleeping)
 	{
-		deps.statusUI.DisplayAlreadyAsleepMsg();
+		deps.resultsUI.DisplayAlreadyAsleepMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2422,7 +2430,7 @@ void SpeedDown2::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2436,7 +2444,7 @@ void SpeedDown2::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		deps.statusUI.DisplayProtectedByMistMsg();
+		deps.resultsUI.DisplayProtectedByMistMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2444,27 +2452,27 @@ void SpeedDown2::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetSpeedStage() < -5)
 	{
-		deps.statusUI.DisplayStatLoweredFailMsg("speed");
+		deps.resultsUI.DisplayStatLoweredFailMsg("speed", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 	else if (ctx.defendingPokemon->GetSpeedStage() == -5)
 	{
 		int lowerSpeed{ ctx.defendingPokemon->GetSpeedStage() - 1 };
 		ctx.defendingPokemon->SetSpeedStage(lowerSpeed);
 
-		deps.statusUI.DisplayStatLowered1Msg("speed");
+		deps.resultsUI.DisplayStatLowered1Msg("speed", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 	else // GetSpeedStage() > -5
 	{
 		int lowerSpeed{ ctx.defendingPokemon->GetSpeedStage() - 2 };
 		ctx.defendingPokemon->SetSpeedStage(lowerSpeed);
 
-		deps.statusUI.DisplayStatLowered2Msg("speed");
+		deps.resultsUI.DisplayStatLowered2Msg("speed", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 }
 
@@ -2472,7 +2480,7 @@ void DragonRage::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2482,7 +2490,7 @@ void DragonRage::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2490,7 +2498,7 @@ void DragonRage::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -2503,7 +2511,7 @@ void DragonRage::DoMove(MoveRoutineDeps& deps)
 	int finalDamage = std::min(baseDamage, maxDamage);
 
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2514,7 +2522,7 @@ void Paralyze::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2537,7 +2545,7 @@ void Paralyze::DoMove(MoveRoutineDeps& deps)
 
 	if (isImmune)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2545,13 +2553,13 @@ void Paralyze::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetStatus() == Status::Paralyzed)
 	{
-		deps.statusUI.DisplayAlreadyParalyzedMsg();
+		deps.resultsUI.DisplayAlreadyParalyzedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2568,7 +2576,7 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2578,7 +2586,7 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2586,7 +2594,7 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -2594,9 +2602,9 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2609,14 +2617,14 @@ void Dig::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.attackingPokemon->IsCharging())
 	{
-		deps.resultsUI.DisplayDigChargeMsg();
+		deps.resultsUI.DisplayDigChargeMsg(ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPokemon->SetSemiInvulnerableDig(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 		return;
 	}
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2630,7 +2638,7 @@ void Dig::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2638,16 +2646,16 @@ void Dig::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2658,7 +2666,7 @@ void Toxic::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2669,7 +2677,7 @@ void Toxic::DoMove(MoveRoutineDeps& deps)
 
 	if (isImmune)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2677,13 +2685,13 @@ void Toxic::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetStatus() == Status::Poisoned || ctx.defendingPokemon->GetStatus() == Status::Badly_Poisoned)
 	{
-		deps.statusUI.DisplayAlreadyPoisonedMsg();
+		deps.resultsUI.DisplayAlreadyPoisonedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2700,7 +2708,7 @@ void AttackUp::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2710,13 +2718,13 @@ void AttackUp::DoMove(MoveRoutineDeps& deps)
 
 	if (attackStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("attack");
+		deps.resultsUI.DisplayStatRaiseFailMsg("attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else
 	{
 		++attackStage;
 		ctx.attackingPokemon->SetAttackStage(attackStage);
-		deps.statusUI.DisplayStatRaised1Msg("attack");
+		deps.resultsUI.DisplayStatRaised1Msg("attack", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -2724,7 +2732,7 @@ void SpeedUp2::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2734,19 +2742,19 @@ void SpeedUp2::DoMove(MoveRoutineDeps& deps)
 
 	if (speedStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("speed");
+		deps.resultsUI.DisplayStatRaiseFailMsg("speed", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else if (speedStage == 5)
 	{
 		++speedStage;
 		ctx.attackingPokemon->SetSpeedStage(speedStage);
-		deps.statusUI.DisplayStatRaised1Msg("speed");
+		deps.resultsUI.DisplayStatRaised1Msg("speed", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else // speedStage < 5
 	{
 		speedStage += 2;
 		ctx.attackingPokemon->SetSpeedStage(speedStage);
-		deps.statusUI.DisplayStatRaised2Msg("speed");
+		deps.resultsUI.DisplayStatRaised2Msg("speed", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -2754,7 +2762,7 @@ void Rage::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2764,7 +2772,7 @@ void Rage::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2772,16 +2780,16 @@ void Rage::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2797,15 +2805,16 @@ void Teleport::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
-	if (ctx.attackingPlayer->GetPokemonCount() == 1)
+	if (ctx.attackingPlayer->GetPokemonCount() == 1 || !ctx.attackingPlayer->IsHuman())
 	{
 		deps.resultsUI.DisplayFailedTextDialog();
 		return;
 	}
 
-	deps.battleUI.SwitchPokemonOption(ctx.attackingPlayer, ctx.attackingPokemon);
+	deps.battleUI.SwitchPokemonOption(*ctx.attackingPlayer, *ctx.attackingPokemon);
+	ctx.attackingPlayer->SetPokemonToSwitchTo(deps.battleUI.GetChosenPokemon());
 
 	deps.switchExecutor.ExecuteSwitch(ctx.attackingPlayer, ctx.attackingPokemon);
 }
@@ -2814,7 +2823,7 @@ void NightShade::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2824,7 +2833,7 @@ void NightShade::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -2832,7 +2841,7 @@ void NightShade::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -2845,7 +2854,7 @@ void NightShade::DoMove(MoveRoutineDeps& deps)
 	int finalDamage = std::min(baseDamage, maxDamage);
 
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, finalDamage);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -2856,7 +2865,7 @@ void Mimic::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2880,14 +2889,14 @@ void Mimic::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	ctx.attackingPokemon->SetUsedMimic(true);
 	ctx.attackingPokemon->SetMimicPP(ctx.currentMove->m_currentPP);
 
-	deps.statusUI.DisplayLearnedMimicMoveMsg();
+	deps.resultsUI.DisplayLearnedMimicMoveMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.defendingPokemon->GetLastUsedMove()->GetName());
 
 	ctx.currentMove->SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(
 		ctx.defendingPokemon->GetLastUsedMove()->GetMoveIndex() - 1));
@@ -2900,7 +2909,7 @@ void DefenseDown2::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2914,7 +2923,7 @@ void DefenseDown2::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPlayer->HasMist() && ctx.flags.hit)
 	{
-		deps.statusUI.DisplayProtectedByMistMsg();
+		deps.resultsUI.DisplayProtectedByMistMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -2922,27 +2931,27 @@ void DefenseDown2::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetDefenseStage() <= -6)
 	{
-		deps.statusUI.DisplayStatLoweredFailMsg("defense");
+		deps.resultsUI.DisplayStatLoweredFailMsg("defense", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 	else if (ctx.defendingPokemon->GetDefenseStage() == -5)
 	{
 		int lowerDefense = ctx.defendingPokemon->GetDefenseStage() - 1;
 		ctx.defendingPokemon->SetDefenseStage(lowerDefense);
 
-		deps.statusUI.DisplayStatLowered1Msg("defense");
+		deps.resultsUI.DisplayStatLowered1Msg("defense", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 	else // GetDefenseStage() > -5
 	{
 		int lowerDefense = ctx.defendingPokemon->GetDefenseStage() - 2;
 		ctx.defendingPokemon->SetDefenseStage(lowerDefense);
 
-		deps.statusUI.DisplayStatLowered2Msg("defense");
+		deps.resultsUI.DisplayStatLowered2Msg("defense", ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 }
 
@@ -2950,7 +2959,7 @@ void EvasionUp::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2960,13 +2969,13 @@ void EvasionUp::DoMove(MoveRoutineDeps& deps)
 
 	if (evasionStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("evasiveness");
+		deps.resultsUI.DisplayStatRaiseFailMsg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else
 	{
 		++evasionStage;
 		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		deps.statusUI.DisplayStatRaised1Msg("evasiveness");
+		deps.resultsUI.DisplayStatRaised1Msg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -2974,7 +2983,7 @@ void HealHalfHP::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -2986,12 +2995,12 @@ void HealHalfHP::DoMove(MoveRoutineDeps& deps)
 
 		ctx.attackingPokemon->HealCurrentHP(healAmount);
 
-		deps.resultsUI.DisplayRecoveredHPRestoredMsg(healAmount);
+		deps.resultsUI.DisplayRecoveredHPRestoredMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 
 	else
 	{
-		deps.resultsUI.DisplayHPFullMsg();
+		deps.resultsUI.DisplayHPFullMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -2999,7 +3008,7 @@ void DefenseUp::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3009,13 +3018,13 @@ void DefenseUp::DoMove(MoveRoutineDeps& deps)
 
 	if (defenseStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("defense");
+		deps.resultsUI.DisplayStatRaiseFailMsg("defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else
 	{
 		++defenseStage;
 		ctx.attackingPokemon->SetDefenseStage(defenseStage);
-		deps.statusUI.DisplayStatRaised1Msg("defense");
+		deps.resultsUI.DisplayStatRaised1Msg("defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -3023,7 +3032,7 @@ void Minimize::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3033,20 +3042,20 @@ void Minimize::DoMove(MoveRoutineDeps& deps)
 
 	if (evasionStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("evasiveness");
+		deps.resultsUI.DisplayStatRaiseFailMsg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else if (evasionStage == 5)
 	{
 		++evasionStage;
 		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		deps.statusUI.DisplayStatRaised1Msg("evasiveness");
+		deps.resultsUI.DisplayStatRaised1Msg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetUsedMinimize(true);
 	}
 	else // evasionStage < 5
 	{
 		evasionStage += 2;
 		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		deps.statusUI.DisplayStatRaised2Msg("evasiveness");
+		deps.resultsUI.DisplayStatRaised2Msg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetUsedMinimize(true);
 	}
 }
@@ -3055,7 +3064,7 @@ void DefenseUp2::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	int defenseStage = ctx.attackingPokemon->GetDefenseStage();
 
@@ -3065,19 +3074,19 @@ void DefenseUp2::DoMove(MoveRoutineDeps& deps)
 
 	if (defenseStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("defense");
+		deps.resultsUI.DisplayStatRaiseFailMsg("defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else if (defenseStage == 5)
 	{
 		++defenseStage;
 		ctx.attackingPokemon->SetDefenseStage(defenseStage);
-		deps.statusUI.DisplayStatRaised1Msg("defense");
+		deps.resultsUI.DisplayStatRaised1Msg("defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else // defenseStage < 5
 	{
 		defenseStage += 2;
 		ctx.attackingPokemon->SetDefenseStage(defenseStage);
-		deps.statusUI.DisplayStatRaised2Msg("defense");
+		deps.resultsUI.DisplayStatRaised2Msg("defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -3085,7 +3094,7 @@ void LightScreen::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3098,7 +3107,7 @@ void LightScreen::DoMove(MoveRoutineDeps& deps)
 	else
 	{
 		ctx.attackingPlayer->SetLightScreen(true);
-		deps.statusUI.DisplayLightScreenMsg();
+		deps.resultsUI.DisplayLightScreenMsg(ctx.attackingPlayer->GetPlayerNameView());
 	}
 }
 
@@ -3106,7 +3115,7 @@ void Haze::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3128,14 +3137,14 @@ void Haze::DoMove(MoveRoutineDeps& deps)
 	ctx.defendingPokemon->SetEvasionStage(0);
 	ctx.defendingPokemon->SetAccuracyStage(0);
 
-	deps.statusUI.DisplayHazeMsg();
+	deps.resultsUI.DisplayHazeMsg();
 }
 
 void Reflect::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3148,7 +3157,7 @@ void Reflect::DoMove(MoveRoutineDeps& deps)
 	else
 	{
 		ctx.attackingPlayer->SetReflect(true);
-		deps.statusUI.DisplayReflectMsg();
+		deps.resultsUI.DisplayReflectMsg(ctx.attackingPlayer->GetPlayerNameView());
 	}
 }
 
@@ -3156,7 +3165,7 @@ void FocusEnergy::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3170,7 +3179,7 @@ void FocusEnergy::DoMove(MoveRoutineDeps& deps)
 	{
 		ctx.attackingPokemon->SetFocusEnergy(true);
 		ctx.attackingPokemon->SetCriticalHitStage(2);
-		deps.statusUI.DisplayFocusEnergyMsg();
+		deps.resultsUI.DisplayFocusEnergyMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -3187,7 +3196,7 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.currentMove->b_isDisabled)
 	{
-		deps.statusUI.DisplayBideDisabledMsg();
+		deps.resultsUI.DisplayBideDisabledMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 		endBide;
 
@@ -3197,14 +3206,14 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 	if (ctx.attackingPokemon->IsBiding())
 	{
 		ctx.attackingPokemon->IncrementBideCounter();
-		deps.statusUI.DisplayBideStoringEnergyMsg();
+		deps.resultsUI.DisplayBideStoringEnergyMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		
 		return;
 	}
 
 	if (!ctx.attackingPokemon->IsBiding())
 	{
-		deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+		deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 		ctx.attackingPokemon->SetBide(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
@@ -3217,12 +3226,12 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.attackingPokemon->GetBideCounter() >= ctx.attackingPokemon->GetBideTurnCount())
 	{		
-		deps.statusUI.DisplayBideUnleashedMsg();
+		deps.resultsUI.DisplayBideUnleashedMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 		if (ctx.defendingPokemon->GetTypeOneEnum() == PokemonType::Ghost ||
 			ctx.defendingPokemon->GetTypeTwoEnum() == PokemonType::Ghost)
 		{
-			deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+			deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 
 			endBide;
 
@@ -3233,7 +3242,7 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 
 		if (!ctx.flags.hit)
 		{
-			deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+			deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 			endBide;
 
@@ -3252,7 +3261,7 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 		{
 			ctx.defendingPokemon->DamageSubstitute(finalDamage);
 
-			deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+			deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 			deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 			ctx.flags.hitSubstitute = true;
 		}
@@ -3275,7 +3284,7 @@ void Metronome::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3288,14 +3297,14 @@ void Metronome::DoMove(MoveRoutineDeps& deps)
 
 	Move* selectedMove = Database::GetInstance().GetPointerToMovedexNumber(randomMod);
 
-	deps.statusUI.DisplayMetronomeMsg(selectedMove);
+	deps.resultsUI.DisplayMetronomeMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), selectedMove->GetName());
 
 	ctx.attackingPokemon->metronomeMove.SetMovePointer(selectedMove);
 	ctx.attackingPokemon->metronomeMove.m_currentPP = 1;
 	ctx.attackingPokemon->metronomeMove.m_maxPP = 1;
 
 	{
-		ExecuteMoveRoutine::Execute(deps.context.currentMove->GetMoveEffectEnum(), deps);
+		Execute(deps.context.currentMove->GetMoveEffectEnum(), deps);
 	}
 }
 
@@ -3303,7 +3312,7 @@ void MirrorMove::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3322,7 +3331,7 @@ void MirrorMove::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->mirrorMove.m_maxPP = 1;
 
 	{
-		ExecuteMoveRoutine::Execute(deps.context.currentMove->GetMoveEffectEnum(), deps);
+		Execute(deps.context.currentMove->GetMoveEffectEnum(), deps);
 	}
 }
 
@@ -3330,7 +3339,7 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3340,7 +3349,7 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 
 		ctx.attackingPokemon->DamageCurrentHP(ctx.attackingPokemon->GetCurrentHP());
 
@@ -3353,7 +3362,7 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 		ctx.attackingPokemon->DamageCurrentHP(ctx.attackingPokemon->GetCurrentHP());
 
@@ -3364,9 +3373,9 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -3381,7 +3390,7 @@ void AlwaysHit::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3391,7 +3400,7 @@ void AlwaysHit::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -3399,16 +3408,16 @@ void AlwaysHit::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -3421,7 +3430,7 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.attackingPokemon->IsCharging())
 	{
-		deps.resultsUI.DisplaySkullBashChargeMsg();
+		deps.resultsUI.DisplaySkullBashChargeMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 
@@ -3429,19 +3438,19 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 
 		if (defenseStage >= 6)
 		{
-			deps.statusUI.DisplayStatRaiseFailMsg("defense");
+			deps.resultsUI.DisplayStatRaiseFailMsg("defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		}
 		else
 		{
 			++defenseStage;
 			ctx.attackingPokemon->SetDefenseStage(defenseStage);
-			deps.statusUI.DisplayStatRaised1Msg("defense");
+			deps.resultsUI.DisplayStatRaised1Msg("defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		}
 
 		return;
 	}
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3454,7 +3463,7 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -3462,16 +3471,16 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -3482,7 +3491,7 @@ void SpecialDefenseUp2::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3492,19 +3501,19 @@ void SpecialDefenseUp2::DoMove(MoveRoutineDeps& deps)
 
 	if (specialDefenseStage >= 6)
 	{
-		deps.statusUI.DisplayStatRaiseFailMsg("special defense");
+		deps.resultsUI.DisplayStatRaiseFailMsg("special defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else if (specialDefenseStage == 5)
 	{
 		++specialDefenseStage;
 		ctx.attackingPokemon->SetSpecialDefenseStage(specialDefenseStage);
-		deps.statusUI.DisplayStatRaised1Msg("special defense");
+		deps.resultsUI.DisplayStatRaised1Msg("special defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 	else // specialDefenseStage < 5
 	{
 		specialDefenseStage += 2;
 		ctx.attackingPokemon->SetSpecialDefenseStage(specialDefenseStage);
-		deps.statusUI.DisplayStatRaised2Msg("special defense");
+		deps.resultsUI.DisplayStatRaised2Msg("special defense", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -3512,7 +3521,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3522,7 +3531,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.defendingPokemon->GetStatus() != Status::Sleeping || ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -3530,16 +3539,16 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	int leechedHealth{};
 
@@ -3567,7 +3576,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 
 	if (leechedHealth > 0)
 	{
-		deps.resultsUI.DisplayEnergyDrainedMsg();
+		deps.resultsUI.DisplayEnergyDrainedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
@@ -3577,7 +3586,7 @@ void PoisonGas::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3588,7 +3597,7 @@ void PoisonGas::DoMove(MoveRoutineDeps& deps)
 
 	if (isImmune)
 	{
-		deps.statusUI.DisplayDoesntAffectMsg();
+		deps.resultsUI.DisplayDoesntAffectMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -3596,13 +3605,13 @@ void PoisonGas::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	if (ctx.defendingPokemon->GetStatus() == Status::Poisoned || ctx.defendingPokemon->GetStatus() == Status::Badly_Poisoned)
 	{
-		deps.statusUI.DisplayAlreadyPoisonedMsg();
+		deps.resultsUI.DisplayAlreadyPoisonedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
@@ -3621,13 +3630,13 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.attackingPokemon->IsCharging())
 	{
-		deps.resultsUI.DisplaySkullBashChargeMsg();
+		deps.resultsUI.DisplaySkyAttackChargeMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		ctx.attackingPokemon->SetCharging(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 		return;
 	}
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3640,7 +3649,7 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -3648,7 +3657,7 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -3660,9 +3669,9 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	ctx.attackingPokemon->SetCriticalHitStage(oldCritStage);
 
@@ -3686,7 +3695,7 @@ void Transform::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3702,19 +3711,19 @@ void Transform::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayAttackAvoidedTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 		return;
 	}
 
 	ctx.attackingPokemon->SetTransformation(ctx.defendingPokemon);
-	deps.statusUI.DisplayTransformMsg();
+	deps.resultsUI.DisplayTransformMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.defendingPokemon->GetNameView());
 }
 
 void Psywave::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3724,7 +3733,7 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -3732,7 +3741,7 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -3749,7 +3758,7 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 	}
 
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, psywaveDamage);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -3760,7 +3769,7 @@ void Splash::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3773,7 +3782,7 @@ void Rest::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3782,7 +3791,7 @@ void Rest::DoMove(MoveRoutineDeps& deps)
 	if (ctx.attackingPokemon->GetStatus() != Status::Sleeping &&
 		ctx.attackingPokemon->GetCurrentHP() < ctx.attackingPokemon->GetMaxHP())
 	{
-		deps.resultsUI.DisplayRestMsg();
+		deps.resultsUI.DisplayRestMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 		ctx.attackingPokemon->ChangeStatus(Status::Sleeping);
 
@@ -3794,7 +3803,7 @@ void Rest::DoMove(MoveRoutineDeps& deps)
 	}
 	else if (ctx.attackingPokemon->GetCurrentHP() >= ctx.attackingPokemon->GetMaxHP())
 	{
-		deps.resultsUI.DisplayHPFullMsg();
+		deps.resultsUI.DisplayHPFullMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 
@@ -3802,7 +3811,7 @@ void Conversion::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3816,7 +3825,7 @@ void Conversion::DoMove(MoveRoutineDeps& deps)
 	{
 		ctx.attackingPokemon->SetConversion(ctx.currentMove);
 
-		deps.statusUI.DisplayConversionMsg();
+		deps.resultsUI.DisplayConversionMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.attackingPokemon->GetTypeOne());
 	}
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
@@ -3826,7 +3835,7 @@ void TriAttack::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3836,7 +3845,7 @@ void TriAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -3844,16 +3853,16 @@ void TriAttack::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	std::uniform_int_distribution<int> randomModDistributor(1, 100);
 	int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
@@ -3893,7 +3902,7 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3903,7 +3912,7 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -3911,7 +3920,7 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -3925,7 +3934,7 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 	{
 		ctx.defendingPokemon->DamageSubstitute(finalDamage);
 
-		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 		ctx.flags.hitSubstitute = true;
 	}
@@ -3944,7 +3953,7 @@ void Substitute::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.currentMove->DeductPP();
 
@@ -3952,7 +3961,7 @@ void Substitute::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.attackingPokemon->HasSubstitute())
 	{
-		deps.statusUI.DisplayAlreadyHasSubstituteMsg();
+		deps.resultsUI.DisplayAlreadyHasSubstituteMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
@@ -3960,13 +3969,13 @@ void Substitute::DoMove(MoveRoutineDeps& deps)
 
 	if (substituteHP >= ctx.attackingPokemon->GetCurrentHP())
 	{
-		deps.statusUI.DisplayNotEnoughHPSubstituteMsg();
+		deps.resultsUI.DisplayNotEnoughHPSubstituteMsg();
 		return;
 	}
 
 	int hpCost = substituteHP;
 
-	deps.statusUI.DisplayPutInSubstituteMsg();
+	deps.resultsUI.DisplayPutInSubstituteMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	ctx.attackingPokemon->SetSubstitute(true);
 	ctx.attackingPokemon->SetSubstituteHP(hpCost);
 	ctx.attackingPokemon->DamageCurrentHP(hpCost);
@@ -3979,9 +3988,9 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	deps.statusUI.DisplayNoMovesLeftStruggleMsg();
+	deps.resultsUI.DisplayNoMovesLeftStruggleMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
-	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer, ctx.currentMove, ctx.attackingPokemon);
+	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
@@ -3989,7 +3998,7 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
-		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
 
@@ -3997,15 +4006,15 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 
 	if (!ctx.flags.hit)
 	{
-		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer, ctx.attackingPokemon);
+		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
 
 	int damage = deps.calculations.CalculateDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(ctx.defendingPlayer, ctx.currentMove, ctx.attackingPokemon, ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
-	deps.resultsUI.DisplayCritTextDialog();
-	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer, ctx.defendingPokemon);
+	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
+	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 
@@ -4015,7 +4024,7 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
 
-	deps.resultsUI.DisplayRecoilMsg();
+	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 	deps.statusProcessor.CheckFaintCondition(ctx.attackingPlayer, ctx.defendingPlayer, ctx.attackingPokemon, ctx.defendingPokemon);
 }

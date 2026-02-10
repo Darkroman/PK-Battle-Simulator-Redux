@@ -4,6 +4,8 @@
 #include <array>
 #include <memory>
 
+#include "../common/PartyEditResults.h"
+
 class Player;
 class RandomEngine;
 class IAIStrategy;
@@ -14,17 +16,17 @@ private:
 	std::vector<std::unique_ptr<Player>>& playerStorage;
 	std::array<Player*, 2> players;
 	RandomEngine& m_rng;
-	std::vector<std::unique_ptr<IAIStrategy>> strategies;
+	IAIStrategy& m_persistentStrategy;
 
 public:
 	Menu() = delete;
-	explicit Menu(std::vector<std::unique_ptr<Player>>&, RandomEngine&);
+	explicit Menu(std::vector<std::unique_ptr<Player>>&, RandomEngine&, IAIStrategy&);
 
-	void SetPlayerPokemon(Player*, size_t, size_t);
-	void SetPlayerPokemon(Player*, size_t, std::string_view);
+	SetPokemonResult SetPlayerPokemon(Player*, size_t, size_t);
+	SetPokemonResult SetPlayerPokemon(Player*, size_t, std::string_view);
 
-	void SetPlayerPokemonMove(Player*, size_t, size_t, size_t);
-	void SetPlayerPokemonMove(Player*, size_t, size_t, std::string_view);
+	SetMoveResult SetPlayerPokemonMove(Player*, size_t, size_t, size_t);
+	SetMoveResult SetPlayerPokemonMove(Player*, size_t, size_t, std::string_view);
 
 	bool SetPlayerPokemonNickname(Player*, size_t);
 

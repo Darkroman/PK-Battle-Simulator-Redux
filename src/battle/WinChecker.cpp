@@ -48,7 +48,8 @@ bool WinChecker::CheckWinOrSwitch(Player* sourcePlayer, Player* targetPlayer, Ba
 		}
 		else
 		{
-			m_battleMenuUI.SwitchPokemonOption(targetPlayer, targetPokemon);
+			m_battleMenuUI.SwitchPokemonOption(*targetPlayer, *targetPokemon);
+			targetPlayer->SetPokemonToSwitchTo(m_battleMenuUI.GetChosenPokemon());
 		}
 
 		if (targetPokemon == m_context.playerOneCurrentPokemon)

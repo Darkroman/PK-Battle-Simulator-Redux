@@ -17,7 +17,7 @@ bool AIPlayer::IsHuman() const
 	return false;
 }
 
-void AIPlayer::ChooseAction(BattlePokemon* selfMon, BattleContext& context)
+BattlePokemon::pokemonMove* AIPlayer::ChooseAction(BattlePokemon* selfMon, const BattleContext& context)
 {
     if (m_aiStrategy.WantsToSwitch(*this, *selfMon))
     {
@@ -25,7 +25,7 @@ void AIPlayer::ChooseAction(BattlePokemon* selfMon, BattleContext& context)
     }
     else
     {
-        context.selectedMove = m_aiStrategy.ChooseMove(*this, *selfMon);
+        return m_aiStrategy.ChooseMove(*this, *selfMon);
     }
 }
 

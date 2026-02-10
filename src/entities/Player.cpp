@@ -1,11 +1,15 @@
 #include "../data/Database.h"
 
 #include "Player.h"
-
-#include <iostream>
+#include "../ui/views/PokemonTextView.h"
 
 Player::Player(std::string_view name) :
     m_name(name) {}
+
+const std::array<BattlePokemon, 6> Player::GetBeltArray() const
+{
+    return belt;
+}
 
 std::array<BattlePokemon, 6> Player::CopyBelt()
 {
@@ -15,6 +19,8 @@ std::array<BattlePokemon, 6> Player::CopyBelt()
 void Player::AssignBelt(std::array<BattlePokemon, 6>& newBelt)
 {
     belt = newBelt;
+
+    m_PokemonCount = 0;
 
     for (size_t i = 0; i < 6; ++i)
     {
@@ -46,33 +52,6 @@ void Player::SetName(std::string_view input)
     m_name = input;
 }
 
-void Player::DisplayPlayerPokemon()
-{
-    int count{ 1 };
-
-    std::cout << "---" << this->GetPlayerName() << "'s Pokemon---\n";
-
-    for (auto& p : belt)
-    {
-        if (!p.HasPokemon())
-        {
-            std::cout << count << ". ---\n";
-        }
-        else
-        {
-            std::cout << count << ". " << p.GetPokemonNameView() << " HP(" << p.GetCurrentHP() << "/" << p.GetMaxHP() << ") " << "- Level: " << p.GetLevel() << " Moves: ";
-            p.DisplayLearnedMoves();
-        }
-        ++count;
-    }
-    std::cout << '\n';
-}
-
-void Player::DisplayAllPokemon()
-{
-    Database::GetInstance().DisplayPokemon();
-}
-
 void Player::IncrementPokemonCount()
 {
     ++m_PokemonCount;
@@ -81,6 +60,11 @@ void Player::IncrementPokemonCount()
 void Player::DecrementPokemonCount()
 {
     --m_PokemonCount;
+}
+
+void Player::SetPokemonCount(int count)
+{
+    m_PokemonCount = count;
 }
 
 int Player::GetPokemonCount() const
@@ -252,7 +236,7 @@ void Player::ResetValues()
 {
     b_canSwitch = true;
     b_isSwitching = false;
-    //b_hasWon = false;
+    b_hasWon = false;
     b_hasForfeited = false;
     b_hasMist = false;
     b_hasLightScreen = false;

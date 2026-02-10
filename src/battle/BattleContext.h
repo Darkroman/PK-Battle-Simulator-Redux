@@ -3,7 +3,6 @@
 #include <vector>
 #include <memory>
 
-//#include "../entities/Player.h"
 #include "../entities/AIPlayer.h"
 
 struct BattleStateFlags
@@ -59,8 +58,6 @@ struct BattleContext
     BattlePokemon* defendingPokemon{ nullptr };
 
     BattlePokemon::pokemonMove* currentMove{ nullptr };
-
-    BattlePokemon::pokemonMove* selectedMove{ nullptr };
 
     int initialPowerMultiplier{ 10 };
     int effectiveness{ 4096 };

@@ -125,6 +125,12 @@ size_t Pokemon::FetchMoveNumber(std::vector<size_t>::iterator index)
     return element;
 }
 
+size_t Pokemon::FetchMoveNumber(std::vector<size_t>::const_iterator index) const
+{
+    size_t element = *index - 1;
+    return element;
+}
+
 void Pokemon::ReserveMoveListVector()
 {
     m_movelist.reserve(57);

@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "../data/Pokemon.h"
 #include "../moves/MoveEffectEnums.h"
 #include "../data/StringToTypes.h"

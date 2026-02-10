@@ -2,7 +2,7 @@
 
 set(SOURCES
     main.cpp
-    Game.h
+    GameEngine.cpp
 
     # data
     data/Database.cpp
@@ -39,9 +39,12 @@ set(SOURCES
 
     # UI
     ui/BattleTextMenu.cpp
+    ui/ConsoleTextSink.cpp
     ui/Menu.cpp
     ui/MoveResultsText.cpp
     ui/StatusEffectText.cpp
+    ui/views/DatabaseTextView.cpp
+    ui/views/PokemonTextViews.cpp
 
     # save
     save/LoadParty.cpp
@@ -51,6 +54,7 @@ set(SOURCES
 # Header include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/common
     ${CMAKE_CURRENT_SOURCE_DIR}/data
     ${CMAKE_CURRENT_SOURCE_DIR}/entities
     "${CMAKE_CURRENT_SOURCE_DIR}/entities/ai strategies"
@@ -58,6 +62,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/moves
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
     ${CMAKE_CURRENT_SOURCE_DIR}/ui/interfaces
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui/views
     ${CMAKE_CURRENT_SOURCE_DIR}/save
 )
 

@@ -1,8 +1,6 @@
 #pragma once
 
 class Move;
-class BattlePokemon;
-struct BattlePokemon::pokemonMove;
 class Player;
 class AIPlayer;
 class IAIStrategy 

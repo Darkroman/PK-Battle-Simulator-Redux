@@ -2,32 +2,32 @@
 
 #include "interfaces/IBattleMenuUI.h"
 
-struct BattleContext;
-
 class BattleTextMenu : public IBattleMenuUI
 {
 public:
-    explicit BattleTextMenu(BattleContext&);
+    void ThrowOutFirstPokemon(const BattleContext&) const override;
+    void DisplayFightingPokemon(const BattleContext&) const override;
+    BattleAction PlayerOneMakeSelection(const BattleContext&) override;
+    BattleAction PlayerTwoMakeSelection(const BattleContext&) override;
+    void SwitchOutMsg(const Player&, const BattlePokemon&) const override;
+    void PlayerChoosesMsg(const Player&, const BattlePokemon&) const override;
+    bool AnnounceWinner(const BattleContext&) override;
 
-    void ThrowOutFirstPokemon() override;
-    void DisplayFightingPokemon() override;
-    void PlayerOneMakeSelection() override;
-    void PlayerTwoMakeSelection() override;
-    bool SwitchPokemonOption(Player* currentPlayer, BattlePokemon* currentPokemon) override;
-    void SwitchOutMsg(Player*, BattlePokemon*) override;
-    void PlayerChoosesMsg(Player*, BattlePokemon*) override;
-    bool AnnounceWinner() override;
+    BattleAction MakeASelectionLoop(Player&, BattlePokemon&) override;
+    BattleAction Fight(Player&, BattlePokemon&) override;
+    BattleAction SwitchPokemonOption(Player&, BattlePokemon&) override;
+    BattleAction Forfeit(Player& player) override;
 
-    void NewLine() override;
-    void DisplayTurnNumber(int) override;
+    void NewLine() const override;
+    void DisplayTurnNumber(int) const override;
+
+    BattlePokemon::pokemonMove* GetChosenMove() const override;
+    BattlePokemon* GetChosenPokemon() const override;
 
 protected:
-    void MakeASelectionLoop(Player* player, BattlePokemon* currentPokemon) override;
-    bool Fight(Player* player, BattlePokemon* currentPokemon) override;
 
 private:
-    BattleContext& m_context;
+    //BattleContext& m_context;
 
-    void Forfeit(Player* player);
-    bool CheckPPCountForStruggle(BattlePokemon* pokemon);
+    bool CheckPPCountForStruggle(BattlePokemon& pokemon);
 };

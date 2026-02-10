@@ -8,8 +8,6 @@
 
 #include "BattleManager.h"
 
-#include <iostream>
-
 BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleMenuUI& battleMenuUI, IMoveResultsUI& moveResultsUI, IStatusEffectUI& statusEffectUI)
 	: m_context(context)
 	, m_rng(rng)
@@ -20,10 +18,62 @@ BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleM
 	, m_switchExecutor(context, battleMenuUI)
 	, m_winChecker(context, m_switchExecutor, battleMenuUI)
 	, m_statusEffectProcessor(context, rng, statusEffectUI)
-	, m_moveExecutor(context, m_calculations, m_statusEffectProcessor, moveResultsUI, battleMenuUI, statusEffectUI, rng, m_switchExecutor)
+	, m_moveExecutor(context, m_calculations, m_statusEffectProcessor, moveResultsUI, battleMenuUI, rng, m_switchExecutor)
 	, m_turnProcessor(context, m_calculations, rng, m_statusEffectProcessor, m_winChecker, m_switchExecutor, m_moveExecutor)
 	, m_postTurnProcessor(context, m_calculations, statusEffectUI, m_statusEffectProcessor, m_winChecker)
 {
+}
+
+void BattleManager::AssignFirstPokemon()
+{
+	m_context.playerOneCurrentPokemon = m_context.playerOne->GetBelt(1);
+	m_context.playerTwoCurrentPokemon = m_context.playerTwo->GetBelt(1);
+}
+
+void BattleManager::ApplyPlayerOneAction(BattleAction action)
+{
+	switch (action)
+	{
+		case BattleAction::Fight:
+			m_context.playerOneCurrentMove = m_battleMenuUI.GetChosenMove();
+			break;
+
+		case BattleAction::Struggle:
+			m_context.playerOneCurrentMove = m_context.playerOneCurrentPokemon->Struggle();
+			break;
+
+		case BattleAction::SwitchPokemon:
+			m_context.playerOne->SetIsSwitching(true);
+			m_context.playerOne->SetPokemonToSwitchTo(m_battleMenuUI.GetChosenPokemon());
+			break;
+
+		case BattleAction::Forfeit:
+			m_context.playerOne->SetForfeit(true);
+			break;
+	}
+}
+
+void BattleManager::ApplyPlayerTwoAction(BattleAction action)
+{
+	switch (action)
+	{
+	case BattleAction::Fight:
+		m_context.playerTwoCurrentMove = m_battleMenuUI.GetChosenMove();
+		break;
+
+	case BattleAction::Struggle:
+		m_context.playerTwoCurrentMove = m_context.playerTwoCurrentPokemon->Struggle();
+		break;
+
+	case BattleAction::SwitchPokemon:
+		m_context.playerTwo->SetIsSwitching(true);
+		m_context.playerTwo->SetPokemonToSwitchTo(m_battleMenuUI.GetChosenPokemon());
+		break;
+
+	case BattleAction::Forfeit:
+		m_context.playerTwo->SetForfeit(true);
+		break;
+	}
 }
 
 bool BattleManager::RunBattleLoop()
@@ -33,7 +83,9 @@ bool BattleManager::RunBattleLoop()
 
 	BattleAIProcedures::InitAIPlayers(m_context);
 
-	m_battleMenuUI.ThrowOutFirstPokemon();
+	m_battleMenuUI.ThrowOutFirstPokemon(m_context);
+
+	AssignFirstPokemon();
 
 	while (winCondition == false)
 	{
@@ -42,22 +94,26 @@ bool BattleManager::RunBattleLoop()
 		++turnCount;
 		m_battleMenuUI.DisplayTurnNumber(turnCount);
 
-		m_battleMenuUI.DisplayFightingPokemon();
+		m_battleMenuUI.DisplayFightingPokemon(m_context);
 
-		m_battleMenuUI.PlayerOneMakeSelection();
+		e_battleAction = m_battleMenuUI.PlayerOneMakeSelection(m_context);
+
+		ApplyPlayerOneAction(e_battleAction);
 
 		if (m_context.playerOne->HasForfeited())
 		{
 			winCondition = m_winChecker.CheckWinCondition(m_context.playerTwo, m_context.playerOne);
-			return false;
+			return winCondition;
 		}
 
-		m_battleMenuUI.PlayerTwoMakeSelection();
+		e_battleAction = m_battleMenuUI.PlayerTwoMakeSelection(m_context);
+
+		ApplyPlayerTwoAction(e_battleAction);
 
 		if (m_context.playerTwo->HasForfeited())
 		{
 			winCondition = m_winChecker.CheckWinCondition(m_context.playerOne, m_context.playerTwo);
-			return false;
+			return winCondition;
 		}
 
 		m_turnProcessor.DetermineWhoGoesFirst();
@@ -96,7 +152,7 @@ bool BattleManager::RunBattleLoop()
 	}
 
 	turnCount = 0;
-	return false;
+	return winCondition;
 }
 
 void BattleManager::ResetValues()
@@ -112,7 +168,6 @@ void BattleManager::ResetValues()
 		{
 			m_context.playerOne->GetBelt(i)->ResetValues();
 		}
-
 	}
 
 	for (size_t i = 1; i <= m_context.playerTwo->GetPokemonCount(); ++i)
@@ -121,6 +176,5 @@ void BattleManager::ResetValues()
 		{
 			m_context.playerTwo->GetBelt(i)->ResetValues();
 		}
-
 	}
 }

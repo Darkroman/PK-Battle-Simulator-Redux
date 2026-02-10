@@ -1,313 +1,136 @@
 #include <iostream>
 
+#include "interfaces/ITextSink.h"
 #include "StatusEffectText.h"
 #include "../battle/BattleContext.h"
-#include "../data/Move.h"
-
-StatusEffectText::StatusEffectText(BattleContext& context) :
-	m_context(context) {}
 
 // Status changes
-void StatusEffectText::DisplayNVStatusMsg(std::string_view statusMessage)
+void StatusEffectText::DisplayFellAsleepMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
 {
-	std::cout << statusMessage << '\n';
+	m_sink.Emit(std::format("{}'s {} fell asleep!", defendingPlayerName, defendingPokemonName));
 }
 
-void StatusEffectText::DisplayFellAsleepMsg()
+void StatusEffectText::DisplayWokenUpMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " fell asleep!\n";
+	m_sink.Emit(std::format("{} has woken up!", attackingPokemonName));
 }
 
-void StatusEffectText::DisplayWokenUpMsg() 
+void StatusEffectText::DisplayIsAsleepMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPokemon->GetNameView() << " has woken up!\n";
+	m_sink.Emit(std::format("{} is sleeping.", attackingPokemonName));
 }
 
-void StatusEffectText::DisplayIsAsleepMsg()
+void StatusEffectText::DisplayFrozenSolidMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPokemon->GetNameView() << " is sleeping.\n";
+	m_sink.Emit(std::format("{} is frozen solid!", attackingPokemonName));
 }
 
-void StatusEffectText::DisplayFrozenSolidMsg()
+void StatusEffectText::DisplayThawedMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPokemon->GetNameView() << " is frozen solid!\n";
+	m_sink.Emit(std::format("{} thawed out!", attackingPokemonName));
 }
 
-void StatusEffectText::DisplayThawedMsg() 
+void StatusEffectText::DisplayNoLongerConfusedMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPokemon->GetNameView() << " thawed out!\n";
+	m_sink.Emit(std::format("{}'s {} is no longer confused!", attackingPlayerName, attackingPokemonName));
 }
 
-void StatusEffectText::DisplayBecameConfuseMsg() 
+void StatusEffectText::DisplayIsConfusedMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " became confused!\n";
+	m_sink.Emit(std::format("{}'s {} is confused!", attackingPlayerName, attackingPokemonName));
 }
 
-void StatusEffectText::DisplayNoLongerConfusedMsg() 
+void StatusEffectText::DisplayHurtItselfConfuseMsg() const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " is no longer confused!\n";
+	m_sink.Emit(std::format("It hurt itself in its confusion!"));
 }
 
-void StatusEffectText::DisplayIsConfusedMsg() 
+void StatusEffectText::DisplayCantMoveParalysisMsg(std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " is confused!\n";
+	m_sink.Emit(std::format("{} couldn't move because it's paralyzed!", attackingPokemonName));
 }
 
-void StatusEffectText::DisplayHurtItselfConfuseMsg()
+void StatusEffectText::DisplayFlinchMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << "It hurt itself in its confusion!\n";
-}
-
-void StatusEffectText::DisplayCantMoveParalysisMsg() 
-{
-	std::cout << m_context.attackingPokemon->GetNameView() << " couldn't move because it's paralyzed!\n";
-}
-
-void StatusEffectText::DisplayFlinchMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " flinched and couldn't move!\n";
-}
-
-void StatusEffectText::DisplayAlreadyPoisonedMsg() 
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " is already poisoned!\n";
-}
-
-void StatusEffectText::DisplayAlreadyParalyzedMsg() 
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " is already paralyzed!\n";
-}
-
-void StatusEffectText::DisplayAlreadyAsleepMsg() 
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " is already asleep!\n";
-}
-
-void StatusEffectText::DisplayDoesntAffectMsg()
-{
-	std::cout << "It doesn't affect " << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << "...\n";
-}
-
-// Stat changes
-void StatusEffectText::DisplayStatRaised2Msg(std::string_view statName)
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s " << statName << " rose sharply!\n";
-}
-
-void StatusEffectText::DisplayStatRaised1Msg(std::string_view statName)
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s " << statName << " rose!\n";
-}
-
-void StatusEffectText::DisplayStatRaiseFailMsg(std::string_view statName)
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " can't raise its " << statName << " any higher!\n";
-}
-
-void StatusEffectText::DisplayStatLowered2Msg(std::string_view statName)
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << "'s " << statName << " fell harshly!\n";
-}
-
-void StatusEffectText::DisplayStatLowered1Msg(std::string_view statName)
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << "'s " << statName << " fell!\n";
-}
-
-void StatusEffectText::DisplayStatLoweredFailMsg(std::string_view statName)
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << "'s " << statName << " won't go any lower!\n";
-}
-
-void StatusEffectText::DisplayFocusEnergyMsg()
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< " is getting pumped!\n";
+	m_sink.Emit(std::format("{}'s {} flinched and couldn't move!", attackingPlayerName, attackingPokemonName));
 }
 
 // Barriers / field effects
-void StatusEffectText::DisplayProtectedByMistMsg()
+void StatusEffectText::DisplayNoLongerProtectedMist(std::string_view playerName) const
 {
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " is protected by the mist!\n";
+	m_sink.Emit(std::format("{}'s team is no longer protected by mist!", playerName));
 }
 
-void StatusEffectText::DisplayMistMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s team became shrouded in mist!\n";
-}
-
-void StatusEffectText::DisplayNoLongerProtectedMist(Player* player)
-{
-	std::cout << player->GetPlayerNameView() << "'s team is no longer protected by mist!\n";
-}
-
-void StatusEffectText::DisplayLightScreenMsg() 
-{
-	std::cout << "Light screen made " << m_context.attackingPlayer->GetPlayerNameView()
-		<< "'s team stronger against special moves!\n";
-}
-
-void StatusEffectText::DisplayHazeMsg() 
-{
-	std::cout << "All stat changes were eliminated!\n";
-}
-
-void StatusEffectText::DisplayReflectMsg() 
-{
-	std::cout << "Reflect made " << m_context.attackingPlayer->GetPlayerNameView()
-		      << "'s team stronger against physical moves!\n";
-}
-
-// Post-turn effects
-void StatusEffectText::DisplayFieldEffectFadedMsg(Player* player, std::string_view effect) 
+void StatusEffectText::DisplayFieldEffectFadedMsg(std::string_view playerName, std::string_view effect) const
 {
 	if (effect == "Light Screen" || effect == "light screen" || effect == "Reflect" || effect == "reflect")
 	{
-		std::cout << player->GetPlayerNameView() << "'s team's " << effect << " wore off!\n";
+		m_sink.Emit(std::format("{}'s team's {} wore off!", playerName, effect));
 	}
 
 	else if (effect == "Mist" || effect == "mist")
 	{
-		std::cout << player->GetPlayerNameView() << "'s team is no longer protected by " << effect << "!\n";
+		m_sink.Emit(std::format("{}'s team is no longer protected by {}!", playerName, effect));
+		
 	}
 }
 
-void StatusEffectText::DisplayLeechSeedSappedMsg(Player* player, BattlePokemon* pokemon) 
+// Post-turn effects
+void StatusEffectText::DisplayLeechSeedSappedMsg(std::string_view playerName, std::string_view pokemonName) const
 {
-	std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << "'s health is sapped by Leech Seed.\n";
+	m_sink.Emit(std::format("{}'s {}'s health is sapped by Leech Seed.", playerName, pokemonName));
 }
 
-void StatusEffectText::DisplayDamagedByStatusPostTurn(std::string_view status, Player* player, BattlePokemon* pokemon) 
+void StatusEffectText::DisplayDamagedByStatusPostTurn(std::string_view status, std::string_view playerName, std::string_view pokemonName) const
 {
-	std::cout << player->GetPlayerNameView() << "'s " << pokemon->GetNameView() << " was damaged by " << status << ".\n";
+	m_sink.Emit(std::format("{}'s {} was damaged by {}.", playerName, pokemonName, status));
 }
 
-void StatusEffectText::DisplayHurtByBoundMsg(Player* player, BattlePokemon* pokemon) 
+void StatusEffectText::DisplayHurtByBoundMsg(std::string_view playerName, std::string_view pokemonName, std::string_view boundMoveName) const
 {
-	std::cout << player->GetPlayerNameView() << "'s "
-		<< pokemon->GetNameView() << " was hurt by "
-		<< pokemon->GetBoundMoveName() << "!\n";
+	m_sink.Emit(std::format("{}'s {} was hurt by {}!", playerName, pokemonName, boundMoveName));
 }
 
-void StatusEffectText::DisplayFreedFromBoundMsg(Player* player, BattlePokemon* pokemon) 
+void StatusEffectText::DisplayFreedFromBoundMsg(std::string_view playerName, std::string_view pokemonName, std::string_view boundMoveName) const
 {
-	std::cout << player->GetPlayerNameView() << "'s "
-		<< pokemon->GetNameView() << " was freed from "
-		<< pokemon->GetBoundMoveName() << "!\n";
+	m_sink.Emit(std::format("{}'s {} was freed from {}!", playerName, pokemonName, boundMoveName));
 }
 
 // Thrash
-void StatusEffectText::DisplayThrashDisabledMsg() 
+void StatusEffectText::DisplayThrashConfusionMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s Thrash is disabled!\n";
-}
-
-void StatusEffectText::DisplayThrashConfusionMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " became confused due to fatigue!\n";
+	m_sink.Emit(std::format("{}'s {} became confused due to fatigue!", attackingPlayerName, attackingPokemonName));
 }
 
 // Rage
-void StatusEffectText::DisplayRageStartedMsg()
+void StatusEffectText::DisplayRageStartedMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
-	std::cout << "(Rage started on " << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << ")\n";
+	m_sink.Emit(std::format("(Rage started on {}'s {})", attackingPlayerName, attackingPokemonName));
+}
+
+void StatusEffectText::DisplayStatRaised1Msg(std::string_view statName, std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s {} rose!", defendingPlayerName, defendingPokemonName, statName));
+}
+
+void StatusEffectText::DisplayStatRaiseFailMsg(std::string_view statName, std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} can't raise its {} any higher!", defendingPlayerName, defendingPokemonName, statName));
 }
 
 // Disable
-void StatusEffectText::DisplayMoveDisabledMsg() 
+void StatusEffectText::DisplayMoveIsDisabledMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view moveName) const
 {
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView()
-		<< "'s " << m_context.defendingPokemon->GetLastUsedMove()->GetName() << " was disabled!\n";
+	m_sink.Emit(std::format("{}'s {}'s {} is disabled!", attackingPlayerName, attackingPokemonName, moveName));
 }
 
-void StatusEffectText::DisplayMoveIsDisabledMsg()
+void StatusEffectText::DisplayMoveNoLongerDisabledMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view disabledMoveName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << "'s " << m_context.currentMove->GetName() << " is disabled!\n";
+	m_sink.Emit(std::format("{}'s {}'s {} is no longer disabled!", attackingPlayerName, attackingPokemonName, disabledMoveName));
 }
 
-void StatusEffectText::DisplayMoveNoLongerDisabledMsg(Player*, BattlePokemon*) 
+// Faint
+void StatusEffectText::DisplayFaintedMsg(std::string_view playerName, std::string_view pokemonName) const
 {
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s "
-		<< m_context.attackingPokemon->GetNameView() << "'s "
-		<< m_context.attackingPokemon->GetDisabledMove()->GetName()
-		<< " is no longer disabled!\n";
-}
-
-// Substitute
-void StatusEffectText::DisplayAlreadyHasSubstituteMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " already has a substitute!\n";
-}
-
-void StatusEffectText::DisplayNotEnoughHPSubstituteMsg() 
-{
-	std::cout << "But it does not have enough HP left to make a substitute!\n";
-}
-
-void StatusEffectText::DisplayPutInSubstituteMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " put in a substitute!\n";
-}
-
-void StatusEffectText::DisplaySubstituteFadedMsg() 
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << "'s substitute faded!\n";
-}
-
-void StatusEffectText::DisplaySeededMsg() 
-{
-	std::cout << m_context.defendingPlayer->GetPlayerNameView() << "'s " << m_context.defendingPokemon->GetNameView() << " was seeded!\n";
-}
-
-void StatusEffectText::DisplayLearnedMimicMoveMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< " learned " << m_context.defendingPokemon->GetLastUsedMove()->GetName() << "!\n";
-}
-
-void StatusEffectText::DisplayTransformMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s "
-		      << m_context.attackingPokemon->GetNameView() << " transformed into "
-		      << m_context.defendingPokemon->GetNameView() << "!\n";
-}
-
-void StatusEffectText::DisplayMetronomeMsg(Move* selectedMove) 
-{
-	std::cout << "Waggling its finger let " << m_context.attackingPlayer->GetPlayerNameView() << "'s "
-		<< m_context.attackingPokemon->GetNameView() << " use " << selectedMove->GetName() << "!\n";
-}
-
-void StatusEffectText::DisplayConversionMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< "'s type changed to " << m_context.attackingPokemon->GetTypeOne() << "!\n";
-}
-
-void StatusEffectText::DisplayBideUnleashedMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< " unleashed its energy!\n";
-}
-
-void StatusEffectText::DisplayBideStoringEnergyMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< " is storing energy!\n";
-}
-
-void StatusEffectText::DisplayBideDisabledMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView()
-		<< "'s Bide is disabled!\n";
-}
-
-void StatusEffectText::DisplayNoMovesLeftStruggleMsg() 
-{
-	std::cout << m_context.attackingPlayer->GetPlayerNameView() << "'s " << m_context.attackingPokemon->GetNameView() << " has no moves left!\n";
-}
-
-void StatusEffectText::DisplayFaintedMsg(Player& player, BattlePokemon& pokemon) 
-{
-	std::cout << player.GetPlayerNameView() << "'s " << pokemon.GetNameView() << " has fainted!\n";
+	m_sink.Emit(std::format("{}'s {} has fainted!", playerName, pokemonName));
 }

@@ -61,7 +61,7 @@ class AIPlayer : public Player
 {
 public:
 	explicit AIPlayer(std::string_view, IAIStrategy&);
-	void ChooseAction(BattlePokemon*, BattleContext&);
+	BattlePokemon::pokemonMove* ChooseAction(BattlePokemon*, const BattleContext&);
 
 	bool IsHuman() const override;
 	BattlePokemon::pokemonMove* ChooseMove(BattlePokemon&);

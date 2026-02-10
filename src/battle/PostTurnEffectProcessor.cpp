@@ -88,19 +88,19 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
         
     int leechedHealth{ 0 };
 
-    if (m_context.attackingPokemon->IsSeeded() && (!m_context.attackingPokemon->IsFainted() || m_context.attackingPokemon->GetCurrentHP() > 0) && !m_context.defendingPokemon->IsFainted())
+    if (m_context.attackingPokemon->IsSeeded() && !m_context.attackingPokemon->IsFainted() && !m_context.defendingPokemon->IsFainted())
     {
         leechedHealth = m_context.attackingPokemon->GetMaxHP() / 8;
 
         m_context.attackingPokemon->DamageCurrentHP(leechedHealth);
         m_context.defendingPokemon->HealCurrentHP(leechedHealth);
 
-        m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.attackingPlayer, m_context.attackingPokemon);
+        m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 
         m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
     }
 
-    if (!m_context.defendingPokemon->IsSeeded() || m_context.defendingPokemon->IsFainted() || m_context.defendingPokemon->GetCurrentHP() <= 0)
+    if (!m_context.defendingPokemon->IsSeeded() || m_context.defendingPokemon->IsFainted())
     {
         return;
     }
@@ -110,14 +110,14 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
     m_context.defendingPokemon->DamageCurrentHP(leechedHealth);
     m_context.attackingPokemon->HealCurrentHP(leechedHealth);
 
-    m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.defendingPlayer, m_context.defendingPokemon);
+    m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.defendingPlayer->GetPlayerNameView(), m_context.defendingPokemon->GetNameView());
 
     m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
 }
 
 void PostTurnEffectProcessor::CheckDamagingStatuses()
 {
-    if (!m_context.attackingPokemon->IsFainted() || m_context.attackingPokemon->GetCurrentHP() > 0)
+    if (!m_context.attackingPokemon->IsFainted())
     {
         switch (m_context.attackingPokemon->currentStatus)
         {
@@ -140,7 +140,7 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
 
     m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
 
-    if (!m_context.defendingPokemon->IsFainted() || m_context.defendingPokemon->GetCurrentHP() > 0)
+    if (!m_context.defendingPokemon->IsFainted())
     {
         switch (m_context.defendingPokemon->currentStatus)
         {
@@ -168,7 +168,7 @@ void PostTurnEffectProcessor::BurnedStatus(Player* player, BattlePokemon* pokemo
     int burnDamage = pokemon->GetMaxHP() / 16;
     pokemon->DamageCurrentHP(burnDamage);
 
-    m_statusEffectUI.DisplayDamagedByStatusPostTurn("burn", player, pokemon);
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("burn", player->GetPlayerNameView(), pokemon->GetNameView());
 }
 
 void PostTurnEffectProcessor::PoisonedStatus(Player* player, BattlePokemon* pokemon)
@@ -176,7 +176,7 @@ void PostTurnEffectProcessor::PoisonedStatus(Player* player, BattlePokemon* poke
     int poisonDamage = pokemon->GetMaxHP() / 8;
     pokemon->DamageCurrentHP(poisonDamage);
 
-    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player, pokemon);
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player->GetPlayerNameView(), pokemon->GetNameView());
 }
 
 void PostTurnEffectProcessor::BadlyPoisonedStatus(Player* player, BattlePokemon* pokemon)
@@ -184,7 +184,7 @@ void PostTurnEffectProcessor::BadlyPoisonedStatus(Player* player, BattlePokemon*
     int poisonDamage = pokemon->GetMaxHP() / 16 * pokemon->GetBadlyPoisonCounter();
     pokemon->DamageCurrentHP(poisonDamage);
 
-    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player, pokemon);
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player->GetPlayerNameView(), pokemon->GetNameView());
 
     pokemon->IncrementBadlyPoisonCounter();
 }
@@ -198,7 +198,7 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
 
     int boundDamage{};
 
-    if (m_context.attackingPokemon->IsBound() && (!m_context.attackingPokemon->IsFainted() || m_context.attackingPokemon->GetCurrentHP() > 0))
+    if (m_context.attackingPokemon->IsBound() && !m_context.attackingPokemon->IsFainted())
     {
         if (m_context.attackingPokemon->GetBoundCounter() >= m_context.attackingPokemon->GetBoundTurnCount())
         {
@@ -207,7 +207,9 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
             m_context.attackingPokemon->ResetBoundCounter();
             m_context.attackingPokemon->SetBoundTurnCount(0);
 
-            m_statusEffectUI.DisplayFreedFromBoundMsg(m_context.attackingPlayer, m_context.attackingPokemon);
+            m_statusEffectUI.DisplayFreedFromBoundMsg(m_context.attackingPlayer->GetPlayerNameView(),
+                m_context.attackingPokemon->GetNameView(),
+                m_context.attackingPokemon->GetBoundMoveName());
         }
         else
         {
@@ -216,7 +218,9 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
 
             m_context.attackingPokemon->DamageCurrentHP(boundDamage);
 
-            m_statusEffectUI.DisplayHurtByBoundMsg(m_context.attackingPlayer, m_context.attackingPokemon);
+            m_statusEffectUI.DisplayHurtByBoundMsg(m_context.attackingPlayer->GetPlayerNameView(),
+                m_context.attackingPokemon->GetNameView(),
+                m_context.attackingPokemon->GetBoundMoveName());
 
             m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer,
                 m_context.attackingPokemon, m_context.defendingPokemon);
@@ -236,7 +240,9 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
         m_context.defendingPokemon->ResetBoundCounter();
         m_context.defendingPokemon->SetBoundTurnCount(0);
 
-        m_statusEffectUI.DisplayFreedFromBoundMsg(m_context.defendingPlayer, m_context.defendingPokemon);
+        m_statusEffectUI.DisplayFreedFromBoundMsg(m_context.defendingPlayer->GetPlayerNameView(),
+            m_context.defendingPokemon->GetNameView(),
+            m_context.defendingPokemon->GetBoundMoveName());
     }
     else
     {
@@ -246,7 +252,9 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
 
         m_context.defendingPokemon->DamageCurrentHP(boundDamage);
 
-        m_statusEffectUI.DisplayHurtByBoundMsg(m_context.defendingPlayer, m_context.defendingPokemon);
+        m_statusEffectUI.DisplayHurtByBoundMsg(m_context.defendingPlayer->GetPlayerNameView(),
+            m_context.defendingPokemon->GetNameView(),
+            m_context.defendingPokemon->GetBoundMoveName());
 
         m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer,
             m_context.defendingPokemon, m_context.attackingPokemon);
@@ -266,8 +274,9 @@ void PostTurnEffectProcessor::CheckDisabledStatus()
 
         if (m_context.attackingPokemon->GetDisabledCounter() == 4)
         {
-            m_statusEffectUI.DisplayMoveNoLongerDisabledMsg(m_context.attackingPlayer, m_context.attackingPokemon);
+            m_statusEffectUI.DisplayMoveNoLongerDisabledMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView(), m_context.attackingPokemon->GetDisabledMove()->GetName());
             m_context.attackingPokemon->SetDisabledStatus(false);
+            m_context.attackingPokemon->ResetDisabledCounter();
         }
     }
 
@@ -277,8 +286,9 @@ void PostTurnEffectProcessor::CheckDisabledStatus()
 
         if (m_context.defendingPokemon->GetDisabledCounter() == 4)
         {
-            m_statusEffectUI.DisplayMoveNoLongerDisabledMsg(m_context.defendingPlayer, m_context.defendingPokemon);
+            m_statusEffectUI.DisplayMoveNoLongerDisabledMsg(m_context.defendingPlayer->GetPlayerNameView(), m_context.defendingPokemon->GetNameView(), m_context.defendingPokemon->GetDisabledMove()->GetName());
             m_context.defendingPokemon->SetDisabledStatus(false);
+            m_context.defendingPokemon->ResetDisabledCounter();
         }
     }
 }
@@ -301,7 +311,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.defendingPlayer->GetReflectCounter() >= reflectTurnCount)
         {
-            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.defendingPlayer, "reflect");
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.defendingPlayer->GetPlayerNameView(), "reflect");
             m_context.defendingPlayer->SetReflect(false);
             m_context.defendingPlayer->ResetReflectCounter();
         }
@@ -315,7 +325,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.attackingPlayer->GetReflectCounter() >= reflectTurnCount)
         {
-            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer, "reflect");
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer->GetPlayerNameView(), "reflect");
             m_context.attackingPlayer->SetReflect(false);
             m_context.attackingPlayer->ResetReflectCounter();
         }
@@ -330,7 +340,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.attackingPlayer->GetLightScreenCounter() >= lightscreenTurnCount)
         {
-            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer, "light screen");
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer->GetPlayerNameView(), "light screen");
             m_context.attackingPlayer->SetLightScreen(false);
             m_context.attackingPlayer->ResetLightScreenCounter();
         }
@@ -344,7 +354,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.defendingPlayer->GetLightScreenCounter() >= lightscreenTurnCount)
         {
-            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.defendingPlayer, "light screen");
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.defendingPlayer->GetPlayerNameView(), "light screen");
             m_context.defendingPlayer->SetLightScreen(false);
             m_context.defendingPlayer->ResetLightScreenCounter();
         }
@@ -359,7 +369,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.attackingPlayer->GetMistCounter() >= mistTurnCount)
         {
-            m_statusEffectUI.DisplayNoLongerProtectedMist(m_context.attackingPlayer);
+            m_statusEffectUI.DisplayNoLongerProtectedMist(m_context.attackingPlayer->GetPlayerNameView());
             m_context.attackingPlayer->SetMist(false);
             m_context.attackingPlayer->ResetMistCounter();
         }
@@ -373,7 +383,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
     {
         if (m_context.defendingPlayer->GetMistCounter() >= mistTurnCount)
         {
-            m_statusEffectUI.DisplayNoLongerProtectedMist(m_context.defendingPlayer);
+            m_statusEffectUI.DisplayNoLongerProtectedMist(m_context.defendingPlayer->GetPlayerNameView());
             m_context.defendingPlayer->SetMist(false);
             m_context.defendingPlayer->ResetMistCounter();
         }

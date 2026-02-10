@@ -8,7 +8,7 @@ SwitchExecutor::SwitchExecutor(BattleContext& context, IBattleMenuUI& battleMenu
 
 void SwitchExecutor::ExecuteSwitch(Player* player, BattlePokemon*& pokemon)
 {
-	m_battleMenuUI.SwitchOutMsg(player, pokemon);
+	m_battleMenuUI.SwitchOutMsg(*player, *pokemon);
 	pokemon->ResetStatsOnSwitch();
 	pokemon = player->GetPokemonToSwitchTo();
 
@@ -48,5 +48,5 @@ void SwitchExecutor::ExecuteSwitch(Player* player, BattlePokemon*& pokemon)
 	}
 
 	player->SetIsSwitching(false);
-	m_battleMenuUI.PlayerChoosesMsg(player, pokemon);
+	m_battleMenuUI.PlayerChoosesMsg(*player, *pokemon);
 }
