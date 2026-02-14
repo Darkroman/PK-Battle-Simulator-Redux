@@ -12,7 +12,7 @@ namespace PokemonTextView
 {
     void DisplayStats(const BattlePokemon& pokemon)
     {
-        std::cout << "Pokemon: " << pokemon.GetName() << '\n';
+        std::cout << "Pokemon: " << pokemon.GetPokemonNameView() << '\n';
 
         if (!pokemon.HasNickname())
         {
@@ -31,29 +31,35 @@ namespace PokemonTextView
 
         std::cout << "Level: " << pokemon.GetLevel() << '\n';
 
-        std::cout << "HP: " << pokemon.GetMaxHP()
-            << " -- [IV: " << pokemon.GetHPIV() << "]"
-            << " -- [EV: " << pokemon.GetHPEV() << "]\n";
+        std::cout << std::left << std::setw(17) << "HP: " << std::setw(3) << pokemon.GetMaxHP()
 
-        std::cout << "Attack: " << pokemon.GetAttack()
-            << " -- [IV: " << pokemon.GetAttackIV() << "]"
-            << " -- [EV: " << pokemon.GetAttackEV() << "]\n";
+            << " -- [IV: " << std::right <<  std::setw(2) << pokemon.GetHPIV() << "]"
+            << " -- [EV: " <<                std::setw(3) << pokemon.GetHPEV() << "]\n";
 
-        std::cout << "Defense: " << pokemon.GetDefense()
-            << " -- [IV: " << pokemon.GetDefenseIV() << "]"
-            << " -- [EV: " << pokemon.GetDefenseEV() << "]\n";
+        std::cout << std::left << std::setw(17) << "Attack: " << std::setw(3) << pokemon.GetAttack()
 
-        std::cout << "Special Attack: " << pokemon.GetSpecialAttack()
-            << " -- [IV: " << pokemon.GetSpecialAttackIV() << "]"
-            << " -- [EV: " << pokemon.GetSpecialAttackEV() << "]\n";
+            << " -- [IV: " << std::right << std::setw(2) << pokemon.GetAttackIV() << "]"
+            << " -- [EV: " <<               std::setw(3) << pokemon.GetAttackEV() << "]\n";
 
-        std::cout << "Special Defense: " << pokemon.GetSpecialDefense()
-            << " -- [IV: " << pokemon.GetSpecialDefenseIV() << "]"
-            << " -- [EV: " << pokemon.GetSpecialDefenseEV() << "]\n";
+        std::cout << std::left << std::setw(17) << "Defense: " << std::setw(3) << pokemon.GetDefense()
 
-        std::cout << "Speed: " << pokemon.GetSpeed()
-            << " -- [IV: " << pokemon.GetSpeedIV() << "]"
-            << " -- [EV: " << pokemon.GetSpeedEV() << "]\n";
+            << " -- [IV: " << std::right << std::setw(2) << pokemon.GetDefenseIV() << "]"
+            << " -- [EV: " <<               std::setw(3) << pokemon.GetDefenseEV() << "]\n";
+
+        std::cout << std::left << std::setw(17) << "Special Attack: " << std::setw(3) << pokemon.GetSpecialAttack()
+
+            << " -- [IV: " << std::right << std::setw(2) << pokemon.GetSpecialAttackIV() << "]"
+            << " -- [EV: " <<               std::setw(3) << pokemon.GetSpecialAttackEV() << "]\n";
+
+        std::cout << std::left << std::setw(17) << "Special Defense: " << std::setw(3) << pokemon.GetSpecialDefense()
+
+            << " -- [IV: " << std::right << std::setw(2) << pokemon.GetSpecialDefenseIV() << "]"
+            << " -- [EV: " <<               std::setw(3) << pokemon.GetSpecialDefenseEV() << "]\n";
+
+        std::cout << std::left << std::setw(17) << "Speed: " << std::setw(3) << pokemon.GetSpeed()
+
+            << " -- [IV: " << std::right << std::setw(2) << pokemon.GetSpeedIV() << "]"
+            << " -- [EV: " <<               std::setw(3) << pokemon.GetSpeedEV() << "]\n";
     }
 
     void DisplayLearnableMoves(const BattlePokemon& pokemon)
@@ -74,20 +80,9 @@ namespace PokemonTextView
 
             size_t displayIndex = moveIndex + 1;
 
-            if (displayIndex < 10)
-            {
-                std::cout << move->GetMoveIndex() << ":   ";
-            }
-            else if (displayIndex <= 99)
-            {
-                std::cout << move->GetMoveIndex() << ":  ";
-            }
-            else
-            {
-                std::cout << move->GetMoveIndex() << ": ";
-            }
-
-            std::cout << std::setw(15) << std::left << move->GetName();
+            std::cout
+                << std::right << std::setw(3) << displayIndex << ": "
+                << std::left << std::setw(15) << move->GetName();
 
             if (colCount % 6 == 0)
             {
@@ -101,35 +96,47 @@ namespace PokemonTextView
     void DisplayIVs(const BattlePokemon& pokemon)
     {
         std::cout << "IVs:\n";
-        std::cout << "HP:      "         << pokemon.GetHPIV() << '\n';
-        std::cout << "Attack:  "         << pokemon.GetAttackIV() << '\n';
-        std::cout << "Defense: "         << pokemon.GetDefenseIV() << '\n';
-        std::cout << "Special Attack: "  << pokemon.GetSpecialAttackIV() << '\n';
-        std::cout << "Special Defense: " << pokemon.GetSpecialDefenseIV() << '\n';
-        std::cout << "Speed:   "         << pokemon.GetSpeedIV() << '\n';
+        std::cout << std::left << std::setw(20) << "HP IV: "              << std::right << std::setw(2) << pokemon.GetHPIV() << '\n';
+        std::cout << std::left << std::setw(20) << "Attack IV: "          << std::right << std::setw(2) << pokemon.GetAttackIV() << '\n';
+        std::cout << std::left << std::setw(20) << "Defense IV: "         << std::right << std::setw(2) << pokemon.GetDefenseIV() << '\n';
+        std::cout << std::left << std::setw(20) << "Special Attack IV: "  << std::right << std::setw(2) << pokemon.GetSpecialAttackIV() << '\n';
+        std::cout << std::left << std::setw(20) << "Special Defense IV: " << std::right << std::setw(2) << pokemon.GetSpecialDefenseIV() << '\n';
+        std::cout << std::left << std::setw(20) << "Speed IV: "           << std::right << std::setw(2) << pokemon.GetSpeedIV() << '\n';
     }
 
     void DisplayEVs(const BattlePokemon& pokemon)
     {
-        std::cout << "HP EV: "              << pokemon.GetHPEV() << '\n';
-        std::cout << "Attack EV: "          << pokemon.GetAttackEV() << '\n';
-        std::cout << "Defense EV: "         << pokemon.GetDefenseEV() << '\n';
-        std::cout << "Special Attack EV: "  << pokemon.GetSpecialAttackEV() << '\n';
-        std::cout << "Special Defense EV: " << pokemon.GetSpecialDefenseEV() << '\n';
-        std::cout << "Speed EV: "           << pokemon.GetSpeedEV() << "\n\n";
+        std::cout << std::left << std::setw(20) << "HP EV: "              << std::right << std::setw(3) << pokemon.GetHPEV() << '\n';
+        std::cout << std::left << std::setw(20) << "Attack EV: "          << std::right << std::setw(3) << pokemon.GetAttackEV() << '\n';
+        std::cout << std::left << std::setw(20) << "Defense EV: "         << std::right << std::setw(3) << pokemon.GetDefenseEV() << '\n';
+        std::cout << std::left << std::setw(20) << "Special Attack EV: "  << std::right << std::setw(3) << pokemon.GetSpecialAttackEV() << '\n';
+        std::cout << std::left << std::setw(20) << "Special Defense EV: " << std::right << std::setw(3) << pokemon.GetSpecialDefenseEV() << '\n';
+        std::cout << std::left << std::setw(20) << "Speed EV: "           << std::right << std::setw(3) << pokemon.GetSpeedEV() << "\n\n";
     }
 
     void DisplayLearnedMoves(const BattlePokemon& pokemon)
     {
         for (size_t moveSlot = 1; moveSlot < 5; ++moveSlot)
         {
-            if (pokemon.GetMove(moveSlot)->IsActive())
+            if (moveSlot != 1)
             {
-                std::cout << pokemon.GetMove(moveSlot)->GetName() << "/";
+                std::cout << " ";
+            }
+
+            if (pokemon.GetMove(moveSlot).IsActive())
+            {
+                std::cout << std::format("{:<12}", pokemon.GetMove(moveSlot).GetName());
+                std::cout << " ";
             }
             else
             {
-                std::cout << "---/";
+                std::cout << std::format("{:^12}", "---");
+                std::cout << " ";
+            }
+
+            if (moveSlot != 4)
+            {
+                std::cout << "/";
             }
         }
         std::cout << '\n';
@@ -139,16 +146,22 @@ namespace PokemonTextView
     {
         for (size_t moveSlot = 1; moveSlot < 5; ++moveSlot)
         {
-            auto* move = pokemon.GetMove(moveSlot);
-            if (move->IsActive())
+            const auto& move = pokemon.GetMove(moveSlot);
+            if (move.IsActive())
             {
-                if (move->b_isDisabled)
+                if (move.b_isDisabled)
                 {
-                    std::cout << moveSlot << ". " << move->GetName() << " (Disabled!)\n";
+                    std::cout << moveSlot << ". "
+                        << std::left << std::setw(13) << move.GetName()
+                        << std::format("{:^11}", "(Disabled!)")
+                        << '\n';
                 }
                 else
                 {
-                    std::cout << moveSlot << ". " << move->GetName() << " PP(" << move->m_currentPP << "/" << move->m_maxPP << ")" << "\n";
+                    std::cout << moveSlot << ". "
+                        << std::left << std::setw(12) << move.GetName() << " PP("
+                        << std::right << std::setw(2) << move.m_currentPP << "/"
+                        << std::right << std::setw(2) << move.m_maxPP << ")" << '\n';
                 }
             }
             else
@@ -171,32 +184,67 @@ namespace PokemonTextView
             }
             else
             {
-                std::cout << count << ". " << p.GetPokemonNameView() << " HP(" << p.GetCurrentHP() << "/" << p.GetMaxHP() << ") " << "- Level: " << p.GetLevel() << " Moves: ";
+                std::string_view status = DisplayPokemonStatus(p);
+                std::cout
+                    << count << ". "
+                    << std::left << std::setw(11) << p.GetPokemonNameView()
+                    << " HP("
+                    << std::right << std::setw(3) << p.GetCurrentHP() << "/"
+                    << std::right << std::setw(3) << p.GetMaxHP() << ") - "
+                    << std::right << std::setw(4) << status
+                    << " - Level: "
+                    << std::right << std::setw(3) << p.GetLevel()
+                    << " - Moves: ";
                 DisplayLearnedMoves(p);
             }
             ++count;
         }
         std::cout << '\n';
+    }
 
-        /*
-        int count{ 1 };
+    std::string_view DisplayPokemonStatus(const BattlePokemon& pokemon)
+    {
+        Status currentStatus = pokemon.GetStatus();
 
-        std::cout << "---" << this->GetPlayerName() << "'s Pokemon---\n";
-
-        for (const auto& p : belt)
+        switch (currentStatus)
         {
-            if (!p.HasPokemon())
-            {
-                std::cout << count << ". ---\n";
-            }
-            else
-            {
-                std::cout << count << ". " << p.GetPokemonNameView() << " HP(" << p.GetCurrentHP() << "/" << p.GetMaxHP() << ") " << "- Level: " << p.GetLevel() << " Moves: ";
-                PokemonTextView::DisplayLearnedMoves(p);
-            }
-            ++count;
+            case Status::Burned:
+                return "BRN";
+                break;
+
+            case Status::Frozen:
+                return "FRZ";
+                break;
+
+            case Status::Paralyzed:
+                return "PAR";
+                break;
+
+            case Status::Poisoned:
+                return "PSN";
+                break;
+
+            case Status::Badly_Poisoned:
+                return "BPSN";
+                break;
+
+            case Status::Sleeping:
+                return "SLP";
+                break;
         }
-        std::cout << '\n';
-        */
+
+        if (pokemon.IsFainted())
+        {
+            return "FNT";
+        }
+        else if (pokemon.IsConfused())
+        {
+            return "CNF";
+        }
+        else
+        {
+            return "NOR";
+        }
+        
     }
 }

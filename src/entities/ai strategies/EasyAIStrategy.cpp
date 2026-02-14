@@ -1,49 +1,51 @@
 #include "../../battle/RandomEngine.h"
-#include "../AIPlayer.h"
 #include "../Player.h"
 #include "EasyAIStrategy.h"
+#include "../controllers/IPlayerController.h"
 
 #include <deque>
 
 EasyAIStrategy::EasyAIStrategy(RandomEngine& rng)
     : m_rng(rng) {}
 
-BattlePokemon::pokemonMove* EasyAIStrategy::ChooseMove(AIPlayer& self, BattlePokemon& selfMon)
+BattlePokemon::pokemonMove& EasyAIStrategy::ChooseMove(Player& self, BattlePokemon& selfMon)
 {
+    if (selfMon.CheckPPCountForStruggle())
+    {
+        return selfMon.Struggle();
+    }
+
     std::deque<BattlePokemon::pokemonMove*> viableMoves;
 
     for (size_t i = 1; i <= 4; ++i)
     {
-        auto* move = selfMon.GetMove(i);
-        if (move->IsActive() && !move->b_isDisabled && move->m_currentPP > 0)
+        auto& move = selfMon.GetMove(i);
+        if (move.IsActive() && !move.b_isDisabled && move.m_currentPP > 0)
         {
-            viableMoves.push_back(move);
+            viableMoves.push_back(&move);
         }
     }
-
-    if (viableMoves.empty())
-        return selfMon.Struggle();
 
     std::uniform_int_distribution<int> dist(0, static_cast<int>(viableMoves.size()) - 1);
     int choice = dist(m_rng.GetGenerator());
 
-    return viableMoves[choice];
+    return *viableMoves[choice];
 }
 
-void EasyAIStrategy::ChooseSwitch(Player& self, BattlePokemon& selfMon)
+BattlePokemon* EasyAIStrategy::ChooseSwitch(Player& self, BattlePokemon& selfMon)
 {
     std::deque<BattlePokemon*> viablePokemon;
 
     for (size_t i = 1; i <= 6; ++i)
     {
-        if (!self.GetBelt(i)->IsFainted() && self.GetBelt(i) != &selfMon)
-            viablePokemon.push_back(self.GetBelt(i));
+        if (!self.GetBelt(i).IsFainted() && &self.GetBelt(i) != &selfMon)
+            viablePokemon.push_back(&self.GetBelt(i));
     }
 
     if (!viablePokemon.empty())
     {
         self.SetIsSwitching(true);
-        self.SetPokemonToSwitchTo(viablePokemon[0]);
+        return viablePokemon[0];
     }
 }
 

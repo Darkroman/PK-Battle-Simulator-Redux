@@ -19,9 +19,9 @@ public:
 private:
     void CheckSeededStatuses();
     void CheckDamagingStatuses();
-    void BurnedStatus(Player* player, BattlePokemon* pokemon);
-    void PoisonedStatus(Player* player, BattlePokemon* pokemon);
-    void BadlyPoisonedStatus(Player* player, BattlePokemon* pokemon);
+    void BurnedStatus(Player& player, BattlePokemon& pokemon);
+    void PoisonedStatus(Player& player, BattlePokemon& pokemon);
+    void BadlyPoisonedStatus(Player& player, BattlePokemon& pokemon);
     void CheckBoundStatuses();
     void CheckDisabledStatus();
     void CheckFieldEffects();

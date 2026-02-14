@@ -9,8 +9,8 @@ class EasyAIStrategy : public IAIStrategy
 public:
     explicit EasyAIStrategy(RandomEngine& rng);
 
-    BattlePokemon::pokemonMove* ChooseMove(AIPlayer& self, BattlePokemon& selfMon) override;
-    void ChooseSwitch(Player& self, BattlePokemon& selfMon) override;
+    BattlePokemon::pokemonMove& ChooseMove(Player& self, BattlePokemon& selfMon) override;
+    BattlePokemon* ChooseSwitch(Player& self, BattlePokemon& selfMon) override;
     bool WantsToSwitch(Player& self, BattlePokemon& selfMon) override;
 
 private:

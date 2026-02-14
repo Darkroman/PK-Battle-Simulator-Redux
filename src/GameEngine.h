@@ -1,14 +1,12 @@
 #pragma once
 
-#include "entities/AIPlayer.h"
-#include "entities/HumanPlayer.h"
 #include "entities/ai strategies/EasyAIStrategy.h"
 
 #include "battle/RandomEngine.h"
 #include "battle/BattleContext.h"
 #include "ui/ConsoleTextSink.h"
 #include "ui/MoveResultsText.h"
-#include "ui/BattleTextMenu.h"
+#include "ui/BattleAnnouncerText.h"
 #include "ui/StatusEffectText.h"
 #include "ui/Menu.h"
 #include "battle/BattleManager.h"
@@ -40,7 +38,7 @@ private:
 
     ConsoleTextSink textSink;
 
-    BattleTextMenu battleTextMenu;
+    BattleAnnouncerText battleAnnouncerText;
     MoveResultsText moveResultsText;
     StatusEffectText statusEffectText;
 

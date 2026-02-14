@@ -309,39 +309,39 @@ void StatusEffectProcessor::ResetPokemonTurnStatuses()
 	m_context.attackingPokemon->SetSemiInvulnerableFly(false);
 }
 
-void StatusEffectProcessor::CheckFaintCondition(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* source, BattlePokemon* target)
+void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& source, BattlePokemon& target)
 {
-	if ((target->GetCurrentHP() <= 0) && (!target->IsFainted()))
+	if ((target.GetCurrentHP() <= 0) && (!target.IsFainted()))
 	{
-		target->SetFainted(true);
-		m_statusEffectUI.DisplayFaintedMsg(targetPlayer->GetPlayerNameView(), target->GetNameView());
-		targetPlayer->IncrementFaintedCount();
+		target.SetFainted(true);
+		m_statusEffectUI.DisplayFaintedMsg(targetPlayer.GetPlayerNameView(), target.GetNameView());
+		targetPlayer.IncrementFaintedCount();
 
-		if (source->IsBound())
+		if (source.IsBound())
 		{
-			source->SetBound(false);
-			sourcePlayer->SetCanSwitch(true);
-			source->ResetBoundCounter();
-			source->SetBoundTurnCount(0);
+			source.SetBound(false);
+			sourcePlayer.SetCanSwitch(true);
+			source.ResetBoundCounter();
+			source.SetBoundTurnCount(0);
 
-			m_statusEffectUI.DisplayFreedFromBoundMsg(sourcePlayer->GetPlayerNameView(), source->GetNameView(), source->GetBoundMoveName());
+			m_statusEffectUI.DisplayFreedFromBoundMsg(sourcePlayer.GetPlayerNameView(), source.GetNameView(), source.GetBoundMoveName());
 		}
 	}
 
-	if ((source->GetCurrentHP() <= 0) && (!source->IsFainted()))
+	if ((source.GetCurrentHP() <= 0) && (!source.IsFainted()))
 	{
-		source->SetFainted(true);
-		m_statusEffectUI.DisplayFaintedMsg(sourcePlayer->GetPlayerNameView(), source->GetNameView());
-		sourcePlayer->IncrementFaintedCount();
+		source.SetFainted(true);
+		m_statusEffectUI.DisplayFaintedMsg(sourcePlayer.GetPlayerNameView(), source.GetNameView());
+		sourcePlayer.IncrementFaintedCount();
 
-		if (target->IsBound())
+		if (target.IsBound())
 		{
-			target->SetBound(false);
-			targetPlayer->SetCanSwitch(true);
-			target->ResetBoundCounter();
-			target->SetBoundTurnCount(0);
+			target.SetBound(false);
+			targetPlayer.SetCanSwitch(true);
+			target.ResetBoundCounter();
+			target.SetBoundTurnCount(0);
 
-			m_statusEffectUI.DisplayFreedFromBoundMsg(targetPlayer->GetPlayerNameView(), target->GetNameView(), target->GetBoundMoveName());
+			m_statusEffectUI.DisplayFreedFromBoundMsg(targetPlayer.GetPlayerNameView(), target.GetNameView(), target.GetBoundMoveName());
 		}
 	}
 }

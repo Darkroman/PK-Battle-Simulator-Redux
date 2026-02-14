@@ -4,7 +4,8 @@ enum class SetPokemonResult {
     Success,
     InvalidRange,
     InvalidPokemon,
-    InvalidSlot
+    InvalidSlot,
+    Exit
 };
 
 enum class SetMoveResult {
@@ -13,7 +14,8 @@ enum class SetMoveResult {
     InvalidRange,
     InvalidMove,
     NotLearnable,
-    DuplicateMove
+    DuplicateMove,
+    Exit
 };
 
 enum class SetLevelResult {

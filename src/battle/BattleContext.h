@@ -3,7 +3,9 @@
 #include <vector>
 #include <memory>
 
-#include "../entities/AIPlayer.h"
+#include "../entities/Player.h"
+
+class IPlayerController;
 
 struct BattleStateFlags
 {
@@ -32,6 +34,8 @@ struct BattleContext
     {
     }
 
+    std::vector<Player*> vec_aiPlayers{};
+
     BattleStateFlags flags;
 
     const int HP_BAR_WIDTH{ 400 };
@@ -41,9 +45,6 @@ struct BattleContext
 
     Player* playerOne;
     Player* playerTwo;
-
-    AIPlayer* aiPlayerOne{ nullptr };
-    AIPlayer* aiPlayerTwo{ nullptr };
 
     BattlePokemon* playerOneCurrentPokemon{ nullptr };
     BattlePokemon* playerTwoCurrentPokemon{ nullptr };

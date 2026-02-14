@@ -22,7 +22,6 @@ struct MoveRoutineDeps {
 	BattleCalculations& calculations;
 	StatusEffectProcessor& statusProcessor;
 	IMoveResultsUI& resultsUI;
-	IBattleMenuUI& battleUI;
 	RandomEngine& rng;
 	SwitchExecutor& switchExecutor;
 
@@ -31,7 +30,6 @@ struct MoveRoutineDeps {
 	BattleCalculations& calc,
 	StatusEffectProcessor& statusProc,
 	IMoveResultsUI& results,
-	IBattleMenuUI& BUI,
 	RandomEngine& randomEngine,
 	SwitchExecutor& switchExec)
 	
@@ -39,7 +37,6 @@ struct MoveRoutineDeps {
 	, calculations(calc)
 	, statusProcessor(statusProc)
 	, resultsUI(results)
-	, battleUI(BUI)
 	, rng(randomEngine)
 	, switchExecutor(switchExec)
 	{}

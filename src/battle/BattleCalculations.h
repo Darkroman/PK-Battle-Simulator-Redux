@@ -10,21 +10,21 @@ class BattleCalculations
 public:
 	BattleCalculations(BattleContext&, RandomEngine&);
 
-	void CalculateCriticalHit(BattlePokemon*);
+	void CalculateCriticalHit(BattlePokemon&);
 
 	std::pair<int, int> GetStageRatio(int);
 
 	int MultiplyEffectiveness(uint16_t, uint16_t);
 
-	void CalculateTypeEffectiveness(BattlePokemon::pokemonMove*, BattlePokemon*);
+	void CalculateTypeEffectiveness(BattlePokemon::pokemonMove&, BattlePokemon&);
 
-	bool CalculateHitChance(BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*);
+	bool CalculateHitChance(BattlePokemon::pokemonMove&, BattlePokemon&, BattlePokemon&);
 
-	int CalculateDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*, bool isAI = false);
+	int CalculateDamage(Player&, BattlePokemon::pokemonMove&, BattlePokemon&, BattlePokemon&, bool isAI = false);
 
-	void ApplyDamage(Player*, BattlePokemon::pokemonMove*, BattlePokemon*, BattlePokemon*, int);
+	void ApplyDamage(Player&, BattlePokemon::pokemonMove&, BattlePokemon&, BattlePokemon&, int);
 
-	int CalculateLowKickPower(BattlePokemon*);
+	int CalculateLowKickPower(BattlePokemon&);
 
 private:
 	RandomEngine& m_rng;

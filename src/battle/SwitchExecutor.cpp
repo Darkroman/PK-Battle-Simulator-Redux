@@ -1,18 +1,21 @@
 #include "SwitchExecutor.h"
 
 #include "BattleContext.h"
-#include "../ui/interfaces/IBattleMenuUI.h"
+#include "../ui/interfaces/IMoveResultsUI.h"
+#include "../entities/controllers/AIController.h"
 
-SwitchExecutor::SwitchExecutor(BattleContext& context, IBattleMenuUI& battleMenuUI) :
-	m_context(context), m_battleMenuUI(battleMenuUI) {}
+SwitchExecutor::SwitchExecutor(BattleContext& context, IMoveResultsUI& moveResultsUI) :
+	m_context(context), m_moveResultsUI(moveResultsUI) {}
 
-void SwitchExecutor::ExecuteSwitch(Player* player, BattlePokemon*& pokemon)
+void SwitchExecutor::ExecuteSwitch(Player& player, BattlePokemon*& pokemon)
 {
-	m_battleMenuUI.SwitchOutMsg(*player, *pokemon);
+	m_moveResultsUI.SwitchOutMsg(player.GetPlayerNameView(), pokemon->GetPokemonNameView());
 	pokemon->ResetStatsOnSwitch();
-	pokemon = player->GetPokemonToSwitchTo();
+	pokemon = player.GetPokemonToSwitchTo();
 
-	if (player == m_context.playerOne)
+	BattlePokemon* newPokemon{ nullptr };
+
+	if (&player == m_context.playerOne)
 	{
 		if (m_context.playerTwoCurrentPokemon->IsBound())
 		{
@@ -23,13 +26,10 @@ void SwitchExecutor::ExecuteSwitch(Player* player, BattlePokemon*& pokemon)
 		}
 
 		m_context.playerOneCurrentPokemon = pokemon;
-
-		if (m_context.aiPlayerTwo)
-		{
-			m_context.aiPlayerTwo->UpdateActivePokemon(m_context.playerOneCurrentPokemon);
-		}
+		newPokemon = m_context.playerOneCurrentPokemon;
+		m_moveResultsUI.PlayerChoosesMsg(player.GetPlayerNameView(), newPokemon->GetPokemonNameView());
 	}
-	else if (player == m_context.playerTwo)
+	else if (&player == m_context.playerTwo)
 	{
 		if (m_context.playerOneCurrentPokemon->IsBound())
 		{
@@ -40,13 +40,14 @@ void SwitchExecutor::ExecuteSwitch(Player* player, BattlePokemon*& pokemon)
 		}
 
 		m_context.playerTwoCurrentPokemon = pokemon;
-
-		if (m_context.aiPlayerOne)
-		{
-			m_context.aiPlayerOne->UpdateActivePokemon(m_context.playerTwoCurrentPokemon);
-		}
+		newPokemon = m_context.playerTwoCurrentPokemon;
+		m_moveResultsUI.PlayerChoosesMsg(player.GetPlayerNameView(), newPokemon->GetPokemonNameView());
 	}
 
-	player->SetIsSwitching(false);
-	m_battleMenuUI.PlayerChoosesMsg(*player, *pokemon);
+	for (auto player : m_context.vec_aiPlayers)
+	{
+		player->GetAIController().OnActivePokemonChanged(m_context);
+	}
+
+	player.SetIsSwitching(false);
 }

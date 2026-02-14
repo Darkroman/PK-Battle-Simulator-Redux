@@ -36,59 +36,59 @@ void SaveParty::SavePokemonName(std::ofstream& outFile, int i)
 {
 	outFile << "Pokemon " << i << ":\n";
 
-	if (!players[num]->GetBelt(i)->HasPokemon())
+	if (!players[num]->GetBelt(i).HasPokemon())
 	{
 		outFile << "-0\n\n";
 		++numberOfPokemon;
 	}
 
-	if (players[num]->GetBelt(i)->HasNickname())
+	if (players[num]->GetBelt(i).HasNickname())
 	{
-		outFile << players[num]->GetBelt(i)->GetNickname()
-			<< " (" << players[num]->GetBelt(i)->GetPokemonNameView() << ")\n";
+		outFile << players[num]->GetBelt(i).GetNickname()
+			<< " (" << players[num]->GetBelt(i).GetPokemonNameView() << ")\n";
 	}
 	else
 	{
-		outFile << players[num]->GetBelt(i)->GetPokemonNameView() << "\n";
+		outFile << players[num]->GetBelt(i).GetPokemonNameView() << "\n";
 	}
 }
 
 void SaveParty::SavePokemonLevel(std::ofstream& outFile, int i)
 {
-	outFile << "Level: " << players[num]->GetBelt(i)->GetLevel() << "\n";
+	outFile << "Level: " << players[num]->GetBelt(i).GetLevel() << "\n";
 }
 
 void SaveParty::SavePokemonEVs(std::ofstream& outFile, int i)
 {
 	outFile << "EVs: "
-		<< players[num]->GetBelt(i)->GetHPEV()
+		<< players[num]->GetBelt(i).GetHPEV()
 		<< " HP " << " / "
-		<< players[num]->GetBelt(i)->GetAttackEV()
+		<< players[num]->GetBelt(i).GetAttackEV()
 		<< " Atk " << " / "
-		<< players[num]->GetBelt(i)->GetDefenseEV()
+		<< players[num]->GetBelt(i).GetDefenseEV()
 		<< " Def " << " / "
-		<< players[num]->GetBelt(i)->GetSpecialAttackEV()
+		<< players[num]->GetBelt(i).GetSpecialAttackEV()
 		<< " SpA " << " / "
-		<< players[num]->GetBelt(i)->GetSpecialDefenseEV()
+		<< players[num]->GetBelt(i).GetSpecialDefenseEV()
 		<< " SpD " << " / "
-		<< players[num]->GetBelt(i)->GetSpeedEV()
+		<< players[num]->GetBelt(i).GetSpeedEV()
 		<< " Spe\n";
 }
 
 void SaveParty::SavePokemonIVs(std::ofstream& outFile, int i)
 {
 	outFile << "IVs: "
-		<< players[num]->GetBelt(i)->GetHPIV()
+		<< players[num]->GetBelt(i).GetHPIV()
 		<< " HP " << " / "
-		<< players[num]->GetBelt(i)->GetAttackIV()
+		<< players[num]->GetBelt(i).GetAttackIV()
 		<< " Atk " << " / "
-		<< players[num]->GetBelt(i)->GetDefenseIV()
+		<< players[num]->GetBelt(i).GetDefenseIV()
 		<< " Def " << " / "
-		<< players[num]->GetBelt(i)->GetSpecialAttackIV()
+		<< players[num]->GetBelt(i).GetSpecialAttackIV()
 		<< " SpA " << " / "
-		<< players[num]->GetBelt(i)->GetSpecialDefenseIV()
+		<< players[num]->GetBelt(i).GetSpecialDefenseIV()
 		<< " SpD " << " / "
-		<< players[num]->GetBelt(i)->GetSpeedIV()
+		<< players[num]->GetBelt(i).GetSpeedIV()
 		<< " Spe\n";
 }
 
@@ -96,15 +96,15 @@ void SaveParty::SavePokemonMoves(std::ofstream& outFile, int i)
 {
 	for (int j = 1; j <= numberOfMoves; ++j)
 	{
-		if (!players[num]->GetBelt(i)->HasMove(j) && j <= numberOfMoves)
+		if (!players[num]->GetBelt(i).HasMove(j) && j <= numberOfMoves)
 		{
 			++numberOfMoves;
 			continue;
 		}
 
-		if (players[num]->GetBelt(i)->HasMove(j))
+		if (players[num]->GetBelt(i).HasMove(j))
 		{
-			outFile << "- " << players[num]->GetBelt(i)->GetMove(j)->GetName() << '\n';
+			outFile << "- " << players[num]->GetBelt(i).GetMove(j).GetName() << '\n';
 			if (j == numberOfMoves && i != numberOfPokemon)
 			{
 				outFile << '\n';
@@ -131,7 +131,7 @@ void SaveParty::Save()
 
 		SavePokemonIVs(outFile, i);
 
-		numberOfMoves = players[num]->GetBelt(i)->GetMoveCount();
+		numberOfMoves = players[num]->GetBelt(i).GetMoveCount();
 
 		if (numberOfMoves <= 0 && (i != numberOfPokemon))
 		{

@@ -14,13 +14,15 @@ set(SOURCES
     data/StringToTypes.cpp
 
     # entities
-    entities/AIPlayer.cpp
     entities/BattlePokemon.cpp
-    entities/HumanPlayer.cpp
     entities/Player.cpp
 
     # ai strategies
     "entities/ai strategies/EasyAIStrategy.cpp"
+
+    # controllers
+    "entities/controllers/AIController.cpp"
+    "entities/controllers/HumanControllerConsole.cpp"
 
     # battle
     battle/BattleAIManager.cpp
@@ -38,7 +40,7 @@ set(SOURCES
     moves/MoveRoutines.cpp
 
     # UI
-    ui/BattleTextMenu.cpp
+    ui/BattleAnnouncerText.cpp
     ui/ConsoleTextSink.cpp
     ui/Menu.cpp
     ui/MoveResultsText.cpp
@@ -58,6 +60,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/data
     ${CMAKE_CURRENT_SOURCE_DIR}/entities
     "${CMAKE_CURRENT_SOURCE_DIR}/entities/ai strategies"
+    "${CMAKE_CURRENT_SOURCE_DIR}/entities/controllers"
     ${CMAKE_CURRENT_SOURCE_DIR}/battle
     ${CMAKE_CURRENT_SOURCE_DIR}/moves
     ${CMAKE_CURRENT_SOURCE_DIR}/ui

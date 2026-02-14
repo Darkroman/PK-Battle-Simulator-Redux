@@ -31,7 +31,7 @@ public:
 
 	void ResetPokemonTurnStatuses();
 
-	void CheckFaintCondition(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* sourcePokemon, BattlePokemon* targetPokemon);
+	void CheckFaintCondition(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& sourcePokemon, BattlePokemon& targetPokemon);
 
 private:
 	BattleContext& m_context;

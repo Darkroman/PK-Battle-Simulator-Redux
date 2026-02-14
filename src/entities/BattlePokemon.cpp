@@ -49,11 +49,11 @@ void BattlePokemon::DetransformData::BackupOriginalPokemonData(BattlePokemon* po
 
     for (size_t i = 0; i < m_array_moves.size(); ++i)
     {
-        m_array_moves[i].SetMovePointer(pokemon->GetMove(i + 1)->GetMovePointer());
-        m_array_moves[i].m_currentPP = pokemon->GetMove(i + 1)->m_currentPP;
-        m_array_moves[i].m_maxPP = pokemon->GetMove(i + 1)->m_maxPP;
-        m_array_moves[i].b_isDisabled = pokemon->GetMove(i + 1)->b_isDisabled;
-        m_array_moves[i].b_isMimicked = pokemon->GetMove(i + 1)->b_isMimicked;
+        m_array_moves[i].SetMovePointer(pokemon->GetMove(i + 1).GetMovePointer());
+        m_array_moves[i].m_currentPP = pokemon->GetMove(i + 1).m_currentPP;
+        m_array_moves[i].m_maxPP = pokemon->GetMove(i + 1).m_maxPP;
+        m_array_moves[i].b_isDisabled = pokemon->GetMove(i + 1).b_isDisabled;
+        m_array_moves[i].b_isMimicked = pokemon->GetMove(i + 1).b_isMimicked;
     }
 }
 
@@ -75,7 +75,13 @@ SetPokemonOutcome BattlePokemon::SetPokemon(std::string_view pkname)
         {
             result = std::stoul(std::string(pkname));
 
-            if (result == 0 || result > 151)
+            if (result == 0)
+            {
+                outcome.result = SetPokemonResult::Exit;
+                return outcome;
+            }
+
+            if (result > 151)
             {
                 outcome.result = SetPokemonResult::InvalidRange;
                 return outcome;
@@ -151,7 +157,13 @@ SetMoveOutcome BattlePokemon::SetMove(size_t moveslot, std::string_view movename
         {
             result = std::stoul(std::string(movename));
 
-            if (result == 0 || result > 165)
+            if (result == 0)
+            {
+                outcome.result = SetMoveResult::Exit;
+                return outcome;
+            }
+
+            if (result > 165)
             {
                 outcome.result = SetMoveResult::InvalidRange;
                 return outcome;
@@ -548,16 +560,46 @@ int BattlePokemon::GetLevel() const
     return m_level;
 }
 
-BattlePokemon::pokemonMove* BattlePokemon::GetMove(size_t moveslot)
+BattlePokemon::pokemonMove& BattlePokemon::GetMove(size_t moveslot)
 {
     --moveslot;
-    return &(m_array_moves[moveslot]);
+    return m_array_moves[moveslot];
 }
 
-const BattlePokemon::pokemonMove* BattlePokemon::GetMove(size_t moveslot) const
+const BattlePokemon::pokemonMove& BattlePokemon::GetMove(size_t moveslot) const
 {
     --moveslot;
-    return &(m_array_moves[moveslot]);
+    return m_array_moves[moveslot];
+}
+
+void BattlePokemon::DeleteMove(size_t moveslot)
+{
+    --moveslot;
+
+    m_array_moves[moveslot].ResetMove();
+}
+
+void BattlePokemon::SwapMoves(size_t firstSlot, size_t secondSlot)
+{
+    --firstSlot;
+    --secondSlot;
+
+    std::swap(m_array_moves[firstSlot], m_array_moves[secondSlot]);
+}
+
+void BattlePokemon::ReorderMoves(size_t slotToMove, size_t targetSlot)
+{
+    --slotToMove;
+    --targetSlot;
+
+    if (slotToMove > targetSlot)
+    {
+        std::rotate(m_array_moves.begin() + targetSlot, m_array_moves.begin() + slotToMove, m_array_moves.begin() + slotToMove + 1);
+    }
+    else
+    {
+        std::rotate(m_array_moves.begin() + slotToMove, m_array_moves.begin() + slotToMove + 1, m_array_moves.begin() + targetSlot + 1);
+    }
 }
 
 void BattlePokemon::pokemonMove::SetMovePointer(Move* move)
@@ -568,6 +610,15 @@ void BattlePokemon::pokemonMove::SetMovePointer(Move* move)
 Move* BattlePokemon::pokemonMove::GetMovePointer() const
 {
     return mp_move;
+}
+
+void BattlePokemon::pokemonMove::ResetMove()
+{
+    mp_move = nullptr;
+    m_currentPP = 0;
+    m_maxPP = 0;
+    b_isDisabled = false;
+    b_isMimicked = false;
 }
 
 bool BattlePokemon::pokemonMove::IsActive() const
@@ -701,6 +752,32 @@ int BattlePokemon::GetMaxPP(size_t moveslot) const
 {
     --moveslot;
     return m_array_moves[moveslot].m_maxPP;
+}
+
+bool BattlePokemon::CheckPPCountForStruggle()
+{
+    int zeroPPCount{ 0 }, disabledCount{ 0 };
+
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (GetMove(i + 1).IsActive())
+        {
+            if (GetMove(i + 1).m_currentPP == 0)
+            {
+                ++zeroPPCount;
+            }
+            if (GetMove(i + 1).b_isDisabled)
+            {
+                ++disabledCount;
+            }
+        }
+    }
+
+    if (zeroPPCount + disabledCount >= GetMoveCount())
+    {
+        return true;
+    }
+    return false;
 }
 
 bool BattlePokemon::HasPokemon() const
@@ -1370,7 +1447,7 @@ void BattlePokemon::SetTransformation(BattlePokemon* pokemon)
 
     for (size_t i = 0; i < m_array_moves.size(); ++i)
     {
-        m_array_moves[i].SetMovePointer(pokemon->GetMove(i + 1)->GetMovePointer());
+        m_array_moves[i].SetMovePointer(pokemon->GetMove(i + 1).GetMovePointer());
         m_array_moves[i].m_currentPP = 5;
         m_array_moves[i].m_maxPP = 5;
         m_array_moves[i].b_isDisabled = false;
@@ -1483,13 +1560,13 @@ void BattlePokemon::DamageSubstitute(int damage)
     }
 }
 
-BattlePokemon::pokemonMove* BattlePokemon::Struggle()
+BattlePokemon::pokemonMove& BattlePokemon::Struggle()
 {
     m_struggle.SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(164));
     m_struggle.m_currentPP = 1;
     m_struggle.m_maxPP = 1;
 
-    return &m_struggle;
+    return m_struggle;
 }
 
 void BattlePokemon::ResetStatsOnSwitch()
@@ -1531,14 +1608,14 @@ void BattlePokemon::ResetStatsOnSwitch()
     {
         for (size_t i = 1; i < 5; ++i)
         {
-            if (GetMove(i)->b_isMimicked)
+            if (GetMove(i).b_isMimicked)
             {
-                GetMove(i)->SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(101));
-                GetMove(i)->m_currentPP = GetMimicPP();
-                GetMove(i)->m_maxPP = GetMove(i)->GetPP();
+                GetMove(i).SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(101));
+                GetMove(i).m_currentPP = GetMimicPP();
+                GetMove(i).m_maxPP = GetMove(i).GetPP();
 
                 SetUsedMimic(false);
-                GetMove(i)->b_isMimicked = false;
+                GetMove(i).b_isMimicked = false;
                 break;
             }
         }
@@ -1548,9 +1625,9 @@ void BattlePokemon::ResetStatsOnSwitch()
     {
         for (size_t i = 1; i < 5; ++i)
         {
-            if (GetMove(i)->b_isDisabled)
+            if (GetMove(i).b_isDisabled)
             {
-                GetMove(i)->b_isDisabled = false;
+                GetMove(i).b_isDisabled = false;
                 SetDisabledStatus(false);
                 ResetDisabledCounter();
                 break;
@@ -1669,14 +1746,14 @@ void BattlePokemon::ResetValues()
     {
         for (size_t i = 1; i < 5; ++i)
         {
-            if (this->GetMove(i)->b_isMimicked)
+            if (this->GetMove(i).b_isMimicked)
             {
-                this->GetMove(i)->SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(101));
-                this->GetMove(i)->m_currentPP = this->GetMimicPP();
-                this->GetMove(i)->m_maxPP = this->GetMove(i)->GetPP();
+                this->GetMove(i).SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(101));
+                this->GetMove(i).m_currentPP = this->GetMimicPP();
+                this->GetMove(i).m_maxPP = this->GetMove(i).GetPP();
 
                 this->SetUsedMimic(false);
-                this->GetMove(i)->b_isMimicked = false;
+                this->GetMove(i).b_isMimicked = false;
                 break;
             }
         }

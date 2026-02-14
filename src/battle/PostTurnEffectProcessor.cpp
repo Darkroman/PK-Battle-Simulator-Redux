@@ -52,26 +52,26 @@ void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
 {
     CheckSeededStatuses();
 
-    winCondition = m_winChecker.CheckWinCondition(m_context.defendingPlayer, m_context.attackingPlayer);
+    winCondition = m_winChecker.CheckWinCondition(*m_context.defendingPlayer, *m_context.attackingPlayer);
     if (winCondition) { return; }
 
-    winCondition = m_winChecker.CheckWinCondition(m_context.attackingPlayer, m_context.defendingPlayer);
+    winCondition = m_winChecker.CheckWinCondition(*m_context.attackingPlayer, *m_context.defendingPlayer);
     if (winCondition) { return; }
 
     CheckDamagingStatuses();
 
-    winCondition = m_winChecker.CheckWinCondition(m_context.defendingPlayer, m_context.attackingPlayer);
+    winCondition = m_winChecker.CheckWinCondition(*m_context.defendingPlayer, *m_context.attackingPlayer);
     if (winCondition) { return; }
 
-    winCondition = m_winChecker.CheckWinCondition(m_context.attackingPlayer, m_context.defendingPlayer);
+    winCondition = m_winChecker.CheckWinCondition(*m_context.attackingPlayer, *m_context.defendingPlayer);
     if (winCondition) { return; }
     
     CheckBoundStatuses();
 
-    winCondition = m_winChecker.CheckWinOrSwitch(m_context.defendingPlayer, m_context.attackingPlayer, m_context.attackingPokemon);
+    winCondition = m_winChecker.CheckWinOrSwitch(*m_context.defendingPlayer, *m_context.attackingPlayer, *m_context.attackingPokemon);
     if (winCondition) { return; }
 
-    winCondition = m_winChecker.CheckWinOrSwitch(m_context.attackingPlayer, m_context.defendingPlayer, m_context.defendingPokemon);
+    winCondition = m_winChecker.CheckWinOrSwitch(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.defendingPokemon);
     if (winCondition) { return; }
 
     CheckDisabledStatus();
@@ -97,7 +97,7 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
 
         m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 
-        m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
+        m_statusProcessor.CheckFaintCondition(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.attackingPokemon, *m_context.defendingPokemon);
     }
 
     if (!m_context.defendingPokemon->IsSeeded() || m_context.defendingPokemon->IsFainted())
@@ -112,7 +112,7 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
 
     m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.defendingPlayer->GetPlayerNameView(), m_context.defendingPokemon->GetNameView());
 
-    m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
+    m_statusProcessor.CheckFaintCondition(*m_context.defendingPlayer, *m_context.attackingPlayer, *m_context.defendingPokemon, *m_context.attackingPokemon);
 }
 
 void PostTurnEffectProcessor::CheckDamagingStatuses()
@@ -122,15 +122,15 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
         switch (m_context.attackingPokemon->currentStatus)
         {
         case Status::Burned:
-            BurnedStatus(m_context.attackingPlayer, m_context.attackingPokemon);
+            BurnedStatus(*m_context.attackingPlayer, *m_context.attackingPokemon);
             break;
 
         case Status::Poisoned:
-            PoisonedStatus(m_context.attackingPlayer, m_context.attackingPokemon);
+            PoisonedStatus(*m_context.attackingPlayer, *m_context.attackingPokemon);
             break;
 
         case Status::Badly_Poisoned:
-            BadlyPoisonedStatus(m_context.attackingPlayer, m_context.attackingPokemon);
+            BadlyPoisonedStatus(*m_context.attackingPlayer, *m_context.attackingPokemon);
             break;
 
         default:
@@ -138,55 +138,55 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
         }
     }
 
-    m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer, m_context.attackingPokemon, m_context.defendingPokemon);
+    m_statusProcessor.CheckFaintCondition(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.attackingPokemon, *m_context.defendingPokemon);
 
     if (!m_context.defendingPokemon->IsFainted())
     {
         switch (m_context.defendingPokemon->currentStatus)
         {
         case Status::Burned:
-            BurnedStatus(m_context.defendingPlayer, m_context.defendingPokemon);
+            BurnedStatus(*m_context.defendingPlayer, *m_context.defendingPokemon);
             break;
 
         case Status::Poisoned:
-            PoisonedStatus(m_context.defendingPlayer, m_context.defendingPokemon);
+            PoisonedStatus(*m_context.defendingPlayer, *m_context.defendingPokemon);
             break;
 
         case Status::Badly_Poisoned:
-            BadlyPoisonedStatus(m_context.defendingPlayer, m_context.defendingPokemon);
+            BadlyPoisonedStatus(*m_context.defendingPlayer, *m_context.defendingPokemon);
             break;
 
         default:
             return;
         }
     }
-    m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer, m_context.defendingPokemon, m_context.attackingPokemon);
+    m_statusProcessor.CheckFaintCondition(*m_context.defendingPlayer, *m_context.attackingPlayer, *m_context.defendingPokemon, *m_context.attackingPokemon);
 }
 
-void PostTurnEffectProcessor::BurnedStatus(Player* player, BattlePokemon* pokemon)
+void PostTurnEffectProcessor::BurnedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int burnDamage = pokemon->GetMaxHP() / 16;
-    pokemon->DamageCurrentHP(burnDamage);
+    int burnDamage = pokemon.GetMaxHP() / 16;
+    pokemon.DamageCurrentHP(burnDamage);
 
-    m_statusEffectUI.DisplayDamagedByStatusPostTurn("burn", player->GetPlayerNameView(), pokemon->GetNameView());
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("burn", player.GetPlayerNameView(), pokemon.GetNameView());
 }
 
-void PostTurnEffectProcessor::PoisonedStatus(Player* player, BattlePokemon* pokemon)
+void PostTurnEffectProcessor::PoisonedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int poisonDamage = pokemon->GetMaxHP() / 8;
-    pokemon->DamageCurrentHP(poisonDamage);
+    int poisonDamage = pokemon.GetMaxHP() / 8;
+    pokemon.DamageCurrentHP(poisonDamage);
 
-    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player->GetPlayerNameView(), pokemon->GetNameView());
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player.GetPlayerNameView(), pokemon.GetNameView());
 }
 
-void PostTurnEffectProcessor::BadlyPoisonedStatus(Player* player, BattlePokemon* pokemon)
+void PostTurnEffectProcessor::BadlyPoisonedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int poisonDamage = pokemon->GetMaxHP() / 16 * pokemon->GetBadlyPoisonCounter();
-    pokemon->DamageCurrentHP(poisonDamage);
+    int poisonDamage = pokemon.GetMaxHP() / 16 * pokemon.GetBadlyPoisonCounter();
+    pokemon.DamageCurrentHP(poisonDamage);
 
-    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player->GetPlayerNameView(), pokemon->GetNameView());
+    m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player.GetPlayerNameView(), pokemon.GetNameView());
 
-    pokemon->IncrementBadlyPoisonCounter();
+    pokemon.IncrementBadlyPoisonCounter();
 }
 
 void PostTurnEffectProcessor::CheckBoundStatuses()
@@ -222,8 +222,8 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
                 m_context.attackingPokemon->GetNameView(),
                 m_context.attackingPokemon->GetBoundMoveName());
 
-            m_statusProcessor.CheckFaintCondition(m_context.attackingPlayer, m_context.defendingPlayer,
-                m_context.attackingPokemon, m_context.defendingPokemon);
+            m_statusProcessor.CheckFaintCondition(*m_context.attackingPlayer, *m_context.defendingPlayer,
+                *m_context.attackingPokemon, *m_context.defendingPokemon);
         }
     }
 
@@ -256,8 +256,8 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
             m_context.defendingPokemon->GetNameView(),
             m_context.defendingPokemon->GetBoundMoveName());
 
-        m_statusProcessor.CheckFaintCondition(m_context.defendingPlayer, m_context.attackingPlayer,
-            m_context.defendingPokemon, m_context.attackingPokemon);
+        m_statusProcessor.CheckFaintCondition(*m_context.defendingPlayer, *m_context.attackingPlayer,
+            *m_context.defendingPokemon, *m_context.attackingPokemon);
     }
 }
 

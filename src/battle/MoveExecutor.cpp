@@ -7,7 +7,6 @@ MoveExecutor::MoveExecutor(
     BattleCalculations& calculations,
     StatusEffectProcessor& statusProcessor,
     IMoveResultsUI& resultsUI,
-    IBattleMenuUI& battleMenuUI,
     RandomEngine& rng,
     SwitchExecutor& switchExecutor
 )
@@ -16,7 +15,6 @@ MoveExecutor::MoveExecutor(
         calculations,
         statusProcessor,
         resultsUI,
-        battleMenuUI,
         rng,
         switchExecutor
     }

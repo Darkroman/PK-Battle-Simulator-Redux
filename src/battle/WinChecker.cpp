@@ -2,37 +2,37 @@
 
 #include "BattleContext.h"
 #include "SwitchExecutor.h"
-#include "../ui/interfaces/IBattleMenuUI.h"
-#include "../entities/AIPlayer.h"
+#include "../ui/interfaces/IMoveResultsUI.h"
+#include "../entities/controllers/AIController.h"
+#include "../entities/Player.h"
 
-WinChecker::WinChecker(BattleContext& context, SwitchExecutor& switchExecutor, IBattleMenuUI& battleMenuUI)
+WinChecker::WinChecker(BattleContext& context, SwitchExecutor& switchExecutor)
     : m_context(context)
 	, m_switchExecutor(switchExecutor)
-	, m_battleMenuUI(battleMenuUI)
 	{}
 
-bool WinChecker::CheckWinCondition(Player* sourcePlayer, Player* targetPlayer)
+bool WinChecker::CheckWinCondition(Player& sourcePlayer, Player& targetPlayer)
 {
-    if (targetPlayer->GetFaintedCount() == targetPlayer->GetPokemonCount() || targetPlayer->HasForfeited())
+    if (targetPlayer.GetFaintedCount() == targetPlayer.GetPokemonCount() || targetPlayer.HasForfeited())
     {
-        sourcePlayer->SetWinCondition(true);
+        sourcePlayer.SetWinCondition(true);
         return true;
     }
 
-    if (sourcePlayer->GetFaintedCount() == sourcePlayer->GetPokemonCount() || sourcePlayer->HasForfeited())
+    if (sourcePlayer.GetFaintedCount() == sourcePlayer.GetPokemonCount() || sourcePlayer.HasForfeited())
     {
-        targetPlayer->SetWinCondition(true);
+        targetPlayer.SetWinCondition(true);
         return true;
     }
 
     return false;
 }
 
-bool WinChecker::CheckWinOrSwitch(Player* sourcePlayer, Player* targetPlayer, BattlePokemon* targetPokemon)
+bool WinChecker::CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& targetPokemon)
 {
 	bool winCondition{ false };
 
-	if (!targetPokemon->IsFainted())
+	if (!targetPokemon.IsFainted())
 	{
 		return false;
 	}
@@ -41,29 +41,27 @@ bool WinChecker::CheckWinOrSwitch(Player* sourcePlayer, Player* targetPlayer, Ba
 
 	if (!winCondition)
 	{
-		if (!targetPlayer->IsHuman())
-		{
-			auto* aiPlayer = static_cast<AIPlayer*>(targetPlayer);
-			aiPlayer->ChooseSwitch(*targetPokemon);
-		}
-		else
-		{
-			m_battleMenuUI.SwitchPokemonOption(*targetPlayer, *targetPokemon);
-			targetPlayer->SetPokemonToSwitchTo(m_battleMenuUI.GetChosenPokemon());
-		}
+		BattlePokemon* newPokemon = targetPlayer.GetController().PromptForSwitch(targetPlayer, targetPokemon);
+		targetPlayer.SetPokemonToSwitchTo(newPokemon);
 
-		if (targetPokemon == m_context.playerOneCurrentPokemon)
+		if (&targetPokemon == m_context.playerOneCurrentPokemon)
 		{
-			m_switchExecutor.ExecuteSwitch(m_context.playerOne, m_context.playerOneCurrentPokemon);
-			targetPlayer->SetHasSwitched(true);
+			m_switchExecutor.ExecuteSwitch(*m_context.playerOne, m_context.playerOneCurrentPokemon);
+			targetPlayer.SetHasSwitched(true);
 			return false;
 		}
 
-		if (targetPokemon == m_context.playerTwoCurrentPokemon)
+		if (&targetPokemon == m_context.playerTwoCurrentPokemon)
 		{
-			m_switchExecutor.ExecuteSwitch(m_context.playerTwo, m_context.playerTwoCurrentPokemon);
-			targetPlayer->SetHasSwitched(true);
+
+			m_switchExecutor.ExecuteSwitch(*m_context.playerTwo, m_context.playerTwoCurrentPokemon);
+			targetPlayer.SetHasSwitched(true);
 			return false;
+		}
+
+		for (auto player : m_context.vec_aiPlayers)
+		{
+			player->GetAIController().OnActivePokemonChanged(m_context);
 		}
 	}
 	else

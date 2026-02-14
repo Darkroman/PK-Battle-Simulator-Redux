@@ -22,29 +22,26 @@ public:
 	Menu() = delete;
 	explicit Menu(std::vector<std::unique_ptr<Player>>&, RandomEngine&, IAIStrategy&);
 
-	SetPokemonResult SetPlayerPokemon(Player*, size_t, size_t);
-	SetPokemonResult SetPlayerPokemon(Player*, size_t, std::string_view);
+	SetPokemonResult SetPlayerPokemon(BattlePokemon&, std::string_view);
+	SetMoveResult SetPlayerPokemonMove(BattlePokemon&, size_t, std::string_view);
 
-	SetMoveResult SetPlayerPokemonMove(Player*, size_t, size_t, size_t);
-	SetMoveResult SetPlayerPokemonMove(Player*, size_t, size_t, std::string_view);
+	bool SetPlayerPokemonNickname(BattlePokemon&);
 
-	bool SetPlayerPokemonNickname(Player*, size_t);
+	bool SetPlayerPokemonLevel(BattlePokemon&);
 
-	bool SetPlayerPokemonLevel(Player*, size_t);
+	bool SetPlayerPokemonHPIV(BattlePokemon&);
+	bool SetPlayerPokemonAttackIV(BattlePokemon&);
+	bool SetPlayerPokemonDefenseIV(BattlePokemon&);
+	bool SetPlayerPokemonSpecialAttackIV(BattlePokemon&);
+	bool SetPlayerPokemonSpecialDefenseIV(BattlePokemon&);
+	bool SetPlayerPokemonSpeedIV(BattlePokemon&);
 
-	bool SetPlayerPokemonHPIV(Player*, size_t);
-	bool SetPlayerPokemonAttackIV(Player*, size_t);
-	bool SetPlayerPokemonDefenseIV(Player*, size_t);
-	bool SetPlayerPokemonSpecialAttackIV(Player*, size_t);
-	bool SetPlayerPokemonSpecialDefenseIV(Player*, size_t);
-	bool SetPlayerPokemonSpeedIV(Player*, size_t);
-
-	bool SetPlayerPokemonHPEV(Player*, size_t);
-	bool SetPlayerPokemonAttackEV(Player*, size_t);
-	bool SetPlayerPokemonDefenseEV(Player*, size_t);
-	bool SetPlayerPokemonSpecialAttackEV(Player*, size_t);
-	bool SetPlayerPokemonSpecialDefenseEV(Player*, size_t);
-	bool SetPlayerPokemonSpeedEV(Player*, size_t);
+	bool SetPlayerPokemonHPEV(BattlePokemon&);
+	bool SetPlayerPokemonAttackEV(BattlePokemon&);
+	bool SetPlayerPokemonDefenseEV(BattlePokemon&);
+	bool SetPlayerPokemonSpecialAttackEV(BattlePokemon&);
+	bool SetPlayerPokemonSpecialDefenseEV(BattlePokemon&);
+	bool SetPlayerPokemonSpeedEV(BattlePokemon&);
 
 	bool RunMenu();
 	void ChangePlayerOneName();
@@ -56,17 +53,22 @@ public:
 	void ChangePlayerTwoType();
 	void PrintPlayerTwoType();
 
-	bool AddPokemon(Player*);
-	bool ChangePokemon(Player*);
-	bool DeletePokemon(Player*);
-	bool EditPokemonStats(Player*);
-	bool EditPokemonMoves(Player*);
+	bool AddPokemon(Player&);
+	bool ChangePokemon(Player&);
+	bool DeletePokemon(Player&);
+	bool SwapPokemon(Player&);
+	bool ReorderPokemon(Player&);
+	bool EditPokemonStats(Player&);
+	bool EditPokemonMoves(Player&);
 
-	bool EditChosenPokemonStats(Player*, size_t);
-	bool EditChosenPokemonMoves(Player*, size_t);
+	bool EditChosenPokemonStats(BattlePokemon&);
+	bool EditChosenPokemonMoves(BattlePokemon&);
 
-	bool AddMove(Player*, size_t);
-	bool ChangeMove(Player*, size_t);
+	bool AddMove(BattlePokemon&);
+	bool ChangeMove(BattlePokemon&);
+	bool DeleteMove(BattlePokemon&);
+	bool SwapMoves(BattlePokemon&);
+	bool ReorderMoves(BattlePokemon&);
 
 	void SaveYourParty(std::array<Player*, 2>);
 	void SavePlayerNumberParty(std::array<Player*, 2>, int);

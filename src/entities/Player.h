@@ -1,80 +1,93 @@
 #pragma once
 
+#include <memory>
+
 #include "BattlePokemon.h"
 
-struct BattleContext;
+class IPlayerController;
+class AIController;
+
+enum class ControllerType : uint8_t { Human, AI };
 
 class Player
 {
 public:
     explicit Player(std::string_view);
 
-    virtual ~Player() = default;
+    ~Player();
 
-    virtual bool IsHuman() const = 0;
+    bool IsAI() const;
+    IPlayerController& GetController() const;
+    AIController& GetAIController();
+    void SetController(std::unique_ptr<IPlayerController>, ControllerType);
 
-    const virtual std::array<BattlePokemon, 6> GetBeltArray() const;
-    virtual std::array<BattlePokemon, 6> CopyBelt();
-    virtual void AssignBelt(std::array<BattlePokemon, 6>&);
+    const std::array<BattlePokemon, 6>& GetBeltArray() const;
+    std::array<BattlePokemon, 6> CopyBelt();
+    void AssignBelt(std::array<BattlePokemon, 6>&);
+    void SwapPokemon(size_t, size_t);
+    void ReorderPokemon(size_t, size_t);
 
-    virtual const std::string& GetPlayerName() const;
-    virtual std::string_view GetPlayerNameView() const;
-    virtual void SetName(std::string_view);
+    const std::string& GetPlayerName() const;
+    std::string_view GetPlayerNameView() const;
+    void SetName(std::string_view);
 
-    virtual BattlePokemon* GetBelt(size_t);
+    BattlePokemon& GetBelt(size_t);
+    const BattlePokemon& GetBelt(size_t) const;
 
-    virtual void IncrementPokemonCount();
-    virtual void DecrementPokemonCount();
-    virtual int GetPokemonCount() const;
-    virtual void SetPokemonCount(int);
+    void IncrementPokemonCount();
+    void DecrementPokemonCount();
+    int GetPokemonCount() const;
+    void SetPokemonCount(int);
 
-    virtual int GetFaintedCount() const;
-    virtual void IncrementFaintedCount();
-    virtual void DecrementFaintedCount();
+    int GetFaintedCount() const;
+    void IncrementFaintedCount();
+    void DecrementFaintedCount();
 
-    virtual bool IsFirst() const;
-    virtual void SetFirst(bool);
+    bool IsFirst() const;
+    void SetFirst(bool);
 
-    virtual bool CanSwitch() const;
-    virtual void SetCanSwitch(bool);
+    bool CanSwitch() const;
+    void SetCanSwitch(bool);
 
-    virtual bool IsSwitching() const;
-    virtual void SetIsSwitching(bool);
+    bool IsSwitching() const;
+    void SetIsSwitching(bool);
 
-    virtual bool HasSwitched() const;
-    virtual void SetHasSwitched(bool);
+    bool HasSwitched() const;
+    void SetHasSwitched(bool);
 
-    virtual void SetPokemonToSwitchTo(BattlePokemon*);
-    virtual BattlePokemon* GetPokemonToSwitchTo();
+    void SetPokemonToSwitchTo(BattlePokemon*);
+    BattlePokemon* GetPokemonToSwitchTo();
 
-    virtual void SetWinCondition(bool);
+    void SetWinCondition(bool);
 
-    virtual bool HasWon() const;
+    bool HasWon() const;
 
-    virtual void SetForfeit(bool);
-    virtual bool HasForfeited() const;
+    void SetForfeit(bool);
+    bool HasForfeited() const;
 
-    virtual void SetMist(bool);
-    virtual bool HasMist() const;
-    virtual void IncrementMistCounter();
-    virtual int GetMistCounter() const;
-    virtual void ResetMistCounter();
+    void SetMist(bool);
+    bool HasMist() const;
+    void IncrementMistCounter();
+    int GetMistCounter() const;
+    void ResetMistCounter();
 
-    virtual void SetLightScreen(bool);
-    virtual bool HasLightScreen() const;
-    virtual void IncrementLightScreenCounter();
-    virtual int GetLightScreenCounter() const;
-    virtual void ResetLightScreenCounter();
+    void SetLightScreen(bool);
+    bool HasLightScreen() const;
+    void IncrementLightScreenCounter();
+    int GetLightScreenCounter() const;
+    void ResetLightScreenCounter();
 
-    virtual void SetReflect(bool);
-    virtual bool HasReflect() const;
-    virtual void IncrementReflectCounter();
-    virtual int GetReflectCounter() const;
-    virtual void ResetReflectCounter();
+    void SetReflect(bool);
+    bool HasReflect() const;
+    void IncrementReflectCounter();
+    int GetReflectCounter() const;
+    void ResetReflectCounter();
 
-    virtual void ResetValues();
+    void ResetValues();
 
 protected:
+    std::unique_ptr<IPlayerController> uptr_controller;
+
     std::array<BattlePokemon, 6> belt;
 
     BattlePokemon* pokemonToSwitchTo{ nullptr };
@@ -84,7 +97,11 @@ protected:
     int m_PokemonCount{ 0 };
     int m_faintedPokemon{ 0 };
 
-    bool b_isFirst = false;
+    ControllerType e_type{};
+
+    bool b_isAI{ false };
+
+    bool b_isFirst{ false };
 
     bool b_canSwitch{ true };
     bool b_isSwitching{ false };

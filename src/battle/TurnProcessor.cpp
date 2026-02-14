@@ -37,17 +37,17 @@ void TurnProcessor::DetermineWhoGoesFirst()
 
 	if (m_context.playerOne->IsSwitching() && !m_context.playerTwo->IsSwitching())
 	{
-		SetFirst(m_context.playerOne, m_context.playerTwo);
+		SetFirst(*m_context.playerOne, *m_context.playerTwo);
 		return;
 	}
 	if (m_context.playerTwo->IsSwitching() && !m_context.playerOne->IsSwitching())
 	{
-		SetFirst(m_context.playerTwo, m_context.playerOne);
+		SetFirst(*m_context.playerTwo, *m_context.playerOne);
 		return;
 	}
 	if (m_context.playerOne->IsSwitching() && m_context.playerTwo->IsSwitching())
 	{
-		SetFirst(m_context.playerOne, m_context.playerTwo);
+		SetFirst(*m_context.playerOne, *m_context.playerTwo);
 		return;
 	}
 
@@ -56,23 +56,23 @@ void TurnProcessor::DetermineWhoGoesFirst()
 
 	if (moveOne->GetPriority() > moveTwo->GetPriority())
 	{
-		SetFirst(m_context.playerOne, m_context.playerTwo);
+		SetFirst(*m_context.playerOne, *m_context.playerTwo);
 		return;
 	}
 	if (moveTwo->GetPriority() > moveOne->GetPriority())
 	{
-		SetFirst(m_context.playerTwo, m_context.playerOne);
+		SetFirst(*m_context.playerTwo, *m_context.playerOne);
 		return;
 	}
 
 	if (playerOneSpeed > playerTwoSpeed)
 	{
-		SetFirst(m_context.playerOne, m_context.playerTwo);
+		SetFirst(*m_context.playerOne, *m_context.playerTwo);
 		return;
 	}
 	if (playerTwoSpeed > playerOneSpeed)
 	{
-		SetFirst(m_context.playerTwo, m_context.playerOne);
+		SetFirst(*m_context.playerTwo, *m_context.playerOne);
 		return;
 	}
 
@@ -81,23 +81,23 @@ void TurnProcessor::DetermineWhoGoesFirst()
 
 	if (firstMod == 2)
 	{
-		SetFirst(m_context.playerTwo, m_context.playerOne);
+		SetFirst(*m_context.playerTwo, *m_context.playerOne);
 	}
 	else
 	{
-		SetFirst(m_context.playerOne, m_context.playerTwo);
+		SetFirst(*m_context.playerOne, *m_context.playerTwo);
 	}
 }
 
-void TurnProcessor::SetFirst(Player* first, Player* second)
+void TurnProcessor::SetFirst(Player& first, Player& second)
 {
-	first->SetFirst(true);
-	second->SetFirst(false);
-	m_context.attackingPlayer = first;
-	m_context.defendingPlayer = second;
-	m_context.attackingPokemon = (first == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
-	m_context.defendingPokemon = (second == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
-	m_context.currentMove = (first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
+	first.SetFirst(true);
+	second.SetFirst(false);
+	m_context.attackingPlayer = &first;
+	m_context.defendingPlayer = &second;
+	m_context.attackingPokemon = (&first == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
+	m_context.defendingPokemon = (&second == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
+	m_context.currentMove = (&first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
 }
 
 void TurnProcessor::ExecuteTurn(bool& winCondition)
@@ -120,7 +120,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 
 	if (m_context.attackingPlayer->IsSwitching())
 	{
-		m_switchExecutor.ExecuteSwitch(m_context.attackingPlayer, m_context.attackingPokemon);
+		m_switchExecutor.ExecuteSwitch(*m_context.attackingPlayer, m_context.attackingPokemon);
 
 		return;
 	}
@@ -142,7 +142,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 
 	m_statusProcessor.RageCheck();
 
-	winCondition = m_winChecker.CheckWinCondition(m_context.attackingPlayer, m_context.defendingPlayer);
+	winCondition = m_winChecker.CheckWinCondition(*m_context.attackingPlayer, *m_context.defendingPlayer);
 }
 
 void TurnProcessor::SwapRoles()

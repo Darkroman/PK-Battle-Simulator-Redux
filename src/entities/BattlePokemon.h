@@ -26,6 +26,7 @@ public:
 
         void SetMovePointer(Move*);
         Move* GetMovePointer() const;
+        void ResetMove();
 
         size_t   GetMoveIndex() const;
         std::string_view    GetName() const;
@@ -167,13 +168,15 @@ public:
     std::string_view GetNameView() const;
 
     int GetLevel() const;
-    void DisplayLearnedMoves() const;
-    void DisplayMovesInBattle() const;
 
-    BattlePokemon::pokemonMove* GetMove(size_t);
-    const BattlePokemon::pokemonMove* GetMove(size_t) const;
+    BattlePokemon::pokemonMove& GetMove(size_t);
+    const BattlePokemon::pokemonMove& GetMove(size_t) const;
+    void DeleteMove(size_t);
+    void SwapMoves(size_t, size_t);
+    void ReorderMoves(size_t, size_t);
     int GetPP(size_t) const;
     int GetMaxPP(size_t) const;
+    bool CheckPPCountForStruggle();
 
     bool HasPokemon() const;
     bool HasMove(size_t);
@@ -330,7 +333,7 @@ public:
     int GetSubstituteHP() const;
     void DamageSubstitute(int);
 
-    BattlePokemon::pokemonMove* Struggle();
+    BattlePokemon::pokemonMove& Struggle();
 
     Status currentStatus{ Status::Normal };
 

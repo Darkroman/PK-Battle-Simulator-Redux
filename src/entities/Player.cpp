@@ -2,11 +2,43 @@
 
 #include "Player.h"
 #include "../ui/views/PokemonTextView.h"
+//#include "controllers/IPlayerController.h"
+#include "controllers/AIController.h"
 
 Player::Player(std::string_view name) :
     m_name(name) {}
 
-const std::array<BattlePokemon, 6> Player::GetBeltArray() const
+Player::~Player() = default;
+
+bool Player::IsAI() const
+{
+    if (e_type == ControllerType::AI)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+IPlayerController& Player::GetController() const
+{
+    return *uptr_controller;
+}
+
+AIController& Player::GetAIController()
+{
+    return static_cast<AIController&>(*uptr_controller);
+}
+
+void Player::SetController(std::unique_ptr<IPlayerController> controller, ControllerType type)
+{
+    uptr_controller = std::move(controller);
+    e_type = type;
+}
+
+const std::array<BattlePokemon, 6>& Player::GetBeltArray() const
 {
     return belt;
 }
@@ -31,10 +63,38 @@ void Player::AssignBelt(std::array<BattlePokemon, 6>& newBelt)
     }
 }
 
-BattlePokemon* Player::GetBelt(size_t beltslot)
+BattlePokemon& Player::GetBelt(size_t beltslot)
 {
     --beltslot;
-    return &(belt[beltslot]);
+    return belt[beltslot];
+}
+
+const BattlePokemon& Player::GetBelt(size_t beltslot) const
+{
+    --beltslot;
+    return belt[beltslot];
+}
+
+void Player::SwapPokemon(size_t firstPick, size_t secondPick)
+{
+    --firstPick;
+    --secondPick;
+    std::swap(belt[firstPick], belt[secondPick]);
+}
+
+void Player::ReorderPokemon(size_t slotToMove, size_t targetSlot)
+{
+    --slotToMove;
+    --targetSlot;
+
+    if (slotToMove > targetSlot)
+    {
+        std::rotate(belt.begin() + targetSlot, belt.begin() + slotToMove, belt.begin() + slotToMove + 1);
+    }
+    else
+    {
+        std::rotate(belt.begin() + slotToMove, belt.begin() + slotToMove + 1, belt.begin() + targetSlot + 1);
+    }
 }
 
 const std::string& Player::GetPlayerName() const

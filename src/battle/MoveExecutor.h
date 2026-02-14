@@ -10,7 +10,6 @@ public:
         BattleCalculations& calculations,
         StatusEffectProcessor& statusProcessor,
         IMoveResultsUI& resultsUI,
-        IBattleMenuUI& battleMenuUI,
         RandomEngine& rng,
         SwitchExecutor& switchExecutor
     );

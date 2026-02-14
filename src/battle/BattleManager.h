@@ -2,7 +2,7 @@
 
 struct BattleContext;
 class RandomEngine;
-class IBattleMenuUI;
+class IBattleAnnouncerUI;
 class IMoveResultsUI;
 class IStatusEffectUI;
 
@@ -17,18 +17,18 @@ class IStatusEffectUI;
 class BattleManager
 {
 public:
-	BattleManager(BattleContext& context, RandomEngine& rng, IBattleMenuUI& battleMenuUI, IMoveResultsUI& moveResultsUI, IStatusEffectUI& statusEffectUI);
+	BattleManager(BattleContext& context, RandomEngine& rng, IBattleAnnouncerUI& battleAnnouncerUI, IMoveResultsUI& moveResultsUI, IStatusEffectUI& statusEffectUI);
 
 	void AssignFirstPokemon();
-	void ApplyPlayerOneAction(BattleAction);
-	void ApplyPlayerTwoAction(BattleAction);
+	void ApplyPlayerOneAction();
+	void ApplyPlayerTwoAction();
 	bool RunBattleLoop();
 	void ResetValues();
 
 private:
 	BattleContext& m_context;
 	RandomEngine& m_rng;
-	IBattleMenuUI& m_battleMenuUI;
+	IBattleAnnouncerUI& m_battleAnnouncerUI;
 	IMoveResultsUI& m_moveResultsUI;
 	IStatusEffectUI& m_statusEffectUI;
 

@@ -122,4 +122,8 @@ public:
 	virtual void DisplayBideDisabledMsg(std::string_view, std::string_view) const = 0;
 
 	virtual void DisplayNoMovesLeftStruggleMsg(std::string_view, std::string_view) const = 0;
+
+	virtual void SwitchOutMsg(std::string_view, std::string_view) const = 0;
+
+	virtual void PlayerChoosesMsg(std::string_view, std::string_view) const = 0;
 };

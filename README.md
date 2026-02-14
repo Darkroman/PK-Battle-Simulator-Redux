@@ -7,6 +7,15 @@
 
    </summary>
    
+### 2/14/2026
+- Added controller classes for Player and AI and got rid of AIPlayer class. Just more untangling of separating some parts of the UI.
+- Some console output formatting fixes and beautifying
+- Correctly outputs Pokemon's name when editing stats of a Pokémon
+- Added exit states for during add or change Pokémon or moves. Can now cancel by entering 0.
+- Added a delete move option
+- Added swap and reposition options for both Pokemon and moves! Swap trades places while reposition moves selected to a target slot (think of it like drag and drop).
+- Player Impact: Formatting for Pokemon's stats and moves is greatly improved. Better spacing and info. Can see what statuses your party Pokemon are currently when switching.
+   
 ### 2/10/2026
 - Some major UI refactoring. 
 - UI fully separated from core game logic (MoveResultsUI & StatusEffectUI) for clearer messages

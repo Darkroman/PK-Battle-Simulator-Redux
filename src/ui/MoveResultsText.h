@@ -126,6 +126,10 @@ public:
 
 	void DisplayNoMovesLeftStruggleMsg(std::string_view, std::string_view) const override;
 
+	void SwitchOutMsg(std::string_view, std::string_view) const override;
+
+	void PlayerChoosesMsg(std::string_view, std::string_view) const override;
+
 private:
 	ITextSink& m_sink;
 

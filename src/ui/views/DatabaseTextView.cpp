@@ -20,21 +20,9 @@ namespace DatabaseTextView
 
             size_t pokeNum = i + 1;
 
-            if (pokeNum < 10)
-            {
-                std::cout << pokeNum << ":   ";
-                std::cout << std::setw(15) << std::left << pokedex[i].GetName();
-            }
-            else if (pokeNum >= 10 && pokeNum <= 99)
-            {
-                std::cout << pokeNum << ":  ";
-                std::cout << std::setw(15) << std::left << pokedex[i].GetName();
-            }
-            else
-            {
-                std::cout << pokeNum << ": ";
-                std::cout << std::setw(15) << std::left << pokedex[i].GetName();
-            }
+            std::cout
+                << std::right << std::setw(3) << pokeNum << ": "
+                << std::left << std::setw(15) << pokedex[i].GetName();
 
             if (colCount % 6 == 0)
             {
@@ -56,21 +44,9 @@ namespace DatabaseTextView
 
             size_t moveNum = i + 1;
 
-            if (moveNum < 10)
-            {
-                std::cout << moveNum << ":   ";
-                std::cout << std::setw(15) << std::left << movedex[i].GetName();
-            }
-            else if (moveNum >= 10 && moveNum <= 99)
-            {
-                std::cout << moveNum << ":  ";
-                std::cout << std::setw(15) << std::left << movedex[i].GetName();
-            }
-            else
-            {
-                std::cout << moveNum << ": ";
-                std::cout << std::setw(15) << std::left << movedex[i].GetName();
-            }
+            std::cout
+                << std::right << std::setw(3) << moveNum << ": "
+                << std::left << std::setw(15) << movedex[i].GetName();
 
             if (colCount % 6 == 0)
             {

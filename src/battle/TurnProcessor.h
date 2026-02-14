@@ -16,7 +16,7 @@ public:
 	TurnProcessor(BattleContext&, BattleCalculations&, RandomEngine&, StatusEffectProcessor&, WinChecker&, SwitchExecutor&, MoveExecutor&);
 
 	void DetermineWhoGoesFirst();
-	void SetFirst(Player*, Player*);
+	void SetFirst(Player&, Player&);
 	void ExecuteTurn(bool&);
 	void SwapRoles();
 

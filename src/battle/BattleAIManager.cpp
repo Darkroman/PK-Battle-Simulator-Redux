@@ -2,6 +2,8 @@
 #include <limits>
 
 #include "BattleContext.h"
+#include "../entities/Player.h"
+#include "../entities/controllers/AIController.h"
 
 #include "BattleAIManager.h"
 
@@ -9,87 +11,34 @@ namespace BattleAIProcedures
 {
 	void InitAIPlayers(BattleContext& context)
 	{
-		if (context.aiPlayerOne)
+		for (auto player : context.vec_aiPlayers)
 		{
-			context.aiPlayerOne->GetOpponentParty(context.playerTwo);
-			context.aiPlayerOne->InitEstimatedStatRanges(context.playerTwo);
-			context.aiPlayerOne->PrecomputeRealStats(context.playerTwo);
-		}
-
-		if (context.aiPlayerTwo)
-		{
-			context.aiPlayerTwo->GetOpponentParty(context.playerOne);
-			context.aiPlayerTwo->InitEstimatedStatRanges(context.playerOne);
-			context.aiPlayerTwo->PrecomputeRealStats(context.playerOne);
+			player->GetAIController().OnBattleStart(*player, context);
 		}
 	}
 
 	void UpdateEnemyActivePokemon(BattleContext& context)
 	{
-		if (context.aiPlayerOne)
+		for (auto player : context.vec_aiPlayers)
 		{
-			context.aiPlayerOne->UpdateActivePokemon(context.playerTwoCurrentPokemon);
-		}
-
-		if (context.aiPlayerTwo)
-		{
-			context.aiPlayerTwo->UpdateActivePokemon(context.playerOneCurrentPokemon);
+			player->GetAIController().OnActivePokemonChanged(context);
 		}
 	}
 
 	void RefineEnemyModelFirstTurn(BattleContext& context)
 	{
-		if (context.aiPlayerOne && context.playerOne == context.attackingPlayer)
+		for (auto player : context.vec_aiPlayers)
 		{
-			context.aiPlayerOne->UpdateEnemyHPandDefenseStats(context, context.defendingPlayer, context.currentMove, context.attackingPokemon, context.defendingPokemon);
-		}
-
-		if (context.aiPlayerTwo && context.playerTwo == context.attackingPlayer)
-		{
-			context.aiPlayerTwo->UpdateEnemyHPandDefenseStats(context, context.defendingPlayer, context.currentMove, context.attackingPokemon, context.defendingPokemon);
-		}
-
-		if (context.aiPlayerOne && context.playerOne == context.defendingPlayer)
-		{
-			context.aiPlayerOne->UpdateEnemyOffenseStats(context, context.currentMove, context.defendingPokemon, context.attackingPokemon);
-		}
-
-		if (context.aiPlayerTwo && context.playerTwo == context.defendingPlayer)
-		{
-			context.aiPlayerTwo->UpdateEnemyOffenseStats(context, context.currentMove, context.defendingPokemon, context.attackingPokemon);
-		}
-
-		if (context.aiPlayerOne)
-		{
-			context.aiPlayerOne->UpdateEnemySpeedStats(context, context.playerOneCurrentMove, context.playerTwoCurrentMove, context.playerOneCurrentPokemon, context.playerTwoCurrentPokemon);
-		}
-
-		if (context.aiPlayerTwo)
-		{
-			context.aiPlayerTwo->UpdateEnemySpeedStats(context, context.playerTwoCurrentMove, context.playerOneCurrentMove, context.playerTwoCurrentPokemon, context.playerOneCurrentPokemon);
+			player->GetAIController().OnMoveResolved(context);
+			player->GetAIController().OnFirstMoveResolved(context);
 		}
 	}
 
 	void RefineEnemyModelSecondTurn(BattleContext& context)
 	{
-		if (context.aiPlayerOne && context.playerOne == context.attackingPlayer)
+		for (auto player : context.vec_aiPlayers)
 		{
-			context.aiPlayerOne->UpdateEnemyHPandDefenseStats(context, context.defendingPlayer, context.currentMove, context.attackingPokemon, context.defendingPokemon);
-		}
-
-		if (context.aiPlayerTwo && context.playerTwo == context.attackingPlayer)
-		{
-			context.aiPlayerTwo->UpdateEnemyHPandDefenseStats(context, context.defendingPlayer, context.currentMove, context.attackingPokemon, context.defendingPokemon);
-		}
-
-		if (context.aiPlayerOne && context.playerOne == context.defendingPlayer)
-		{
-			context.aiPlayerOne->UpdateEnemyOffenseStats(context, context.currentMove, context.defendingPokemon, context.attackingPokemon);
-		}
-
-		if (context.aiPlayerTwo && context.playerTwo == context.defendingPlayer)
-		{
-			context.aiPlayerTwo->UpdateEnemyOffenseStats(context, context.currentMove, context.defendingPokemon, context.attackingPokemon);
+			player->GetAIController().OnMoveResolved(context);
 		}
 	}
 }
