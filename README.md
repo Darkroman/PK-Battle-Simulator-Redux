@@ -7,6 +7,21 @@
 
    </summary>
    
+### 2/16/2026
+- Post Turn evaluation order is now random before each check (more accurate to gen 9 mechanics).
+- Now correctly evaluates winner based on first player to lose all Pokémon.
+- Voluntary switch order evaluation now random if both players take same turn to switch.
+- Post-faint switching order still determined by fainted Pokémon's speed, but random when speed is exactly tied.
+- Fixed an error that mistakingly took in a Pokémon's speed rather than speed stage on computing overall speed in determining post turn order.
+- Added check in ExecuteTurn to check if defending Pokémon is fainted. This fixes edge case where the 2nd turn pokemon still tries to use move against the 1st turn pokemon that KO'd itself via recoil move. Checks both attacker and defender now.
+- Moved the Switch prompt after all post turn effects have been evaluated instead of right after the last damaging one.
+- Put in faint checks in disable status evaluation subroutine that way a fainted pokemon doesn't have their disabled move evaluated.
+- Fixed error in recoil damage checks to make sure recoil damage is always at least 1.
+- Fixed rounding errors in post turn damage evaluations so it will always do at least do 1 damage.
+- Badly poisoned damage now rounds up damage (Max of either 1, or HP / 16 x counter + 15).
+- Fixed rounding errors in leech seed health as well leech move routines (Leech and Dream Eater).
+- Improved battle outcome text separation consistency in battles.
+   
 ### 2/14/2026
 - Added controller classes for Player and AI and got rid of AIPlayer class. Just more untangling of separating some parts of the UI.
 - Some console output formatting fixes and beautifying

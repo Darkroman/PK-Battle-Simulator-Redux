@@ -134,3 +134,8 @@ void StatusEffectText::DisplayFaintedMsg(std::string_view playerName, std::strin
 {
 	m_sink.Emit(std::format("{}'s {} has fainted!", playerName, pokemonName));
 }
+
+void StatusEffectText::NewLine() const
+{
+	std::cout << '\n';
+}

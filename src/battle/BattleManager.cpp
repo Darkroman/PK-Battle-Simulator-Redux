@@ -21,7 +21,7 @@ BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleA
 	, m_winChecker(context, m_switchExecutor)
 	, m_statusEffectProcessor(context, rng, statusEffectUI)
 	, m_moveExecutor(context, m_calculations, m_statusEffectProcessor, moveResultsUI, rng, m_switchExecutor)
-	, m_turnProcessor(context, m_calculations, rng, m_statusEffectProcessor, m_winChecker, m_switchExecutor, m_moveExecutor)
+	, m_turnProcessor(context, m_calculations, m_statusEffectProcessor, m_winChecker, m_switchExecutor, m_moveExecutor)
 	, m_postTurnProcessor(context, m_calculations, statusEffectUI, m_statusEffectProcessor, m_winChecker)
 {
 }
@@ -131,6 +131,7 @@ bool BattleManager::RunBattleLoop()
 		BattleAIProcedures::UpdateEnemyActivePokemon(m_context);
 
 		++turnCount;
+
 		m_battleAnnouncerUI.DisplayTurnNumber(turnCount);
 
 		m_battleAnnouncerUI.DisplayFightingPokemon(m_context);
@@ -151,14 +152,17 @@ bool BattleManager::RunBattleLoop()
 			return winCondition;
 		}
 
-		m_turnProcessor.DetermineWhoGoesFirst();
+		m_turnProcessor.DetermineTurnOrder();
 
 		m_turnProcessor.ExecuteTurn(winCondition);
 		if (winCondition) { continue; }
 
+		if (!(m_context.attackingPokemon->IsFainted() || m_context.defendingPokemon->IsFainted()))
+		{
+			m_battleAnnouncerUI.NewLine();
+		}
+		
 		BattleAIProcedures::RefineEnemyModelFirstTurn(m_context);
-
-		m_battleAnnouncerUI.NewLine();
 
 		m_turnProcessor.SwapRoles();
 
@@ -166,10 +170,6 @@ bool BattleManager::RunBattleLoop()
 		if (winCondition) { continue; }
 
 		BattleAIProcedures::RefineEnemyModelSecondTurn(m_context);
-
-		m_battleAnnouncerUI.NewLine();
-
-		m_postTurnProcessor.DeterminePostTurnDamageOrder();
 
 		m_postTurnProcessor.ProcessAllPostTurnEffects(winCondition);
 		if (winCondition) { continue; }
@@ -188,6 +188,8 @@ bool BattleManager::RunBattleLoop()
 
 void BattleManager::ResetValues()
 {
+	m_context.vec_outOfPokemon.clear();
+
 	m_context.playerOne->ResetValues();
 	m_context.playerTwo->ResetValues();
 

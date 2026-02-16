@@ -8,96 +8,59 @@
 #include "SwitchExecutor.h"
 #include "MoveExecutor.h"
 
-TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calculations, RandomEngine& rng, StatusEffectProcessor& statusProcessor, WinChecker& winChecker, SwitchExecutor& switchExecutor, MoveExecutor& moveExecutor)
+TurnProcessor::TurnProcessor(BattleContext& context, BattleCalculations& calculations, StatusEffectProcessor& statusProcessor, WinChecker& winChecker, SwitchExecutor& switchExecutor, MoveExecutor& moveExecutor)
 	: m_context(context)
 	, m_calculations(calculations)
-	, m_rng(rng)
 	, m_statusProcessor(statusProcessor)
 	, m_winChecker(winChecker)
 	, m_switchExecutor(switchExecutor)
 	, m_moveExecutor(moveExecutor)
 	{}
 
-void TurnProcessor::DetermineWhoGoesFirst()
+void TurnProcessor::DetermineTurnOrder()
 {
-	auto [numerator1, denominator1] = m_calculations.GetStageRatio(m_context.playerOneCurrentPokemon->GetSpeedStage());
-	int playerOneSpeed = m_context.playerOneCurrentPokemon->GetSpeed() * numerator1 / denominator1;
-
-	auto [numerator2, denominator2] = m_calculations.GetStageRatio(m_context.playerTwoCurrentPokemon->GetSpeedStage());
-	int playerTwoSpeed = m_context.playerTwoCurrentPokemon->GetSpeed() * numerator2 / denominator2;
-
-	if (m_context.playerOneCurrentPokemon->GetStatus() == Status::Paralyzed)
-	{
-		playerOneSpeed /= 2;
-	}
-	if (m_context.playerTwoCurrentPokemon->GetStatus() == Status::Paralyzed)
-	{
-		playerTwoSpeed /= 2;
-	}
-
-	if (m_context.playerOne->IsSwitching() && !m_context.playerTwo->IsSwitching())
-	{
-		SetFirst(*m_context.playerOne, *m_context.playerTwo);
-		return;
-	}
-	if (m_context.playerTwo->IsSwitching() && !m_context.playerOne->IsSwitching())
-	{
-		SetFirst(*m_context.playerTwo, *m_context.playerOne);
-		return;
-	}
 	if (m_context.playerOne->IsSwitching() && m_context.playerTwo->IsSwitching())
 	{
-		SetFirst(*m_context.playerOne, *m_context.playerTwo);
+		m_calculations.RandomizeTurnOrder();
 		return;
 	}
+
+	constexpr int SWITCH_PRIORITY{ 6 };
 
 	const auto* moveOne = m_context.playerOneCurrentMove;
 	const auto* moveTwo = m_context.playerTwoCurrentMove;
 
-	if (moveOne->GetPriority() > moveTwo->GetPriority())
+	auto moveOnePriority = (m_context.playerOne->IsSwitching()) ? SWITCH_PRIORITY : moveOne->GetPriority();
+	auto moveTwoPriority = (m_context.playerTwo->IsSwitching()) ? SWITCH_PRIORITY : moveTwo->GetPriority();
+
+	if (moveOnePriority > moveTwoPriority)
 	{
-		SetFirst(*m_context.playerOne, *m_context.playerTwo);
+		m_calculations.SetFirst(*m_context.playerOne, *m_context.playerTwo);
 		return;
 	}
-	if (moveTwo->GetPriority() > moveOne->GetPriority())
+	else if (moveOnePriority < moveTwoPriority)
 	{
-		SetFirst(*m_context.playerTwo, *m_context.playerOne);
+		m_calculations.SetFirst(*m_context.playerTwo, *m_context.playerOne);
 		return;
 	}
+
+	int playerOneSpeed = m_calculations.CalculatePokemonSpeed(*m_context.playerOneCurrentPokemon);
+	int playerTwoSpeed = m_calculations.CalculatePokemonSpeed(*m_context.playerTwoCurrentPokemon);
 
 	if (playerOneSpeed > playerTwoSpeed)
 	{
-		SetFirst(*m_context.playerOne, *m_context.playerTwo);
+		m_calculations.SetFirst(*m_context.playerOne, *m_context.playerTwo);
 		return;
 	}
-	if (playerTwoSpeed > playerOneSpeed)
+	else if (playerTwoSpeed > playerOneSpeed)
 	{
-		SetFirst(*m_context.playerTwo, *m_context.playerOne);
+		m_calculations.SetFirst(*m_context.playerTwo, *m_context.playerOne);
 		return;
-	}
-
-	std::uniform_int_distribution<int> firstDist(1, 2);
-	int firstMod = firstDist(m_rng.GetGenerator());
-
-	if (firstMod == 2)
-	{
-		SetFirst(*m_context.playerTwo, *m_context.playerOne);
 	}
 	else
 	{
-		SetFirst(*m_context.playerOne, *m_context.playerTwo);
+		m_calculations.RandomizeTurnOrder();
 	}
-}
-
-void TurnProcessor::SetFirst(Player& first, Player& second)
-{
-	first.SetFirst(true);
-	second.SetFirst(false);
-	m_context.attackingPlayer = &first;
-	m_context.defendingPlayer = &second;
-	m_context.attackingPokemon = (&first == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
-	m_context.defendingPokemon = (&second == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
-	m_context.currentMove = (&first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
 }
 
 void TurnProcessor::ExecuteTurn(bool& winCondition)
@@ -130,7 +93,7 @@ void TurnProcessor::ExecuteTurn(bool& winCondition)
 		return;
 	}
 
-	else if (!m_context.attackingPokemon->IsFainted())
+	else if (!m_context.attackingPokemon->IsFainted() && !m_context.defendingPokemon->IsFainted())
 	{
 		if (!m_statusProcessor.CheckPerformativeStatus())
 		{

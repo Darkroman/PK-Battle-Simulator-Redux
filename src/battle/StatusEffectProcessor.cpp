@@ -311,7 +311,7 @@ void StatusEffectProcessor::ResetPokemonTurnStatuses()
 
 void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& source, BattlePokemon& target)
 {
-	if ((target.GetCurrentHP() <= 0) && (!target.IsFainted()))
+	if (target.GetCurrentHP() <= 0 && !target.IsFainted())
 	{
 		target.SetFainted(true);
 		m_statusEffectUI.DisplayFaintedMsg(targetPlayer.GetPlayerNameView(), target.GetNameView());
@@ -326,9 +326,17 @@ void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& ta
 
 			m_statusEffectUI.DisplayFreedFromBoundMsg(sourcePlayer.GetPlayerNameView(), source.GetNameView(), source.GetBoundMoveName());
 		}
+
+		if (targetPlayer.GetPokemonCount() == targetPlayer.GetFaintedCount())
+		{
+			if (std::find(m_context.vec_outOfPokemon.begin(), m_context.vec_outOfPokemon.end(), &targetPlayer) == m_context.vec_outOfPokemon.end())
+			{
+				m_context.vec_outOfPokemon.push_back(&targetPlayer);
+			}
+		}
 	}
 
-	if ((source.GetCurrentHP() <= 0) && (!source.IsFainted()))
+	if (source.GetCurrentHP() <= 0 && !source.IsFainted())
 	{
 		source.SetFainted(true);
 		m_statusEffectUI.DisplayFaintedMsg(sourcePlayer.GetPlayerNameView(), source.GetNameView());
@@ -342,6 +350,14 @@ void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& ta
 			target.SetBoundTurnCount(0);
 
 			m_statusEffectUI.DisplayFreedFromBoundMsg(targetPlayer.GetPlayerNameView(), target.GetNameView(), target.GetBoundMoveName());
+		}
+
+		if (targetPlayer.GetPokemonCount() == sourcePlayer.GetFaintedCount())
+		{
+			if (std::find(m_context.vec_outOfPokemon.begin(), m_context.vec_outOfPokemon.end(), &sourcePlayer) == m_context.vec_outOfPokemon.end())
+			{
+				m_context.vec_outOfPokemon.push_back(&sourcePlayer);
+			}
 		}
 	}
 }

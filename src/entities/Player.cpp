@@ -2,7 +2,6 @@
 
 #include "Player.h"
 #include "../ui/views/PokemonTextView.h"
-//#include "controllers/IPlayerController.h"
 #include "controllers/AIController.h"
 
 Player::Player(std::string_view name) :
@@ -290,6 +289,13 @@ int Player::GetReflectCounter() const
 void Player::ResetReflectCounter()
 {
     m_reflectCounter = 0;
+}
+
+bool Player::HasPendingPostTurnEffect() const
+{
+    return GetReflectCounter() == 4 ||
+        GetLightScreenCounter() == 4 ||
+        GetMistCounter() == 4;
 }
 
 void Player::ResetValues()

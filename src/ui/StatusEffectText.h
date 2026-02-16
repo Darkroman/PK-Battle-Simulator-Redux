@@ -47,6 +47,8 @@ public:
 	// Faint
 	void DisplayFaintedMsg(std::string_view, std::string_view) const override;
 
+	void NewLine() const override;
+
 private:
 	ITextSink& m_sink;
 };

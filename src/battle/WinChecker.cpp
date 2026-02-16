@@ -4,7 +4,6 @@
 #include "SwitchExecutor.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../entities/controllers/AIController.h"
-#include "../entities/Player.h"
 
 WinChecker::WinChecker(BattleContext& context, SwitchExecutor& switchExecutor)
     : m_context(context)
@@ -13,19 +12,22 @@ WinChecker::WinChecker(BattleContext& context, SwitchExecutor& switchExecutor)
 
 bool WinChecker::CheckWinCondition(Player& sourcePlayer, Player& targetPlayer)
 {
-    if (targetPlayer.GetFaintedCount() == targetPlayer.GetPokemonCount() || targetPlayer.HasForfeited())
-    {
-        sourcePlayer.SetWinCondition(true);
-        return true;
-    }
+	if (m_context.vec_outOfPokemon.empty())
+	{
+		return false;
+	}
 
-    if (sourcePlayer.GetFaintedCount() == sourcePlayer.GetPokemonCount() || sourcePlayer.HasForfeited())
-    {
-        targetPlayer.SetWinCondition(true);
-        return true;
-    }
+	if (&targetPlayer == m_context.vec_outOfPokemon[0])
+	{
+		sourcePlayer.SetWinCondition(true);
+		return true;
+	}
 
-    return false;
+	if (&sourcePlayer == m_context.vec_outOfPokemon[0])
+	{
+		targetPlayer.SetWinCondition(true);
+		return true;
+	}
 }
 
 bool WinChecker::CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& targetPokemon)

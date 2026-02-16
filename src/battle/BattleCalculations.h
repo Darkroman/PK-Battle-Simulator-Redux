@@ -10,6 +10,14 @@ class BattleCalculations
 public:
 	BattleCalculations(BattleContext&, RandomEngine&);
 
+	int CalculatePokemonSpeed(BattlePokemon&);
+
+	void RandomizeTurnOrder();
+
+	void RandomizePostTurnOrder();
+
+	void SetFirst(Player&, Player&);
+
 	void CalculateCriticalHit(BattlePokemon&);
 
 	std::pair<int, int> GetStageRatio(int);

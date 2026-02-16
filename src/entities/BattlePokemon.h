@@ -284,6 +284,8 @@ public:
     bool MoveIsDisabled() const;
     pokemonMove* GetDisabledMove() const;
 
+    bool HasPendingPostTurnEffect() const;
+
     int GetBadlyPoisonCounter() const;
     void ResetBadlyPoisonCounter();
     void IncrementBadlyPoisonCounter();

@@ -1,6 +1,9 @@
+#include <algorithm>
+
 #include "PostTurnEffectProcessor.h"
 
 #include "BattleContext.h"
+#include "RandomEngine.h"
 #include "BattleCalculations.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
 #include "StatusEffectProcessor.h"
@@ -14,42 +17,43 @@ PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, BattleC
     , m_winChecker(winChecker)
 {}
 
-void PostTurnEffectProcessor::DeterminePostTurnDamageOrder()
+void PostTurnEffectProcessor::DeterminePostFaintSwitchOrder()
 {
-    auto [numerator1, denominator1] = m_calculations.GetStageRatio(m_context.playerOneCurrentPokemon->GetSpeed());
-    int playerOneSpeed = m_context.playerOneCurrentPokemon->GetSpeed() * numerator1 / denominator1;
+    int playerOneSpeed = m_calculations.CalculatePokemonSpeed(*m_context.playerOneCurrentPokemon);
+    int playerTwoSpeed = m_calculations.CalculatePokemonSpeed(*m_context.playerTwoCurrentPokemon);
 
-    auto [numerator2, denominator2] = m_calculations.GetStageRatio(m_context.playerTwoCurrentPokemon->GetSpeed());
-    int playerTwoSpeed = m_context.playerTwoCurrentPokemon->GetSpeed() * numerator2 / denominator2;
-
-    if (m_context.playerOneCurrentPokemon->GetStatus() == Status::Paralyzed)
-    {
-        playerOneSpeed /= 2;
-    }
-
-    if (m_context.playerTwoCurrentPokemon->GetStatus() == Status::Paralyzed)
-    {
-        playerTwoSpeed /= 2;
-    }
-
-    if ((playerOneSpeed > playerTwoSpeed) && (m_context.attackingPlayer != m_context.playerOne))
+    if (playerOneSpeed > playerTwoSpeed)
     {
         m_context.attackingPlayer = m_context.playerOne;
         m_context.defendingPlayer = m_context.playerTwo;
         m_context.attackingPokemon = m_context.playerOneCurrentPokemon;
         m_context.defendingPokemon = m_context.playerTwoCurrentPokemon;
     }
-    else if ((playerTwoSpeed > playerOneSpeed) && (m_context.attackingPlayer == m_context.playerOne))
+    else if (playerTwoSpeed > playerOneSpeed)
     {
         m_context.attackingPlayer = m_context.playerTwo;
         m_context.defendingPlayer = m_context.playerOne;
         m_context.attackingPokemon = m_context.playerTwoCurrentPokemon;
         m_context.defendingPokemon = m_context.playerOneCurrentPokemon;
     }
+    else
+    {
+        m_calculations.RandomizePostTurnOrder();
+    }
 }
 
 void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
 {
+    if ((m_context.attackingPokemon->HasPendingPostTurnEffect() ||
+        m_context.defendingPokemon->HasPendingPostTurnEffect() ||
+        m_context.attackingPlayer->HasPendingPostTurnEffect() ||
+        m_context.defendingPlayer->HasPendingPostTurnEffect()))
+    {
+        m_statusEffectUI.NewLine();
+    }
+
+    m_calculations.RandomizePostTurnOrder();
+
     CheckSeededStatuses();
 
     winCondition = m_winChecker.CheckWinCondition(*m_context.defendingPlayer, *m_context.attackingPlayer);
@@ -58,6 +62,8 @@ void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
     winCondition = m_winChecker.CheckWinCondition(*m_context.attackingPlayer, *m_context.defendingPlayer);
     if (winCondition) { return; }
 
+    m_calculations.RandomizePostTurnOrder();
+
     CheckDamagingStatuses();
 
     winCondition = m_winChecker.CheckWinCondition(*m_context.defendingPlayer, *m_context.attackingPlayer);
@@ -65,18 +71,30 @@ void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
 
     winCondition = m_winChecker.CheckWinCondition(*m_context.attackingPlayer, *m_context.defendingPlayer);
     if (winCondition) { return; }
+
+    m_calculations.RandomizePostTurnOrder();
     
     CheckBoundStatuses();
+
+    winCondition = m_winChecker.CheckWinCondition(*m_context.defendingPlayer, *m_context.attackingPlayer);
+    if (winCondition) { return; }
+
+    winCondition = m_winChecker.CheckWinCondition(*m_context.attackingPlayer, *m_context.defendingPlayer);
+    if (winCondition) { return; }
+
+    m_calculations.RandomizePostTurnOrder();
+
+    CheckDisabledStatus();
+
+    CheckFieldEffects();
+
+    DeterminePostFaintSwitchOrder();
 
     winCondition = m_winChecker.CheckWinOrSwitch(*m_context.defendingPlayer, *m_context.attackingPlayer, *m_context.attackingPokemon);
     if (winCondition) { return; }
 
     winCondition = m_winChecker.CheckWinOrSwitch(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.defendingPokemon);
     if (winCondition) { return; }
-
-    CheckDisabledStatus();
-
-    CheckFieldEffects();
 }
 
 void PostTurnEffectProcessor::CheckSeededStatuses()
@@ -85,19 +103,26 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
     {
         return;
     }
-        
-    int leechedHealth{ 0 };
 
     if (m_context.attackingPokemon->IsSeeded() && !m_context.attackingPokemon->IsFainted() && !m_context.defendingPokemon->IsFainted())
     {
-        leechedHealth = m_context.attackingPokemon->GetMaxHP() / 8;
+        int damage = std::max(1, m_context.attackingPokemon->GetMaxHP() / 8);
 
-        m_context.attackingPokemon->DamageCurrentHP(leechedHealth);
-        m_context.defendingPokemon->HealCurrentHP(leechedHealth);
+        int before = m_context.attackingPokemon->GetCurrentHP();
+        m_context.attackingPokemon->DamageCurrentHP(damage);
+
+        int drained = before - m_context.attackingPokemon->GetCurrentHP();
+
+        m_context.defendingPokemon->HealCurrentHP(drained);
 
         m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
 
         m_statusProcessor.CheckFaintCondition(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.attackingPokemon, *m_context.defendingPokemon);
+    }
+
+    if (m_context.attackingPlayer->GetPokemonCount() == m_context.attackingPlayer->GetFaintedCount())
+    {
+        return;
     }
 
     if (!m_context.defendingPokemon->IsSeeded() || m_context.defendingPokemon->IsFainted())
@@ -105,10 +130,14 @@ void PostTurnEffectProcessor::CheckSeededStatuses()
         return;
     }
 
-    leechedHealth = m_context.defendingPokemon->GetMaxHP() / 8;
+    int damage = std::max(1, m_context.defendingPokemon->GetMaxHP() / 8);
 
-    m_context.defendingPokemon->DamageCurrentHP(leechedHealth);
-    m_context.attackingPokemon->HealCurrentHP(leechedHealth);
+    int before = m_context.defendingPokemon->GetCurrentHP();
+    m_context.defendingPokemon->DamageCurrentHP(damage);
+
+    int drained = before - m_context.defendingPokemon->GetCurrentHP();
+
+    m_context.attackingPokemon->HealCurrentHP(drained);
 
     m_statusEffectUI.DisplayLeechSeedSappedMsg(m_context.defendingPlayer->GetPlayerNameView(), m_context.defendingPokemon->GetNameView());
 
@@ -140,6 +169,11 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
 
     m_statusProcessor.CheckFaintCondition(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.attackingPokemon, *m_context.defendingPokemon);
 
+    if (m_context.attackingPlayer->GetPokemonCount() == m_context.attackingPlayer->GetFaintedCount())
+    {
+        return;
+    }
+
     if (!m_context.defendingPokemon->IsFainted())
     {
         switch (m_context.defendingPokemon->currentStatus)
@@ -157,7 +191,7 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
             break;
 
         default:
-            return;
+            break;
         }
     }
     m_statusProcessor.CheckFaintCondition(*m_context.defendingPlayer, *m_context.attackingPlayer, *m_context.defendingPokemon, *m_context.attackingPokemon);
@@ -165,7 +199,8 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
 
 void PostTurnEffectProcessor::BurnedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int burnDamage = pokemon.GetMaxHP() / 16;
+    int burnDamage{ std::max(1, pokemon.GetMaxHP() / 16) };
+
     pokemon.DamageCurrentHP(burnDamage);
 
     m_statusEffectUI.DisplayDamagedByStatusPostTurn("burn", player.GetPlayerNameView(), pokemon.GetNameView());
@@ -173,7 +208,8 @@ void PostTurnEffectProcessor::BurnedStatus(Player& player, BattlePokemon& pokemo
 
 void PostTurnEffectProcessor::PoisonedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int poisonDamage = pokemon.GetMaxHP() / 8;
+    int poisonDamage{ std::max(1, pokemon.GetMaxHP() / 8) };
+
     pokemon.DamageCurrentHP(poisonDamage);
 
     m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player.GetPlayerNameView(), pokemon.GetNameView());
@@ -181,7 +217,8 @@ void PostTurnEffectProcessor::PoisonedStatus(Player& player, BattlePokemon& poke
 
 void PostTurnEffectProcessor::BadlyPoisonedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int poisonDamage = pokemon.GetMaxHP() / 16 * pokemon.GetBadlyPoisonCounter();
+    int poisonDamage{ std::max(1, pokemon.GetMaxHP() / 16 * pokemon.GetBadlyPoisonCounter() + 15) };
+
     pokemon.DamageCurrentHP(poisonDamage);
 
     m_statusEffectUI.DisplayDamagedByStatusPostTurn("poison", player.GetPlayerNameView(), pokemon.GetNameView());
@@ -195,8 +232,6 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
     {
         return;
     }
-
-    int boundDamage{};
 
     if (m_context.attackingPokemon->IsBound() && !m_context.attackingPokemon->IsFainted())
     {
@@ -214,7 +249,7 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
         else
         {
             m_context.attackingPokemon->IncrementBoundCounter();
-            boundDamage = m_context.attackingPokemon->GetMaxHP() / 8;
+            int boundDamage{ std::max(1, m_context.attackingPokemon->GetMaxHP() / 8) };
 
             m_context.attackingPokemon->DamageCurrentHP(boundDamage);
 
@@ -225,6 +260,11 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
             m_statusProcessor.CheckFaintCondition(*m_context.attackingPlayer, *m_context.defendingPlayer,
                 *m_context.attackingPokemon, *m_context.defendingPokemon);
         }
+    }
+
+    if (m_context.attackingPlayer->GetPokemonCount() == m_context.attackingPlayer->GetFaintedCount())
+    {
+        return;
     }
 
     if (!m_context.defendingPokemon->IsBound() || m_context.defendingPokemon->IsFainted() || m_context.defendingPokemon->GetCurrentHP() <= 0)
@@ -246,9 +286,8 @@ void PostTurnEffectProcessor::CheckBoundStatuses()
     }
     else
     {
-
         m_context.defendingPokemon->IncrementBoundCounter();
-        boundDamage = m_context.defendingPokemon->GetMaxHP() / 8;
+        int boundDamage{ std::max(1, m_context.defendingPokemon->GetMaxHP() / 8) };
 
         m_context.defendingPokemon->DamageCurrentHP(boundDamage);
 
@@ -268,7 +307,7 @@ void PostTurnEffectProcessor::CheckDisabledStatus()
         return;
     };
 
-    if (m_context.attackingPokemon->MoveIsDisabled())
+    if (m_context.attackingPokemon->MoveIsDisabled() && !m_context.attackingPokemon->IsFainted())
     {
         m_context.attackingPokemon->IncrementDisabledCounter();
 
@@ -280,7 +319,7 @@ void PostTurnEffectProcessor::CheckDisabledStatus()
         }
     }
 
-    if (m_context.defendingPokemon->MoveIsDisabled())
+    if (m_context.defendingPokemon->MoveIsDisabled() && !m_context.defendingPokemon->IsFainted())
     {
         m_context.defendingPokemon->IncrementDisabledCounter();
 
@@ -306,7 +345,23 @@ void PostTurnEffectProcessor::CheckFieldEffects()
         return;
     }
 
+    m_calculations.RandomizePostTurnOrder();
+
     // Reflect
+    if (m_context.attackingPlayer->HasReflect())
+    {
+        if (m_context.attackingPlayer->GetReflectCounter() >= reflectTurnCount)
+        {
+            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer->GetPlayerNameView(), "reflect");
+            m_context.attackingPlayer->SetReflect(false);
+            m_context.attackingPlayer->ResetReflectCounter();
+        }
+        else
+        {
+            m_context.attackingPlayer->IncrementReflectCounter();
+        }
+    }
+
     if (m_context.defendingPlayer->HasReflect())
     {
         if (m_context.defendingPlayer->GetReflectCounter() >= reflectTurnCount)
@@ -321,19 +376,7 @@ void PostTurnEffectProcessor::CheckFieldEffects()
         }
     }
 
-    if (m_context.attackingPlayer->HasReflect())
-    {
-        if (m_context.attackingPlayer->GetReflectCounter() >= reflectTurnCount)
-        {
-            m_statusEffectUI.DisplayFieldEffectFadedMsg(m_context.attackingPlayer->GetPlayerNameView(), "reflect");
-            m_context.attackingPlayer->SetReflect(false);
-            m_context.attackingPlayer->ResetReflectCounter();
-        }
-        else
-        {
-            m_context.attackingPlayer->IncrementReflectCounter();
-        }
-    }
+    m_calculations.RandomizePostTurnOrder();
 
     // Light Screen
     if (m_context.attackingPlayer->HasLightScreen())
@@ -363,6 +406,8 @@ void PostTurnEffectProcessor::CheckFieldEffects()
             m_context.defendingPlayer->IncrementLightScreenCounter();
         }
     }
+
+    m_calculations.RandomizePostTurnOrder();
 
     // Mist
     if (m_context.attackingPlayer->HasMist())

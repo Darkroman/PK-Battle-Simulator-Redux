@@ -82,6 +82,7 @@ public:
     void IncrementReflectCounter();
     int GetReflectCounter() const;
     void ResetReflectCounter();
+    bool HasPendingPostTurnEffect() const;
 
     void ResetValues();
 

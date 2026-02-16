@@ -9,6 +9,50 @@
 
 BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng) : m_context(context), m_rng(rng) {}
 
+int BattleCalculations::CalculatePokemonSpeed(BattlePokemon& pokemon)
+{
+	auto [numerator, denominator] = GetStageRatio(pokemon.GetSpeedStage());
+
+	int speed = pokemon.GetSpeed() * numerator / denominator;
+
+	if (pokemon.GetStatus() == Status::Paralyzed)
+	{
+		speed /= 2;
+	}
+
+	return speed;
+}
+
+void BattleCalculations::RandomizeTurnOrder()
+{
+	std::array<Player*, 2> activePlayers{ m_context.playerOne, m_context.playerTwo };
+	std::shuffle(activePlayers.begin(), activePlayers.end(), m_rng.GetGenerator());
+
+	SetFirst(*activePlayers[0], *activePlayers[1]);
+}
+
+void BattleCalculations::SetFirst(Player& first, Player& second)
+{
+	first.SetFirst(true);
+	second.SetFirst(false);
+	m_context.attackingPlayer = &first;
+	m_context.defendingPlayer = &second;
+	m_context.attackingPokemon = (&first == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
+	m_context.defendingPokemon = (&second == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
+	m_context.currentMove = (&first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
+}
+
+void BattleCalculations::RandomizePostTurnOrder()
+{
+	std::vector<BattlePokemon*> activePokemon{ m_context.attackingPokemon, m_context.defendingPokemon };
+	std::shuffle(activePokemon.begin(), activePokemon.end(), m_rng.GetGenerator());
+
+	if (activePokemon[0] != m_context.attackingPokemon) {
+		std::swap(m_context.attackingPlayer, m_context.defendingPlayer);
+		std::swap(m_context.attackingPokemon, m_context.defendingPokemon);
+	}
+}
+
 void BattleCalculations::CalculateCriticalHit(BattlePokemon& source)
 {
 	size_t stage = source.GetCriticalHitStage();

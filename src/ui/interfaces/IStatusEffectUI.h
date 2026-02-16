@@ -43,4 +43,6 @@ public:
 
 	// Faint
 	virtual void DisplayFaintedMsg(std::string_view, std::string_view) const = 0;
+
+	virtual void NewLine() const = 0;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 struct BattleContext;
+class RandomEngine;
 class BattleCalculations;
 class IStatusEffectUI;
 class StatusEffectProcessor;
@@ -13,7 +14,7 @@ class PostTurnEffectProcessor
 public:
     explicit PostTurnEffectProcessor(BattleContext&, BattleCalculations&, IStatusEffectUI&, StatusEffectProcessor&, WinChecker&);
 
-    void DeterminePostTurnDamageOrder();
+    void DeterminePostFaintSwitchOrder();
     void ProcessAllPostTurnEffects(bool&);
 
 private:

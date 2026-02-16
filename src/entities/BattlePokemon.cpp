@@ -1276,6 +1276,16 @@ BattlePokemon::pokemonMove* BattlePokemon::GetDisabledMove() const
     return disabledMove;
 }
 
+bool BattlePokemon::HasPendingPostTurnEffect() const
+{
+    return IsSeeded() ||
+        currentStatus == Status::Burned ||
+        currentStatus == Status::Poisoned ||
+        currentStatus == Status::Badly_Poisoned ||
+        IsBound() ||
+        (GetDisabledCounter() == 4);
+}
+
 int BattlePokemon::GetBadlyPoisonCounter() const
 {
     return m_badlyPoisonCounter;

@@ -56,6 +56,8 @@ void BattleAnnouncerText::DisplayFightingPokemon(const BattleContext& context) c
 
     bool isTwoAI = false;
     PrintPokemon(*context.playerTwo, *context.playerTwoCurrentPokemon, isTwoAI);
+
+    std::cout << '\n';
 }
 
 bool BattleAnnouncerText::AnnounceWinner(const BattleContext& context)

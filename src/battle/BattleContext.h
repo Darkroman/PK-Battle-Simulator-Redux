@@ -36,6 +36,8 @@ struct BattleContext
 
     std::vector<Player*> vec_aiPlayers{};
 
+    std::vector<Player*> vec_outOfPokemon{};
+
     BattleStateFlags flags;
 
     const int HP_BAR_WIDTH{ 400 };

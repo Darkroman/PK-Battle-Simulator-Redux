@@ -1195,11 +1195,13 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	int recoilDamage = (targetHPBegin - targetHPEnd) / 4;
 
-	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
+	int finalDamage = std::max(1, recoilDamage);
+
+	ctx.attackingPokemon->DamageCurrentHP(finalDamage);
 
 	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
-	deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
 }
 
 void Rampage::DoMove(MoveRoutineDeps& deps)
@@ -1336,11 +1338,13 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	int recoilDamage = (targetHPBegin - targetHPEnd) / 3;
 
-	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
+	int finalDamage = std::max(1, recoilDamage);
+
+	ctx.attackingPokemon->DamageCurrentHP(finalDamage);
 
 	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
-	deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
 }
 
 void DefenseDown::DoMove(MoveRoutineDeps& deps)
@@ -2142,31 +2146,15 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
-	int leechedHealth{};
+	int leechedHealth{ ctx.damageTaken / 2 };
 
-	if (ctx.damageTaken <= 0)
-	{
-		leechedHealth = 0;
-	}
-	else if (ctx.damageTaken == 1)
-	{
-		leechedHealth = 1;
-	}
-	else
-	{
-		leechedHealth = ctx.damageTaken / 2;
-	}
+	int finalLeech = std::min(std::max(1, leechedHealth), ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP());
 
-	if (leechedHealth > (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP()))
-	{
-		leechedHealth = (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP());
-	}
-
-	ctx.attackingPokemon->HealCurrentHP(leechedHealth);
+	ctx.attackingPokemon->HealCurrentHP(finalLeech);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 	
-	if (!ctx.defendingPokemon->HasSubstitute() && leechedHealth > 0)
+	if (finalLeech > 0)
 	{
 		deps.resultsUI.DisplayEnergyDrainedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
@@ -3362,9 +3350,13 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 
 		ctx.attackingPokemon->DamageCurrentHP(ctx.attackingPokemon->GetCurrentHP());
 
-		deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
+		deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
 		return;
 	}
+
+	ctx.attackingPokemon->DamageCurrentHP(ctx.attackingPokemon->GetCurrentHP());
+
+	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
 
 	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
@@ -3376,10 +3368,6 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 	deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-
-	ctx.attackingPokemon->DamageCurrentHP(ctx.attackingPokemon->GetCurrentHP());
-
-	deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
 }
 
 void AlwaysHit::DoMove(MoveRoutineDeps& deps)
@@ -3546,31 +3534,15 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
-	int leechedHealth{};
+	int leechedHealth{ ctx.damageTaken / 2 };
 
-	if (ctx.damageTaken <= 0)
-	{
-		leechedHealth = 0;
-	}
-	else if (ctx.damageTaken == 1)
-	{
-		leechedHealth = 1;
-	}
-	else
-	{
-		leechedHealth = ctx.damageTaken / 2;
-	}
+	int finalLeech = std::min(std::max(1, leechedHealth), ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP());
 
-	if (leechedHealth > (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP()))
-	{
-		leechedHealth = (ctx.attackingPokemon->GetMaxHP() - ctx.attackingPokemon->GetCurrentHP());
-	}
-
-	ctx.attackingPokemon->HealCurrentHP(leechedHealth);
+	ctx.attackingPokemon->HealCurrentHP(finalLeech);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
-	if (leechedHealth > 0)
+	if (finalLeech > 0)
 	{
 		deps.resultsUI.DisplayEnergyDrainedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 	}
@@ -3746,12 +3718,7 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 	std::uniform_int_distribution<int> rngDist(0, 100);
 	int randomNumber{ rngDist(deps.rng.GetGenerator()) };
 
-	psywaveDamage = ctx.attackingPokemon->GetLevel() * (randomNumber + 50) / 100;
-
-	if (psywaveDamage == 0)
-	{
-		psywaveDamage = 1;
-	}
+	psywaveDamage = std::max(1, ctx.attackingPokemon->GetLevel() * (randomNumber + 50) / 100);
 
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, psywaveDamage);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
@@ -4018,9 +3985,11 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 
 	int recoilDamage = (ctx.attackingPokemon->GetMaxHP() + 2) / 4;
 
-	ctx.attackingPokemon->DamageCurrentHP(recoilDamage);
+	int finalDamage = std::max(1, recoilDamage);
+
+	ctx.attackingPokemon->DamageCurrentHP(finalDamage);
 
 	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
-	deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
 }

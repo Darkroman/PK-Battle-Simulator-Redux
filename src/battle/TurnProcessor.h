@@ -8,22 +8,21 @@ class WinChecker;
 class SwitchExecutor;
 class MoveExecutor;
 
+class BattlePokemon;
 class Player;
 
 class TurnProcessor
 {
 public:
-	TurnProcessor(BattleContext&, BattleCalculations&, RandomEngine&, StatusEffectProcessor&, WinChecker&, SwitchExecutor&, MoveExecutor&);
+	TurnProcessor(BattleContext&, BattleCalculations&, StatusEffectProcessor&, WinChecker&, SwitchExecutor&, MoveExecutor&);
 
-	void DetermineWhoGoesFirst();
-	void SetFirst(Player&, Player&);
+	void DetermineTurnOrder();
 	void ExecuteTurn(bool&);
 	void SwapRoles();
 
 private:
 	BattleContext& m_context;
 	BattleCalculations& m_calculations;
-	RandomEngine& m_rng;
 	StatusEffectProcessor& m_statusProcessor;
 	WinChecker& m_winChecker;
 	SwitchExecutor& m_switchExecutor;
