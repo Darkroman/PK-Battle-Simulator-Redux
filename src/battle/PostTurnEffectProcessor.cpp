@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include "PostTurnEffectProcessor.h"
 
 #include "BattleContext.h"
@@ -217,7 +215,7 @@ void PostTurnEffectProcessor::PoisonedStatus(Player& player, BattlePokemon& poke
 
 void PostTurnEffectProcessor::BadlyPoisonedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int poisonDamage{ std::max(1, pokemon.GetMaxHP() / 16 * pokemon.GetBadlyPoisonCounter() + 15) };
+    int poisonDamage{ std::max(pokemon.GetBadlyPoisonCounter(), pokemon.GetMaxHP() / 16 * pokemon.GetBadlyPoisonCounter()) };
 
     pokemon.DamageCurrentHP(poisonDamage);
 

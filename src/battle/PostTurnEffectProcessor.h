@@ -1,7 +1,6 @@
 #pragma once
 
 struct BattleContext;
-class RandomEngine;
 class BattleCalculations;
 class IStatusEffectUI;
 class StatusEffectProcessor;

@@ -31,16 +31,6 @@ void BattleCalculations::RandomizeTurnOrder()
 	SetFirst(*activePlayers[0], *activePlayers[1]);
 }
 
-void BattleCalculations::SetFirst(Player& first, Player& second)
-{
-	first.SetFirst(true);
-	second.SetFirst(false);
-	m_context.attackingPlayer = &first;
-	m_context.defendingPlayer = &second;
-	m_context.attackingPokemon = (&first == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
-	m_context.defendingPokemon = (&second == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
-	m_context.currentMove = (&first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
-}
 
 void BattleCalculations::RandomizePostTurnOrder()
 {
@@ -51,6 +41,17 @@ void BattleCalculations::RandomizePostTurnOrder()
 		std::swap(m_context.attackingPlayer, m_context.defendingPlayer);
 		std::swap(m_context.attackingPokemon, m_context.defendingPokemon);
 	}
+}
+
+void BattleCalculations::SetFirst(Player& first, Player& second)
+{
+	first.SetFirst(true);
+	second.SetFirst(false);
+	m_context.attackingPlayer = &first;
+	m_context.defendingPlayer = &second;
+	m_context.attackingPokemon = (&first == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
+	m_context.defendingPokemon = (&second == m_context.playerOne) ? m_context.playerOneCurrentPokemon : m_context.playerTwoCurrentPokemon;
+	m_context.currentMove = (&first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
 }
 
 void BattleCalculations::CalculateCriticalHit(BattlePokemon& source)
