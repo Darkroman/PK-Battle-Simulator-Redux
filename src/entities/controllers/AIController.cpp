@@ -281,7 +281,7 @@ void AIController::UpdateEnemyOffenseStats(BattleContext& context, BattlePokemon
 		return;
 	}
 
-	int observedDamage = context.damageTaken;
+	int observedDamage{ context.damageTaken };
 
 	int effectiveness{ context.effectiveness };
 
@@ -293,402 +293,6 @@ void AIController::UpdateEnemyOffenseStats(BattleContext& context, BattlePokemon
 	{
 		currentMovePower = currentMovePower * powerModifier / 10;
 	}
-
-	auto GetStageRatio = [&](int stage) -> std::pair<int, int>
-		{
-			if (stage < 0)
-			{
-				return { 2, -stage + 2 };
-			}
-
-			else if (stage == 0)
-			{
-				return { 2, 2 };
-			}
-
-			else
-			{
-				return { stage + 2, 2 };
-			}
-		};
-
-	bool isPhysical = currentMove.GetCategoryEnum() == Category::Physical;
-
-	std::pair<int, int> sourceStageRatio = isPhysical ? GetStageRatio(source.GetDefenseStage()) : GetStageRatio(source.GetSpecialDefenseStage());
-	std::pair<int, int> targetStageRatio = isPhysical ? GetStageRatio(target.GetAttackStage()) : GetStageRatio(target.GetSpecialAttackStage());
-
-	int sourceDefense{ 0 };
-
-	if (context.flags.isCriticalHit && (source.GetDefenseStage() > 0 || source.GetSpecialDefenseStage() > 0))
-	{
-		sourceDefense = isPhysical ? source.GetDefense() : source.GetSpecialDefense();
-	}
-	else
-	{
-		sourceDefense = (isPhysical ? source.GetDefense() * sourceStageRatio.first / sourceStageRatio.second : source.GetSpecialDefense()) * sourceStageRatio.first / sourceStageRatio.second;
-	}
-
-	auto poke = FindActivePokemonSlot();
-
-	std::vector<int> multipliers{};
-	multipliers.reserve(6); // max multipliers that can exist at a time
-
-	bool isCriticalHit = context.flags.isCriticalHit;
-
-	if (memory.selfPlayer->HasLightScreen() && !isCriticalHit && currentMove.GetCategoryEnum() == Category::Special)
-	{
-		observedDamage = (observedDamage * 2048) >> 10;
-		multipliers.push_back(2048);
-	}
-
-	if (memory.selfPlayer->HasReflect() && !isCriticalHit && currentMove.GetCategoryEnum() == Category::Physical)
-	{
-		observedDamage = (observedDamage * 2048) >> 10;
-		multipliers.push_back(2048);
-	}
-
-	if (currentMove.GetMoveEffectEnum() == MoveEffect::Earthquake && source.IsSemiInvulnerableFromDig())
-	{
-		observedDamage /= 2;
-		multipliers.push_back(8192);
-	}
-
-	if ((currentMove.GetMoveEffectEnum() == MoveEffect::Stomp || currentMove.GetMoveEffectEnum() == MoveEffect::BodySlam) && source.HasUsedMinimize())
-	{
-		observedDamage /= 2;
-		multipliers.push_back(8192);
-	}
-
-	if (target.GetStatus() == Status::Burned && currentMove.GetCategoryEnum() == Category::Physical)
-	{
-		observedDamage = (observedDamage * 2048) >> 10;
-		multipliers.push_back(2048);
-	}
-
-	// reverse the effectiveness
-	observedDamage = (observedDamage * 4096) / context.effectiveness;
-	multipliers.push_back(effectiveness);
-
-	// reverse stab
-	bool isStab = currentMove.GetMoveTypeEnum() == target.GetTypeOneEnum() || currentMove.GetMoveTypeEnum() == target.GetTypeTwoEnum();
-	int stab = isStab ? 6144 : 4096;
-	observedDamage = (observedDamage * 4096) / stab;
-	multipliers.push_back(stab);
-
-	// reverse crit
-	int critical = context.flags.isCriticalHit ? 6144 : 4096;
-	multipliers.push_back(critical);
-
-	observedDamage = (observedDamage * 4096) / critical;
-
-	auto ReverseStageMultiplier = [&](int dmg)
-		{
-			if (context.flags.isCriticalHit && (target.GetAttackStage() < 0 || target.GetSpecialAttackStage() < 0))
-			{
-
-			}
-			else
-			{
-				dmg = (dmg * targetStageRatio.second) / targetStageRatio.first;
-			}
-			return dmg;
-		};
-
-	auto ApplyCritAwareAttackStage = [&](int atk)
-		{
-			if (context.flags.isCriticalHit && (target.GetAttackStage() < 0 || target.GetSpecialAttackStage() < 0))
-			{
-
-			}
-			else
-			{
-				atk = atk * (targetStageRatio.first / targetStageRatio.second);
-			}
-			return atk;
-		};
-
-	int neutralDamage = ReverseStageMultiplier(observedDamage);
-
-	int level{ target.GetLevel() };
-
-	std::vector<int> targetAttackValues = isPhysical ? poke->realAttackValues : poke->realSpecialAttackValues;
-
-	std::vector<int> newAttackValues{};
-	newAttackValues.reserve(targetAttackValues.size());
-
-	for (auto& atk : targetAttackValues)
-	{
-		int damage = (((((2 * level / 5) + 2) * currentMovePower * ApplyCritAwareAttackStage(atk)) / sourceDefense) / 50) + 2;
-
-		for (auto& mult : multipliers)
-		{
-			damage = (damage * mult) >> 12;
-		}
-
-		if (damage < context.damageTaken)
-		{
-			continue;
-		}
-
-		bool valid{ false };
-		for (int randomMod = 85; randomMod <= 100; ++randomMod)
-		{
-			if ((damage * randomMod) / 100 == context.damageTaken)
-			{
-				valid = true;
-				break;
-			}
-		}
-		if (valid)
-		{
-			newAttackValues.push_back(atk);
-		}
-	}
-
-	if (isPhysical)
-	{
-		if (!newAttackValues.empty())
-		{
-			poke->realAttackValues = std::move(newAttackValues);
-			poke->attackRange = { poke->realAttackValues.front(), poke->realAttackValues.back() };
-		}
-	}
-	else
-	{
-		if (!newAttackValues.empty())
-		{
-			poke->realSpecialAttackValues = std::move(newAttackValues);
-			poke->specialAttackRange = { poke->realSpecialAttackValues.front(), poke->realSpecialAttackValues.back() };
-		}
-	}
-}
-
-void AIController::UpdateEnemyHPandDefenseStats(BattleContext& context, Player& targetPlayer, BattlePokemon::pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target)
-{
-	if (context.effectiveness == 0 || context.pixelsLost == 0 || target.IsFainted())
-	{
-		return;
-	}
-
-	const int HP_BAR_WIDTH = context.HP_BAR_WIDTH;
-
-	int pixelsLost = context.pixelsLost;
-
-	int baseDamage{ 0 };
-
-	int effectiveness{ context.effectiveness };
-
-	int currentMovePower{ currentMove.GetPower() };
-
-	int powerModifier{ context.initialPowerMultiplier };
-
-	if (powerModifier > 10)
-	{
-		currentMovePower = currentMovePower * powerModifier / 10;
-	}
-
-	auto GetStageRatio = [&](int stage) -> std::pair<int, int>
-		{
-			if (stage < 0)
-			{
-				return { 2, -stage + 2 };
-			}
-
-			else if (stage == 0)
-			{
-				return { 2, 2 };
-			}
-
-			else
-			{
-				return { stage + 2, 2 };
-			}
-		};
-
-	bool isPhysical = currentMove.GetCategoryEnum() == Category::Physical;
-
-	std::pair<int, int> sourceStageRatio = isPhysical ? GetStageRatio(source.GetAttackStage()) : GetStageRatio(source.GetSpecialAttackStage());
-	std::pair<int, int> targetStageRatio = isPhysical ? GetStageRatio(target.GetDefenseStage()) : GetStageRatio(target.GetSpecialDefenseStage());
-
-	int sourceAttack{ 0 };
-
-	if (context.flags.isCriticalHit && (source.GetAttackStage() < 0 || source.GetSpecialAttackStage() < 0))
-	{
-		sourceAttack = isPhysical ? source.GetAttack() : source.GetSpecialAttack();
-	}
-	else
-	{
-		sourceAttack = (isPhysical ? source.GetAttack() * sourceStageRatio.first / sourceStageRatio.second : source.GetSpecialAttack()) * sourceStageRatio.first / sourceStageRatio.second;
-	}
-
-	auto poke = FindActivePokemonSlot();
-
-	std::vector<int> multipliers{};
-	multipliers.reserve(6); // max multipliers that can exist at a time
-
-	if (context.flags.isCriticalHit)
-	{
-		multipliers.push_back(6144);
-	}
-
-	bool hasStab = (currentMove.GetMoveTypeEnum() == source.GetTypeOneEnum() ||
-		currentMove.GetMoveTypeEnum() == source.GetTypeTwoEnum())
-		&& currentMove.GetMoveEffectEnum() != MoveEffect::Struggle;
-
-	if (hasStab)
-	{
-		multipliers.push_back(6144);
-	}
-
-	multipliers.push_back(effectiveness);
-
-	if (source.GetStatus() == Status::Burned && currentMove.GetCategoryEnum() == Category::Physical)
-	{
-		multipliers.push_back(2048);
-	}
-
-	if ((currentMove.GetMoveEffectEnum() == MoveEffect::Stomp || currentMove.GetMoveEffectEnum() == MoveEffect::BodySlam) && target.HasUsedMinimize())
-	{
-		multipliers.push_back(8192);
-	}
-
-	if (currentMove.GetMoveEffectEnum() == MoveEffect::Earthquake && target.IsSemiInvulnerableFromDig())
-	{
-		multipliers.push_back(8192);
-	}
-
-	if (targetPlayer.HasReflect() && !context.flags.isCriticalHit && currentMove.GetCategoryEnum() == Category::Physical)
-	{
-		multipliers.push_back(2048);
-	}
-
-	if (targetPlayer.HasLightScreen() && !context.flags.isCriticalHit && currentMove.GetCategoryEnum() == Category::Special)
-	{
-		multipliers.push_back(2048);
-	}
-
-	int level{ target.GetLevel() };
-
-	std::vector<int> targetDefenseValues = isPhysical ? poke->realDefenseValues : poke->realSpecialDefenseValues;
-
-	std::vector<int> newDefenseValues{};
-	newDefenseValues.reserve(targetDefenseValues.size());
-
-	auto ApplyCritAwareStage = [&](int def)
-		{
-			if (context.flags.isCriticalHit && (target.GetDefenseStage() > 0 || target.GetSpecialDefenseStage() > 0))
-			{
-
-			}
-			else
-			{
-				def = def * targetStageRatio.first / targetStageRatio.second;
-			}
-			return def;
-		};
-
-	auto IsPixelDamagePossible = [&](int hp, int baseDamage) -> bool
-		{
-			int damage = baseDamage;
-			for (int mult : multipliers)
-				damage = (damage * mult) >> 12;
-
-			damage = std::max(damage, 1);
-
-			int randomMax = damage;
-			int randomMin = std::max((damage * 85) / 100, 1);
-
-			int minPixels = (randomMin * HP_BAR_WIDTH) / hp;
-			int maxPixels = ((randomMax * HP_BAR_WIDTH + hp - 1) / hp);
-
-			return (minPixels >= pixelsLost && pixelsLost <= maxPixels);
-		};
-
-	for (auto& def : targetDefenseValues)
-	{
-		if (isPhysical && def < poke->defenseRange.first)
-		{
-			continue;
-		}
-		else if (!isPhysical && def < poke->specialDefenseRange.first)
-		{
-			continue;
-		}
-
-		bool valid{ false };
-		for (int hp : poke->realHPValues)
-		{
-			int damage = (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / ApplyCritAwareStage(def)) / 50) + 2;
-
-			if (IsPixelDamagePossible(hp, damage))
-			{
-				valid = true;
-				break;
-			}
-		}
-		if (valid)
-		{
-			newDefenseValues.push_back(def);
-		}
-	}
-
-	if (isPhysical)
-	{
-		if (!newDefenseValues.empty())
-		{
-			poke->realDefenseValues = std::move(newDefenseValues);
-			poke->defenseRange = { poke->realDefenseValues.front(), poke->realDefenseValues.back() };
-		}
-
-	}
-	else
-	{
-		if (!newDefenseValues.empty())
-		{
-			poke->realSpecialDefenseValues = std::move(newDefenseValues);
-			poke->specialDefenseRange = { poke->realSpecialDefenseValues.front(), poke->realSpecialDefenseValues.back() };
-		}
-	}
-
-
-	std::vector<int> newHPValues{};
-	newHPValues.reserve(poke->realHPValues.size());
-
-	for (int hp : poke->realHPValues)
-	{
-		if (hp < poke->hpRange.first)
-		{
-			continue;
-		}
-
-		bool valid{ false };
-		for (int def : poke->realDefenseValues)
-		{
-			int damage = (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / ApplyCritAwareStage(def)) / 50) + 2;
-
-			if (IsPixelDamagePossible(hp, damage))
-			{
-				valid = true;
-				break;
-			}
-		}
-		if (valid)
-		{
-			newHPValues.push_back(hp);
-		}
-	}
-
-	if (!newHPValues.empty())
-	{
-		poke->realHPValues = std::move(newHPValues);
-		poke->hpRange = { poke->realHPValues.front(), poke->realHPValues.back() };
-	}
-
-}
-
-void AIController::UpdateEnemySpeedStats(BattleContext& context, Player& self, BattlePokemon& source, BattlePokemon& target)
-{
-	auto poke = FindActivePokemonSlot();
 
 	auto GetStageRatio = [](int stage) -> std::pair<int, int>
 		{
@@ -705,61 +309,431 @@ void AIController::UpdateEnemySpeedStats(BattleContext& context, Player& self, B
 			return { stage + 2, 2 };
 		};
 
-	auto MulRatio = [](std::pair<int, int> a, std::pair<int, int> b)
-		{
-			return std::pair<int, int>{ a.first* b.first, a.second* b.second };
-		};
+	bool isPhysical{ currentMove.GetCategoryEnum() == Category::Physical };
 
-	auto TightenRawFromEff = [](int eff, std::pair<int, int> ratio, bool isFirst) -> int
-		{
-			int num;
+	int baseSourceDefense{ isPhysical ? source.GetDefense() : source.GetSpecialDefense() };
 
-			if (isFirst)
-			{
-				num = (eff + 1) * ratio.second - 1;
-			}
-			else
-			{
-				num = eff * ratio.second + ratio.first - 1;
-			}
+	int sourceStage{ isPhysical ? source.GetDefenseStage() : source.GetSpecialDefenseStage() };
 
-			return num / ratio.first;
-		};
+	bool isCriticalHit{ context.flags.isCriticalHit };
 
-	auto myStage = GetStageRatio(source.GetSpeedStage());
-	int myEff = source.GetSpeed() * myStage.first / myStage.second;
-
-	if (source.GetStatus() == Status::Paralyzed)
+	if (isCriticalHit)
 	{
-		myEff /= 2;
+		// If own defense stage is greater than 0, clamp to 0
+		sourceStage = std::min(sourceStage, 0);
 	}
 
-	// Compute opponent's combined stage + paralysis ratio
-	auto opStage = GetStageRatio(target.GetSpeedStage());
-	auto opStatus = (target.GetStatus() == Status::Paralyzed) ? std::pair<int, int>{ 1, 2 } : std::pair<int, int>{ 1, 1 };
-	auto opRatio = MulRatio(opStage, opStatus);
+	auto [defNumerator, defDenominator] = GetStageRatio(sourceStage);
+	int sourceDefense{ baseSourceDefense * defNumerator / defDenominator };
 
-	int& rawMin = poke->speedRange.first;
-	int& rawMax = poke->speedRange.second;
+	auto poke = FindActivePokemonSlot();
+
+	std::vector<int> otherMultipliers{};
+	otherMultipliers.reserve(3); // max other multipliers is 3 (as of gen 1 moves)
+
+	if (memory.selfPlayer->HasLightScreen() && !isCriticalHit && !isPhysical)
+	{
+		otherMultipliers.push_back(2048);
+	}
+
+	if (memory.selfPlayer->HasReflect() && !isCriticalHit && isPhysical)
+	{
+		otherMultipliers.push_back(2048);
+	}
+
+	if (currentMove.GetMoveEffectEnum() == MoveEffect::Earthquake && source.IsSemiInvulnerableFromDig())
+	{
+		otherMultipliers.push_back(8192);
+	}
+
+	if ((currentMove.GetMoveEffectEnum() == MoveEffect::Stomp || currentMove.GetMoveEffectEnum() == MoveEffect::BodySlam) && source.HasUsedMinimize())
+	{
+		otherMultipliers.push_back(8192);
+	}
+
+	int other{ 4096 };
+	for (auto mult : otherMultipliers)
+	{
+		other = (other * mult + 2048) / 4096;
+	}
+
+	int damageReversed = observedDamage * other / 4096;
+
+	std::vector<int> multipliers{};
+	multipliers.reserve(4); // max multipliers is 4 (burn, crit, stab, and effectiveness)
+
+	if (target.GetStatus() == Status::Burned && isPhysical)
+	{
+		multipliers.push_back(2048);
+	}
+
+	multipliers.push_back(effectiveness);
+
+	bool hasStab = (currentMove.GetMoveTypeEnum() == source.GetTypeOneEnum() ||
+		currentMove.GetMoveTypeEnum() == source.GetTypeTwoEnum()) &&
+		currentMove.GetMoveEffectEnum() != MoveEffect::Struggle;
+	multipliers.push_back(hasStab ? 6144 : 4096);
+
+	multipliers.push_back(isCriticalHit ? 6144 : 4096);
+
+	for (auto mult : multipliers)
+	{
+		damageReversed = (damageReversed * 4096) / mult;
+	}
+
+	int targetStage{ isPhysical ? target.GetAttackStage() : target.GetSpecialAttackStage() };
+
+	if (isCriticalHit)
+	{
+		// if opponent's attack stage is less than 0, clamp to 0
+		targetStage = std::max(targetStage, 0);
+	}
+
+	std::pair<int, int> targetStageRatio{ GetStageRatio(targetStage) };
+
+	damageReversed = damageReversed * targetStageRatio.second / targetStageRatio.first;
+
+	std::vector<int>& targetAttackValues = isPhysical ? poke->realAttackValues : poke->realSpecialAttackValues;
+
+	std::vector<int> newAttackValues{};
+	newAttackValues.reserve(targetAttackValues.size());
+
+	int level = target.GetLevel();
+
+	for (auto atk : targetAttackValues)
+	{
+		int attackStat = atk;
+
+		attackStat = attackStat * targetStageRatio.first / targetStageRatio.second;
+
+		int damage = (((((2 * level / 5) + 2) * currentMovePower * attackStat) / sourceDefense) / 50) + 2;
+
+		for (auto mult : multipliers)
+		{
+			damage = (damage * mult) / 4096;
+		}
+
+		bool valid = false;
+		for (int randomMod = 85; randomMod <= 100; ++randomMod)
+		{
+			int scaled = (damage * randomMod + 50) / 100;
+			if (scaled == context.damageTaken)
+			{
+				valid = true;
+				break;
+			}
+		}
+
+		if (valid)
+		{
+			newAttackValues.push_back(atk);
+		}
+	}
+
+	if (!newAttackValues.empty())
+	{
+		if (isPhysical)
+		{
+			poke->realAttackValues = std::move(newAttackValues);
+			poke->attackRange = { poke->realAttackValues.front(), poke->realAttackValues.back() };
+		}
+		else
+		{
+			poke->realSpecialAttackValues = std::move(newAttackValues);
+			poke->specialAttackRange = { poke->realSpecialAttackValues.front(), poke->realSpecialAttackValues.back() };
+		}
+	}
+}
+
+void AIController::UpdateEnemyHPandDefenseStats(BattleContext& context, Player& targetPlayer, BattlePokemon::pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target)
+{
+	if (context.effectiveness == 0 || context.pixelsLost == 0 || target.IsFainted())
+		return;
+
+	const int HP_BAR_WIDTH{ context.HP_BAR_WIDTH };
+
+	int pixelsLost{ context.pixelsLost };
+
+	int currentMovePower{ currentMove.GetPower() };
+
+	int powerModifier{ context.initialPowerMultiplier };
+
+	if (powerModifier > 10)
+		currentMovePower = currentMovePower * powerModifier / 10;
+
+	auto GetStageRatio = [](int stage) -> std::pair<int, int>
+		{
+			if (stage < 0)
+			{
+				return { 2, -stage + 2 };
+			}
+			if (stage == 0)
+			{
+				return { 2, 2 };
+			}
+
+			return { stage + 2, 2 };
+		};
+
+	bool isPhysical{ currentMove.GetCategoryEnum() == Category::Physical };
+
+	int baseSourceAttack{ isPhysical ? source.GetAttack() : source.GetSpecialAttack() };
+
+	int sourceStage{ isPhysical ? source.GetAttackStage() : source.GetSpecialAttackStage() };
+
+	bool isCriticalHit{ context.flags.isCriticalHit };
+
+	if (isCriticalHit)
+	{
+		// If attacker's attack stage is less than 0, clamp to 0
+		sourceStage = std::max(sourceStage, 0);
+	}
+
+	auto [atkNumerator, atkDenominator] = GetStageRatio(sourceStage);
+	int sourceAttack{ baseSourceAttack * atkNumerator / atkDenominator };
+
+	auto poke = FindActivePokemonSlot();
+
+	// Core multipliers: Burn, Crit, STAB, Effectiveness
+	std::vector<int> multipliers{};
+	multipliers.reserve(4); // 4 is max multipliers it can hold
+
+	if (isCriticalHit) multipliers.push_back(6144);
+
+	bool hasStab = (currentMove.GetMoveTypeEnum() == source.GetTypeOneEnum() ||
+		currentMove.GetMoveTypeEnum() == source.GetTypeTwoEnum()) &&
+		currentMove.GetMoveEffectEnum() != MoveEffect::Struggle;
+
+	if (hasStab)
+	{
+		multipliers.push_back(6144);
+	}
+
+	multipliers.push_back(context.effectiveness);
+
+	if (source.GetStatus() == Status::Burned && isPhysical)
+	{
+		multipliers.push_back(2048);
+	}
+
+	// other multipliers (stomp and bodyslam vs minimize, earthquake vs dig, reflect and light screen)
+	std::vector<int> otherMultipliers{};
+	otherMultipliers.reserve(3); // max other multipliers it can do as of gen 1 (minimize/dig, reflect and light screen)
+
+	if ((currentMove.GetMoveEffectEnum() == MoveEffect::Stomp || currentMove.GetMoveEffectEnum() == MoveEffect::BodySlam) && target.HasUsedMinimize())
+	{
+		otherMultipliers.push_back(8192);
+	}
+
+	if (currentMove.GetMoveEffectEnum() == MoveEffect::Earthquake && target.IsSemiInvulnerableFromDig())
+	{
+		otherMultipliers.push_back(8192);
+	}
+
+	if (targetPlayer.HasReflect() && !isCriticalHit && isPhysical)
+	{
+		otherMultipliers.push_back(2048);
+	}
+
+	if (targetPlayer.HasLightScreen() && !isCriticalHit && !isPhysical)
+	{
+		otherMultipliers.push_back(2048);
+	}
+
+	int targetStage{ isPhysical ? target.GetDefenseStage() : target.GetSpecialDefenseStage() };
+
+	if (isCriticalHit)
+	{
+		// If defender's defense stage is greater than 0, clamp to 0
+		targetStage = std::min(targetStage, 0);
+	}
+
+	std::pair<int, int> targetStageRatio{ GetStageRatio(targetStage) };
+
+	auto ApplyCritAwareStage = [&](int def)
+		{
+			def = def * targetStageRatio.first / targetStageRatio.second;
+
+			return def;
+		};
+
+	auto IsPixelDamagePossible = [&](int hp, int baseDamage) -> bool
+		{
+			int damage = baseDamage;
+
+			for (int mult : multipliers)
+				damage = (damage * mult) / 4096;
+
+			int other{ 4096 };
+			for (int mult : otherMultipliers)
+				other = (other * mult + 2048) / 4096;
+
+			damage = damage * other / 4096;
+			damage = std::max(damage, 1);
+
+			int randomMax = damage;
+			int randomMin = std::max((damage * 85 + 50) / 100, 1);
+
+			int minPixels = (randomMin * HP_BAR_WIDTH) / hp;
+			int maxPixels = (randomMax * HP_BAR_WIDTH + hp - 1) / hp;
+
+			return pixelsLost >= minPixels && pixelsLost <= maxPixels;
+		};
+
+	// Filter defense values
+	std::vector<int>& targetDefenseValues = isPhysical ? poke->realDefenseValues : poke->realSpecialDefenseValues;
+	std::vector<int> newDefenseValues{};
+	newDefenseValues.reserve(targetDefenseValues.size());
+
+	int level{ target.GetLevel() };
+
+	for (auto def : targetDefenseValues)
+	{
+		if (isPhysical && def < poke->defenseRange.first) continue;
+		if (!isPhysical && def < poke->specialDefenseRange.first) continue;
+
+		bool valid{ false };
+		for (int hp : poke->realHPValues)
+		{
+			int damage = (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / ApplyCritAwareStage(def)) / 50) + 2;
+			if (IsPixelDamagePossible(hp, damage))
+			{
+				valid = true;
+				break;
+			}
+		}
+
+		if (valid) newDefenseValues.push_back(def);
+	}
+
+	if (!newDefenseValues.empty())
+	{
+		if (isPhysical)
+		{
+			poke->realDefenseValues = std::move(newDefenseValues);
+			poke->defenseRange = { poke->realDefenseValues.front(), poke->realDefenseValues.back() };
+		}
+		else
+		{
+			poke->realSpecialDefenseValues = std::move(newDefenseValues);
+			poke->specialDefenseRange = { poke->realSpecialDefenseValues.front(), poke->realSpecialDefenseValues.back() };
+		}
+	}
+
+	// Filter HP values
+	std::vector<int> newHPValues{};
+	newHPValues.reserve(poke->realHPValues.size());
+
+	for (int hp : poke->realHPValues)
+	{
+		if (hp < poke->hpRange.first) continue;
+
+		bool valid{ false };
+		for (int def : (isPhysical ? poke->realDefenseValues : poke->realSpecialDefenseValues))
+		{
+			int damage = (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / ApplyCritAwareStage(def)) / 50) + 2;
+			if (IsPixelDamagePossible(hp, damage))
+			{
+				valid = true;
+				break;
+			}
+		}
+
+		if (valid)
+		{
+			newHPValues.push_back(hp);
+		}
+	}
+
+	if (!newHPValues.empty())
+	{
+		poke->realHPValues = std::move(newHPValues);
+		poke->hpRange = { poke->realHPValues.front(), poke->realHPValues.back() };
+	}
+}
+
+void AIController::UpdateEnemySpeedStats(BattleContext& context, Player& self, BattlePokemon& source, BattlePokemon& target)
+{
+	auto poke = FindActivePokemonSlot();
+
+	// --- Stage ratio helper ---
+	auto GetStageRatio = [](int stage) -> std::pair<int, int>
+		{
+			if (stage < 0)
+			{
+				return { 2, -stage + 2 };
+			}
+			
+			if (stage == 0)
+			{
+				return { 2, 2 };
+			}
+
+			return { stage + 2, 2 };
+		};
+
+	// --- Compute OUR effective speed ---
+	bool isParalyzed{ source.GetStatus() == Status::Paralyzed };
+
+	int myBaseSpeed{ source.GetSpeed() };
+	auto myStageRatio{ GetStageRatio(source.GetSpeedStage()) };
+
+	int myEffectiveSpeed{ myBaseSpeed * myStageRatio.first / myStageRatio.second };
+
+	if (isParalyzed)
+	{
+		myEffectiveSpeed /= 2;
+	}
+
+	// --- Compute opponent multiplier ---
+	// opponentEffectiveSpeed = rawSpeed * multiplier.first / multiplier.second
+
+	auto opponentStageRatio = GetStageRatio(target.GetSpeedStage());
+
+	std::pair<int, int> opponentMultiplier = opponentStageRatio;
+
+	if (target.GetStatus() == Status::Paralyzed)
+	{
+		opponentMultiplier.first *= 1;
+		opponentMultiplier.second *= 2;
+	}
+
+	int& minRawSpeed = poke->speedRange.first;
+	int& maxRawSpeed = poke->speedRange.second;
+
+	// We solve inequalities on:
+	// rawSpeed * opponentMultiplier.first / opponentMultiplier.second
+	// compared against myEffectiveSpeed
+
+	int numerator = myEffectiveSpeed * opponentMultiplier.second;
+	int denominator = opponentMultiplier.first;
 
 	if (self.IsFirst())
 	{
-		int newMax = TightenRawFromEff(myEff, opRatio, true);
+		// We moved first:
+		// opponentEffectiveSpeed <= myEffectiveSpeed
+		//
+		// rawSpeed <= floor(numerator / denominator)
 
-		if (newMax < rawMax)
-		{
-			rawMax = std::max(rawMin, newMax);
-		}
+		int newMax = numerator / denominator;
+
+		maxRawSpeed = std::min(maxRawSpeed, newMax);
 	}
 	else
 	{
-		int newMin = TightenRawFromEff(myEff, opRatio, false);
+		// Opponent moved first:
+		// opponentEffectiveSpeed > myEffectiveSpeed
+		//
+		// rawSpeed >= ceil((numerator + 1) / denominator)
 
-		if (newMin > rawMin)
-		{
-			rawMin = std::min(rawMax, newMin);
-		}
+		int newMin = (numerator + denominator) / denominator;
+
+		minRawSpeed = std::max(minRawSpeed, newMin);
 	}
+
+	// Clamp in case range inverted
+	if (minRawSpeed > maxRawSpeed)
+		minRawSpeed = maxRawSpeed;
 }
 
 std::array<PersistentMemory, 6>::iterator AIController::FindActivePokemonSlot()

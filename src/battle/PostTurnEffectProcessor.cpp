@@ -45,7 +45,9 @@ void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
     if ((m_context.attackingPokemon->HasPendingPostTurnEffect() ||
         m_context.defendingPokemon->HasPendingPostTurnEffect() ||
         m_context.attackingPlayer->HasPendingPostTurnEffect() ||
-        m_context.defendingPlayer->HasPendingPostTurnEffect()))
+        m_context.defendingPlayer->HasPendingPostTurnEffect()) &&
+        !m_context.attackingPokemon->IsFainted() &&
+        !m_context.defendingPokemon->IsFainted())
     {
         m_statusEffectUI.NewLine();
     }
@@ -197,7 +199,8 @@ void PostTurnEffectProcessor::CheckDamagingStatuses()
 
 void PostTurnEffectProcessor::BurnedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int burnDamage{ std::max(1, pokemon.GetMaxHP() / 16) };
+    int maxHP{ pokemon.GetMaxHP() };
+    int burnDamage{ std::max(1, maxHP / 16) };
 
     pokemon.DamageCurrentHP(burnDamage);
 
@@ -206,7 +209,8 @@ void PostTurnEffectProcessor::BurnedStatus(Player& player, BattlePokemon& pokemo
 
 void PostTurnEffectProcessor::PoisonedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int poisonDamage{ std::max(1, pokemon.GetMaxHP() / 8) };
+    int maxHP{ pokemon.GetMaxHP() };
+    int poisonDamage{ std::max(1, maxHP / 8) };
 
     pokemon.DamageCurrentHP(poisonDamage);
 
@@ -215,7 +219,12 @@ void PostTurnEffectProcessor::PoisonedStatus(Player& player, BattlePokemon& poke
 
 void PostTurnEffectProcessor::BadlyPoisonedStatus(Player& player, BattlePokemon& pokemon)
 {
-    int poisonDamage{ std::max(pokemon.GetBadlyPoisonCounter(), pokemon.GetMaxHP() / 16 * pokemon.GetBadlyPoisonCounter()) };
+    // Badly poison's counter is capped at 15 in the BattlePokemon::IncrementBadlyPoisonCounter() method
+    int counter{ pokemon.GetBadlyPoisonCounter() };
+
+    int maxHP{ pokemon.GetMaxHP() };
+    int baseDamage{ std::max(1, maxHP / 16) };
+    int poisonDamage{ baseDamage * counter };
 
     pokemon.DamageCurrentHP(poisonDamage);
 

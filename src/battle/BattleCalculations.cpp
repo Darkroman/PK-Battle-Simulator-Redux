@@ -31,7 +31,6 @@ void BattleCalculations::RandomizeTurnOrder()
 	SetFirst(*activePlayers[0], *activePlayers[1]);
 }
 
-
 void BattleCalculations::RandomizePostTurnOrder()
 {
 	std::vector<BattlePokemon*> activePokemon{ m_context.attackingPokemon, m_context.defendingPokemon };
@@ -79,7 +78,7 @@ int BattleCalculations::MultiplyEffectiveness(uint16_t effect1, uint16_t effect2
 		return 0;
 
 	int product = static_cast<int>(effect1 * effect2);
-	return (product >> 12);
+	return (product / 4096);
 }
 
 void BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove& currentMove, BattlePokemon& target)
@@ -174,6 +173,11 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 {
 	auto effectiveness = m_context.effectiveness;
 
+	if (effectiveness == 0)
+	{
+		return 0;
+	}
+
 	int baseDamage{ 0 };
 
 	if ((currentMove.GetMoveEffectEnum() == MoveEffect::OHKO) && effectiveness != 0)
@@ -184,63 +188,34 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 		return baseDamage;
 	}
 
-	if (effectiveness == 0)
+	CalculateCriticalHit(source);
+
+	// START: Calculate total attack and defense values of attacker and defender
+	bool isPhysical{ currentMove.GetCategoryEnum() == Category::Physical };
+
+	int baseSourceAttack{ isPhysical ? source.GetAttack() : source.GetSpecialAttack() };
+	int baseTargetDefense{ isPhysical ? target.GetDefense() : target.GetSpecialDefense() };
+
+	int sourceStage{ isPhysical ? source.GetAttackStage() : source.GetSpecialAttackStage() };
+	int targetStage{ isPhysical ? target.GetDefenseStage() : target.GetSpecialDefenseStage() };
+
+	bool isCritical{ m_context.flags.isCriticalHit };
+
+	if (isCritical)
 	{
-		return 0;
+		// If attacker's attack stage is less than 0, clamp to 0
+		sourceStage = std::max(sourceStage, 0);
+		
+		// If defender's defense stage is greater than 0, clamp to 0
+		targetStage = std::min(targetStage, 0);
 	}
 
-	int sourceAttack{ 0 };
-	int targetDefense{ 0 };
-
-	if (currentMove.GetCategoryEnum() == Category::Physical)
-	{
-		if (m_context.flags.isCriticalHit && (source.GetAttackStage() < 0))
-		{
-			auto [numerator, denominator] = GetStageRatio(0);
-			sourceAttack = source.GetAttack() * numerator / denominator;
-		}
-		else
-		{
-			auto [numerator, denominator] = GetStageRatio(source.GetAttackStage());
-			sourceAttack = source.GetAttack() * numerator / denominator;
-		}
-
-		if (m_context.flags.isCriticalHit && (target.GetDefenseStage() > 0))
-		{
-			auto [numerator, denominator] = GetStageRatio(0);
-			targetDefense = target.GetDefense() * numerator / denominator;
-		}
-		else
-		{
-			auto [numerator, denominator] = GetStageRatio(target.GetDefenseStage());
-			targetDefense = target.GetDefense() * numerator / denominator;
-		}
-	}
-
-	else if (currentMove.GetCategoryEnum() == Category::Special)
-	{
-		if (m_context.flags.isCriticalHit && (source.GetSpecialAttackStage() < 0))
-		{
-			auto [numerator, denominator] = GetStageRatio(0);
-			sourceAttack = source.GetSpecialAttack() * numerator / denominator;
-		}
-		else
-		{
-			auto [numerator, denominator] = GetStageRatio(source.GetSpecialAttackStage());
-			sourceAttack = source.GetSpecialAttack() * numerator / denominator;
-		}
-
-		if (m_context.flags.isCriticalHit && (target.GetSpecialDefenseStage() > 0))
-		{
-			auto [numerator, denominator] = GetStageRatio(0);
-			targetDefense = target.GetSpecialDefense() * numerator / denominator;
-		}
-		else
-		{
-			auto [numerator, denominator] = GetStageRatio(target.GetSpecialDefenseStage());
-			targetDefense = target.GetSpecialDefense() * numerator / denominator;
-		}
-	}
+	auto [atkNumerator, atkDenominator] = GetStageRatio(sourceStage);
+	int sourceAttack{ baseSourceAttack * atkNumerator / atkDenominator };
+	
+	auto [defNumerator, defDenominator] = GetStageRatio(targetStage);
+	int targetDefense{ baseTargetDefense * defNumerator / defDenominator };
+	// END:
 
 	int currentMovePower{ currentMove.GetPower() };
 
@@ -258,20 +233,25 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 
 	int level = source.GetLevel();
 
-	baseDamage = (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / targetDefense) / 50) + 2;
+	// Damage formula: (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / targetDefense) / 50) + 2
+	// Truncates int after every division
+	int step1 = (2 * level / 5) + 2;
+	int step2 = step1 * currentMovePower;
+	int step3 = step2 * sourceAttack;
+	int step4 = step3 / targetDefense;
+	baseDamage = step4 / 50 + 2;
+	
+	int interimDamage = baseDamage;
 
-	CalculateCriticalHit(source);
-
-	if (m_context.flags.isCriticalHit)
+	if (isCritical)
 	{
-		baseDamage = (baseDamage * 6144) >> 12;
+		interimDamage = interimDamage * 6144 / 4096;
 	}
 
-	// From my research it seems the random damage roll is handled like this in the actual games Gen 5+
-	std::uniform_int_distribution<int> dist(0, 255);
-	int roll = dist(m_rng.GetGenerator());
-	int randPercent = 100 - (roll % 16);
-	int finalDamage = isAI ? (baseDamage * 92) / 100 : (baseDamage * randPercent) / 100;
+	std::uniform_int_distribution<int> dist(85, 100);
+	int randPercent = isAI ? 92 : dist(m_rng.GetGenerator());
+
+	interimDamage = interimDamage * randPercent / 100;
 
 	bool hasStab = (currentMove.GetMoveTypeEnum() == source.GetTypeOneEnum() ||
 		currentMove.GetMoveTypeEnum() == source.GetTypeTwoEnum())
@@ -279,46 +259,50 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 
 	if (hasStab)
 	{
-		finalDamage = (finalDamage * 6144) >> 12;
+		interimDamage = interimDamage * 6144 / 4096;
 	}
 
-	finalDamage = (finalDamage * effectiveness) >> 12;
+	interimDamage = interimDamage * effectiveness / 4096;
 
-	if (source.GetStatus() == Status::Burned && currentMove.GetCategoryEnum() == Category::Physical)
+	if (source.GetStatus() == Status::Burned && isPhysical)
 	{
-		finalDamage = (finalDamage * 2048) >> 12;
+		interimDamage = interimDamage * 2048 / 4096;
 	}
+
+	int other{ 4096 };
 
 	if ((currentMove.GetMoveEffectEnum() == MoveEffect::Stomp || currentMove.GetMoveEffectEnum() == MoveEffect::BodySlam) && target.HasUsedMinimize())
 	{
-		finalDamage *= 2;
+		other = (other * 8192 + 2048) / 4096;
 	}
 
 	if (currentMove.GetMoveEffectEnum() == MoveEffect::Earthquake && target.IsSemiInvulnerableFromDig())
 	{
-		finalDamage *= 2;
+		other = (other * 8192 + 2048) / 4096;
 	}
 
-	if (targetPlayer.HasReflect() && !m_context.flags.isCriticalHit && currentMove.GetCategoryEnum() == Category::Physical)
+	if (targetPlayer.HasReflect() && !isCritical && isPhysical)
 	{
-		finalDamage = (finalDamage * 2048) >> 12;
+		other = (other * 2048 + 2048) / 4096;
 	}
 
-	if (targetPlayer.HasLightScreen() && !m_context.flags.isCriticalHit && currentMove.GetCategoryEnum() == Category::Special)
+	if (targetPlayer.HasLightScreen() && !isCritical && !isPhysical)
 	{
-		finalDamage = (finalDamage * 2048) >> 12;
+		other = (other * 2048 + 2048) / 4096;
 	}
 
-	if (finalDamage < 1 && effectiveness != 0)
+	int finalDamage = interimDamage * other / 4096;
+
+	if (effectiveness != 0)
 	{
-		finalDamage = 1;
+		finalDamage = std::max(1, finalDamage);
 	}
 
 	if (finalDamage > target.GetCurrentHP())
 	{
 		finalDamage = target.GetCurrentHP();
 	}
-
+	
 	return finalDamage;
 }
 

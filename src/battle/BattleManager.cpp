@@ -77,6 +77,7 @@ void BattleManager::ApplyPlayerOneAction()
 
 		case BattleAction::Forfeit:
 			m_context.playerOne->SetForfeit(true);
+			m_context.vec_outOfPokemon.push_back(m_context.playerOne);
 			break;
 	}
 }
@@ -106,11 +107,12 @@ void BattleManager::ApplyPlayerTwoAction()
 	case BattleAction::SwitchPokemon:
 		m_context.playerTwoCurrentMove = nullptr;
 		m_context.playerTwo->SetIsSwitching(true);
-		m_context.playerOne->SetPokemonToSwitchTo(decision.chosenPokemon);
+		m_context.playerTwo->SetPokemonToSwitchTo(decision.chosenPokemon);
 		break;
 
 	case BattleAction::Forfeit:
-		m_context.playerOne->SetForfeit(true);
+		m_context.playerTwo->SetForfeit(true);
+		m_context.vec_outOfPokemon.push_back(m_context.playerTwo);
 		break;
 	}
 }

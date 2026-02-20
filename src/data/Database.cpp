@@ -26,7 +26,7 @@ Database& Database::GetInstance()
 
 void Database::TestingPokemonAndMoves()
 {
-    pokedex.emplace_back(152, "Poketest", 100, 100, 100, 100, 100, 100, "Normal", ConvertStringToPokemonType("Normal"), "None", ConvertStringToPokemonType("None"), 1);
+    pokedex.emplace_back(152, "Poketest1", 100, 100, 100, 100, 100, 100, "Normal", ConvertStringToPokemonType("Normal"), "None", ConvertStringToPokemonType("None"), 1);
 
     std::vector<size_t> tmp_movelist2{};
     tmp_movelist2.reserve(165);
@@ -36,6 +36,10 @@ void Database::TestingPokemonAndMoves()
     }
 
     pokedex[151].CopyMoveListVector(tmp_movelist2);
+
+    pokedex.emplace_back(153, "Poketest2", 100, 100, 102, 100, 100, 200, "Normal", ConvertStringToPokemonType("Normal"), "None", ConvertStringToPokemonType("None"), 1);
+
+    pokedex[152].CopyMoveListVector(tmp_movelist2);
 }
 
 const std::vector<Pokemon>& Database::GetPokedexVector() const

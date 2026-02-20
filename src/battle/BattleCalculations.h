@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <utility>
+
 class RandomEngine;
 struct BattleContext;
 class Player;

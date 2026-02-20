@@ -1298,7 +1298,8 @@ void BattlePokemon::ResetBadlyPoisonCounter()
 
 void BattlePokemon::IncrementBadlyPoisonCounter()
 {
-    ++m_badlyPoisonCounter;
+    if (m_badlyPoisonCounter < 15)
+        ++m_badlyPoisonCounter;
 }
 
 bool BattlePokemon::IsFlinched() const

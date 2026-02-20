@@ -223,6 +223,6 @@ BattlePokemon* HumanControllerConsole::SwitchAction(Player& currentPlayer, Battl
 
 BattleAction HumanControllerConsole::ForfeitAction(Player& sourcePlayer)
 {
-    std::cout << sourcePlayer.GetPlayerNameView() << " has forfeited!\n\n";
+    std::cout << sourcePlayer.GetPlayerNameView() << " has forfeited!\n";
     return BattleAction::Forfeit;
 }

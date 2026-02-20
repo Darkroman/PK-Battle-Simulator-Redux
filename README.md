@@ -7,6 +7,12 @@
 
    </summary>
    
+### 2/20/2026
+- Refactored how CalculateDamage works. Should have largely the same outcomes, just made the code more consistent and easier to follow.
+- One slight change to note is I took from Bulbapedia's damage page for Gen 5 onwards in the "other" section and implemented that here (with rounding up on 0.5 results).
+- Refactored and fixed up the AI update observed enemy stat ranges subroutines.
+- Added cap of 15 to the badly poison counter.
+   
 ### 2/16/2026
 - Post Turn evaluation order is now random before each check (more accurate to gen 9 mechanics).
 - Now correctly evaluates winner based on first player to lose all Pokémon.
