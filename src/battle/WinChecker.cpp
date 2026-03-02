@@ -1,6 +1,7 @@
 #include "WinChecker.h"
 
 #include "BattleContext.h"
+#include "../entities/Player.h"
 #include "SwitchExecutor.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../entities/controllers/AIController.h"
@@ -22,7 +23,7 @@ bool WinChecker::CheckWinCondition(Player& sourcePlayer, Player& targetPlayer)
 		sourcePlayer.SetWinCondition(true);
 		return true;
 	}
-
+	
 	if (&sourcePlayer == m_context.vec_outOfPokemon[0])
 	{
 		targetPlayer.SetWinCondition(true);
@@ -30,7 +31,7 @@ bool WinChecker::CheckWinCondition(Player& sourcePlayer, Player& targetPlayer)
 	}
 }
 
-bool WinChecker::CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& targetPokemon)
+bool WinChecker::CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& sourcePokemon, BattlePokemon& targetPokemon)
 {
 	bool winCondition{ false };
 
@@ -43,7 +44,7 @@ bool WinChecker::CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, Ba
 
 	if (!winCondition)
 	{
-		BattlePokemon* newPokemon = targetPlayer.GetController().PromptForSwitch(targetPlayer, targetPokemon);
+		BattlePokemon* newPokemon = targetPlayer.GetController().PromptForSwitch(targetPlayer, sourcePlayer, targetPokemon, sourcePokemon);
 		targetPlayer.SetPokemonToSwitchTo(newPokemon);
 
 		if (&targetPokemon == m_context.playerOneCurrentPokemon)

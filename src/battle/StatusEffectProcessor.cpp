@@ -2,6 +2,7 @@
 #include "RandomEngine.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
 #include "../moves/MoveEffectEnums.h"
+#include "../entities/Player.h"
 
 #include "StatusEffectProcessor.h"
 
@@ -352,7 +353,7 @@ void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& ta
 			m_statusEffectUI.DisplayFreedFromBoundMsg(targetPlayer.GetPlayerNameView(), target.GetNameView(), target.GetBoundMoveName());
 		}
 
-		if (targetPlayer.GetPokemonCount() == sourcePlayer.GetFaintedCount())
+		if (sourcePlayer.GetPokemonCount() == sourcePlayer.GetFaintedCount())
 		{
 			if (std::find(m_context.vec_outOfPokemon.begin(), m_context.vec_outOfPokemon.end(), &sourcePlayer) == m_context.vec_outOfPokemon.end())
 			{

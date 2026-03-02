@@ -51,10 +51,10 @@ void BattleAnnouncerText::DisplayFightingPokemon(const BattleContext& context) c
             }
         };
 
-    bool isOneAI = false;
+    bool isOneAI = context.playerOne->IsAI();
     PrintPokemon(*context.playerOne, *context.playerOneCurrentPokemon, isOneAI);
 
-    bool isTwoAI = false;
+    bool isTwoAI = context.playerTwo->IsAI();
     PrintPokemon(*context.playerTwo, *context.playerTwoCurrentPokemon, isTwoAI);
 
     std::cout << '\n';

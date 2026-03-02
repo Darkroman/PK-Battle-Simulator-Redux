@@ -6,7 +6,7 @@
 #include "../entities/Player.h"
 #include "BattleAIManager.h"
 #include "../entities/controllers/IPlayerController.h"
-#include "../entities/PlayerDecisionOutcome.h"
+#include "../entities/controllers/AIController.h"
 
 #include "BattleManager.h"
 
@@ -57,7 +57,7 @@ void BattleManager::ApplyPlayerOneAction()
 		return;
 	}
 
-	decision = m_context.playerOne->GetController().ChooseAction(*m_context.playerOne, *m_context.playerOneCurrentPokemon);
+	decision = m_context.playerOne->GetController().ChooseAction(*m_context.playerOne, *m_context.playerTwo, *m_context.playerOneCurrentPokemon, *m_context.playerTwoCurrentPokemon, m_rng);
 
 	switch (decision.action)
 	{
@@ -92,7 +92,7 @@ void BattleManager::ApplyPlayerTwoAction()
 		return;
 	}
 
-	decision = m_context.playerTwo->GetController().ChooseAction(*m_context.playerTwo, *m_context.playerTwoCurrentPokemon);
+	decision = m_context.playerTwo->GetController().ChooseAction(*m_context.playerTwo, *m_context.playerOne, *m_context.playerTwoCurrentPokemon, *m_context.playerOneCurrentPokemon, m_rng);
 
 	switch (decision.action)
 	{
@@ -122,15 +122,15 @@ bool BattleManager::RunBattleLoop()
 	int turnCount{ 0 };
 	bool winCondition{ false };
 
-	BattleAIProcedures::InitAIPlayers(m_context);
-
 	AssignFirstPokemon();
+
+	BattleAIProcedures::InitAIPlayers(m_context);
 
 	m_battleAnnouncerUI.ThrowOutFirstPokemon(m_context);
 
 	while (winCondition == false)
 	{
-		BattleAIProcedures::UpdateEnemyActivePokemon(m_context);
+		//BattleAIProcedures::UpdateEnemyActivePokemon(m_context);
 
 		++turnCount;
 
@@ -209,5 +209,10 @@ void BattleManager::ResetValues()
 		{
 			m_context.playerTwo->GetBelt(i).ResetValues();
 		}
+	}
+
+	for (auto aiPlayers : m_context.vec_aiPlayers)
+	{
+		aiPlayers->GetAIController().ResetObservedMoves();
 	}
 }

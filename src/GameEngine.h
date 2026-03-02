@@ -1,7 +1,6 @@
 #pragma once
 
-#include "entities/ai strategies/EasyAIStrategy.h"
-
+#include "entities/Player.h"
 #include "battle/RandomEngine.h"
 #include "battle/BattleContext.h"
 #include "ui/ConsoleTextSink.h"
@@ -29,9 +28,6 @@ private:
 
     Database& db;
     RandomEngine rng;
-
-    EasyAIStrategy easyStrategy;
-    IAIStrategy& aiStrat;
 
     std::vector<std::unique_ptr<Player>> players;
     BattleContext context;

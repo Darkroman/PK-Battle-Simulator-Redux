@@ -14,10 +14,9 @@
 #include "Menu.h"
 #include "../common/InputValidation.h"
 #include "../battle/RandomEngine.h"
-#include "../entities/ai strategies/EasyAIStrategy.h"
 
-Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage, RandomEngine& rng, IAIStrategy& persistentStrategy)
-	: playerStorage(playerStorage), m_rng(rng), m_persistentStrategy(persistentStrategy)
+Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage, RandomEngine& rng)
+	: playerStorage(playerStorage), m_rng(rng)
 {
 	players[0] = playerStorage[0].get();
 	players[1] = playerStorage[1].get();
@@ -736,7 +735,6 @@ bool Menu::RunMenu()
 		case 9:
 			if (IsPokemonSetupIncomplete())
 			{
-				std::cout << "Wtf?\n";
 				continue;
 			}
 			return false;
@@ -898,7 +896,7 @@ void Menu::ChangePlayerOneType()
 
 			case 2:
 			{
-				playerStorage[0]->SetController(std::make_unique<AIController>(m_persistentStrategy), ControllerType::AI);
+				playerStorage[0]->SetController(std::make_unique<AIController>(), ControllerType::AI);
 				players[0] = playerStorage[0].get();
 
 				std::cout << "Switched Player One to Easy A.I.\n\n";
@@ -1078,7 +1076,7 @@ void Menu::ChangePlayerTwoType()
 
 		case 2:
 		{
-			playerStorage[1]->SetController(std::make_unique<AIController>(m_persistentStrategy), ControllerType::AI);
+			playerStorage[1]->SetController(std::make_unique<AIController>(), ControllerType::AI);
 			players[1] = playerStorage[1].get();
 
 			std::cout << "Switched Player Two to Easy A.I.\n\n";
@@ -2252,27 +2250,36 @@ void Menu::SetDefaultPokemon()
 	}
 
 	players[0]->GetBelt(1).SetPokemon("Poketest1");
+	players[0]->GetBelt(2).SetPokemon("Poketest1");
 	players[1]->GetBelt(1).SetPokemon("Poketest2");
+	players[1]->GetBelt(2).SetPokemon("Poketest2");
 
 	if (players[0]->GetBelt(1).GetCurrentHP() != 0)
 	{
-		players[0]->GetBelt(1).SetMove(1, "Stomp");
-		players[1]->GetBelt(1).SetMove(1, "Minimize");
-		players[1]->GetBelt(1).SetMove(2, "Reflect");
+		players[0]->GetBelt(1).SetMove(1, "Thunderbolt");
+		players[0]->GetBelt(2).SetMove(1, "Thunderbolt");
+		players[1]->GetBelt(1).SetMove(1, "Earthquake");
+		players[1]->GetBelt(2).SetMove(1, "Earthquake");
+		//players[1]->GetBelt(1).SetMove(2, "Screech");
+		//players[1]->GetBelt(1).SetMove(3, "Recover");
 
 		players[0]->GetBelt(1).IncrementMoveCount();
+		players[0]->GetBelt(2).IncrementMoveCount();
 		players[1]->GetBelt(1).IncrementMoveCount();
-		players[1]->GetBelt(1).IncrementMoveCount();
+		players[1]->GetBelt(2).IncrementMoveCount();
 
 		players[0]->GetBelt(1).SetLevel(100);
+		players[0]->GetBelt(2).SetLevel(100);
 		players[1]->GetBelt(1).SetLevel(100);
+		players[1]->GetBelt(2).SetLevel(100);
 
-		//players[0]->GetBelt(1.SetHPEV(252);
-		//players[0]->GetBelt(1).SetAttackEV(252);
+		//players[0]->GetBelt(1).SetHPEV(252);
+		//players[0]->GetBelt(1).SetAttackEV(64);
 		//players[0]->GetBelt(1).SetDefenseEV(252);
 		//players[0]->GetBelt(1).SetHPIV(31);
 		//players[0]->GetBelt(1).SetAttackIV(31);
 		//players[0]->GetBelt(1).SetDefenseIV(31);
+		//players[0]->GetBelt(1).SetSpecialDefenseIV(31);
 		//players[0]->GetBelt(1).SetSpeedIV(31);
 
 		//players[1]->GetBelt(1).SetHPEV(252);
@@ -2291,8 +2298,10 @@ void Menu::SetDefaultPokemon()
 		//players[1]->GetBelt(1).ChangeStatus(Status::Poisoned);
 		//players[1]->GetBelt(1).DamageCurrentHP(players[1]->GetBelt(1).GetMaxHP() - 1);
 
-		//players[0]->GetBelt(1)->SetAttackStage(6);
-		//players[1]->GetBelt(1)->SetDefenseStage(-6);
+		//players[0]->GetBelt(1).ChangeStatus(Status::Burned);
+
+		//players[0]->GetBelt(1).SetAttackStage(6);
+		//players[1]->GetBelt(1).SetDefenseStage(-6);
 	}
 	else
 	{
@@ -2444,8 +2453,32 @@ bool Menu::IsPokemonSetupIncomplete()
 		std::cout << players[0]->GetPlayerNameView() << " does not have any Pokemon!\n\n";
 		return true;
 	}
-	else
+
+	for (auto& player : players)
 	{
-		return false;
+		for (auto& pokemon : player->GetBeltArray())
+		{
+			if (!pokemon.HasPokemon())
+			{
+				continue;
+			}
+
+			int emptyMoveCount{};
+			for (auto& move : pokemon.GetMoveArray())
+			{
+				if (move.GetMovePointer() == nullptr)
+				{
+					++emptyMoveCount;
+				}
+			}
+			if (emptyMoveCount >= 4)
+			{
+				std::cout << player->GetPlayerNameView() << "'s " << pokemon.GetNameView() << " doesn't have any moves!\n\n";
+				return true;
+			}
+		}
 	}
+
+	return false;
+	
 }

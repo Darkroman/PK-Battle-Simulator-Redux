@@ -1,11 +1,13 @@
 #pragma once
 
-#include "BattlePokemon.h"
+struct pokemonMove;
+class BattlePokemon;
+
 #include "../battle/BattleAction.h"
 
 struct PlayerDecisionOutcome
 {
     BattleAction action{ BattleAction::None };
-    BattlePokemon::pokemonMove* chosenMove{ nullptr };
+    pokemonMove* chosenMove{ nullptr };
     BattlePokemon* chosenPokemon{ nullptr };
 };

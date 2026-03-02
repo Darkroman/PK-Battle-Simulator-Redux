@@ -1,11 +1,11 @@
 #include "PostTurnEffectProcessor.h"
 
 #include "BattleContext.h"
-#include "RandomEngine.h"
 #include "BattleCalculations.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
 #include "StatusEffectProcessor.h"
 #include "WinChecker.h"
+#include "../entities/Player.h"
 
 PostTurnEffectProcessor::PostTurnEffectProcessor(BattleContext& context, BattleCalculations& calculations, IStatusEffectUI& statusEffectUI, StatusEffectProcessor& statusProcessor, WinChecker& winChecker)
     : m_context(context)
@@ -90,10 +90,10 @@ void PostTurnEffectProcessor::ProcessAllPostTurnEffects(bool& winCondition)
 
     DeterminePostFaintSwitchOrder();
 
-    winCondition = m_winChecker.CheckWinOrSwitch(*m_context.defendingPlayer, *m_context.attackingPlayer, *m_context.attackingPokemon);
+    winCondition = m_winChecker.CheckWinOrSwitch(*m_context.defendingPlayer, *m_context.attackingPlayer, *m_context.defendingPokemon, *m_context.attackingPokemon);
     if (winCondition) { return; }
 
-    winCondition = m_winChecker.CheckWinOrSwitch(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.defendingPokemon);
+    winCondition = m_winChecker.CheckWinOrSwitch(*m_context.attackingPlayer, *m_context.defendingPlayer, *m_context.attackingPokemon, *m_context.defendingPokemon);
     if (winCondition) { return; }
 }
 

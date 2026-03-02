@@ -43,6 +43,8 @@ public:
     void IncrementFaintedCount();
     void DecrementFaintedCount();
 
+    int GetPokemonLeft() const;
+
     bool IsFirst() const;
     void SetFirst(bool);
 

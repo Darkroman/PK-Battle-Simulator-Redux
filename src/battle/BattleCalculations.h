@@ -7,6 +7,7 @@ class RandomEngine;
 struct BattleContext;
 class Player;
 class BattlePokemon;
+struct pokemonMove;
 
 class BattleCalculations
 {
@@ -21,19 +22,19 @@ public:
 
 	void SetFirst(Player&, Player&);
 
-	void CalculateCriticalHit(BattlePokemon&);
+	bool CalculateCriticalHit(BattleContext&, BattlePokemon&);
 
 	std::pair<int, int> GetStageRatio(int);
 
 	int MultiplyEffectiveness(uint16_t, uint16_t);
 
-	void CalculateTypeEffectiveness(BattlePokemon::pokemonMove&, BattlePokemon&);
+	void CalculateTypeEffectiveness(BattleContext&, const pokemonMove&, const BattlePokemon&);
 
-	bool CalculateHitChance(BattlePokemon::pokemonMove&, BattlePokemon&, BattlePokemon&);
+	bool CalculateHitChance(pokemonMove&, BattlePokemon&, BattlePokemon&);
 
-	int CalculateDamage(Player&, BattlePokemon::pokemonMove&, BattlePokemon&, BattlePokemon&, bool isAI = false);
+	int CalculateDamage(BattleContext&, Player&, pokemonMove&, BattlePokemon&, BattlePokemon&);
 
-	void ApplyDamage(Player&, BattlePokemon::pokemonMove&, BattlePokemon&, BattlePokemon&, int);
+	void ApplyDamage(Player&, pokemonMove&, BattlePokemon&, BattlePokemon&, int);
 
 	int CalculateLowKickPower(BattlePokemon&);
 
@@ -78,27 +79,4 @@ public:
 	};
 
 	const std::array<int, 4> m_arr_CriticalHitStageThresholds{ 1, 3, 12, 24 }; // For critical hit
-
-	const std::array<std::array<uint16_t, 18>, 18> typeChart
-	{{
-			         // NOR  FIR  WAT  ELE  GRA  ICE  FIG  POI  GRO  FLY  PSY  BUG  ROC  GHO  DRA  DAR  STE  FAI
-			/* NOR */ {4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,2048,   0,4096,4096,2048,4096},
-			/* FIR */ {4096,2048,2048,4096,8192,8192,4096,4096,4096,4096,4096,8192,2048,4096,2048,4096,8192,4096},
-			/* WAT */ {4096,8192,2048,4096,2048,4096,4096,4096,8192,4096,4096,4096,8192,4096,2048,4096,4096,4096},
-			/* ELE */ {4096,4096,8192,2048,2048,4096,4096,4096,   0,8192,4096,4096,4096,4096,2048,4096,4096,4096},
-			/* GRA */ {4096,2048,8192,4096,2048,4096,4096,2048,8192,2048,4096,4096,8192,4096,2048,4096,2048,4096},
-			/* ICE */ {4096,2048,2048,4096,8192,2048,4096,4096,8192,8192,4096,4096,4096,4096,8192,4096,2048,4096},
-			/* FIG */ {8192,4096,4096,4096,4096,8192,4096,2048,4096,2048,2048,2048,8192,   0,4096,8192,8192,2048},
-			/* POI */ {4096,4096,4096,4096,8192,4096,4096,2048,2048,4096,4096,4096,2048,2048,4096,4096,   0,8192},
-			/* GRO */ {4096,8192,4096,8192,2048,4096,4096,8192,4096,   0,4096,2048,8192,4096,4096,4096,8192,4096},
-			/* FLY */ {4096,4096,4096,2048,8192,4096,8192,4096,4096,4096,4096,8192,2048,4096,4096,4096,2048,4096},
-			/* PSY */ {4096,4096,4096,4096,4096,4096,8192,8192,4096,4096,2048,4096,4096,4096,4096,   0,2048,4096},
-			/* BUG */ {4096,2048,4096,4096,8192,4096,2048,2048,4096,2048,8192,4096,4096,2048,4096,8192,2048,2048},
-			/* ROC */ {4096,8192,4096,4096,4096,8192,2048,4096,2048,8192,4096,8192,4096,4096,4096,4096,2048,4096},
-			/* GHO */ {   0,4096,4096,4096,4096,4096,4096,4096,4096,4096,8192,4096,4096,8192,4096,2048,4096,4096},
-			/* DRA */ {4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,4096,8192,4096,2048,   0},
-			/* DAR */ {4096,4096,4096,4096,4096,4096,2048,4096,4096,4096,8192,4096,4096,8192,4096,2048,4096,2048},
-			/* STE */ {4096,2048,2048,2048,4096,8192,4096,4096,4096,4096,4096,4096,8192,4096,4096,4096,2048,8192},
-			/* FAI */ {4096,2048,4096,4096,4096,4096,8192,2048,4096,4096,4096,4096,4096,4096,8192,8192,2048,4096}
-	}};
 };

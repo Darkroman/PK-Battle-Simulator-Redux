@@ -2,15 +2,17 @@
 
 #include "IPlayerController.h"
 
+struct pokemonMove;
+
 class HumanControllerConsole : public IPlayerController
 {
 public:
 
-	PlayerDecisionOutcome ChooseAction(Player&, BattlePokemon&) override;
-	BattlePokemon* PromptForSwitch(Player&, BattlePokemon&) override;
+	PlayerDecisionOutcome ChooseAction(Player&, Player&, BattlePokemon&, BattlePokemon&, RandomEngine&) override;
+	BattlePokemon* PromptForSwitch(Player&, Player&, BattlePokemon&, BattlePokemon&) override;
 
 private:
-	BattlePokemon::pokemonMove* FightAction(Player&, BattlePokemon&);
+	pokemonMove* FightAction(Player&, BattlePokemon&);
 	BattlePokemon* SwitchAction(Player&, BattlePokemon&);
 	BattleAction ForfeitAction(Player&);
 };

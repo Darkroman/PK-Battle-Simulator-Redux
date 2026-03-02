@@ -8,7 +8,6 @@
 
 class Player;
 class RandomEngine;
-class IAIStrategy;
 
 class Menu
 {
@@ -16,11 +15,10 @@ private:
 	std::vector<std::unique_ptr<Player>>& playerStorage;
 	std::array<Player*, 2> players;
 	RandomEngine& m_rng;
-	IAIStrategy& m_persistentStrategy;
 
 public:
 	Menu() = delete;
-	explicit Menu(std::vector<std::unique_ptr<Player>>&, RandomEngine&, IAIStrategy&);
+	explicit Menu(std::vector<std::unique_ptr<Player>>&, RandomEngine&);
 
 	SetPokemonResult SetPlayerPokemon(BattlePokemon&, std::string_view);
 	SetMoveResult SetPlayerPokemonMove(BattlePokemon&, size_t, std::string_view);

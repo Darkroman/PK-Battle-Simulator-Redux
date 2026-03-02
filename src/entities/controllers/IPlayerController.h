@@ -1,18 +1,19 @@
 #pragma once
 
 #include "../../battle/BattleAction.h"
-#include "../BattlePokemon.h"
 #include "../PlayerDecisionOutcome.h"
 
+struct BattleContext;
 class Player;
 class BattlePokemon;
-struct BattleContext;
+class BattleCalculations;
+class RandomEngine;
 
 class IPlayerController
 {
 public:
 
 	virtual ~IPlayerController() = default;
-	virtual PlayerDecisionOutcome ChooseAction(Player&, BattlePokemon&) = 0;
-	virtual BattlePokemon* PromptForSwitch(Player&, BattlePokemon&) = 0;
+	virtual PlayerDecisionOutcome ChooseAction(Player&, Player&, BattlePokemon&, BattlePokemon&, RandomEngine&) = 0;
+	virtual BattlePokemon* PromptForSwitch(Player&, Player&, BattlePokemon&, BattlePokemon&) = 0;
 };

@@ -1,6 +1,8 @@
+#include <sstream>
+
 #include "StringToTypes.h"
 
-static inline mapOfStringsToCategories mostc = {
+static inline const mapOfStringsToCategories mostc = {
     { "Physical", Category::Physical},
     { "Special",  Category::Special },
     { "Status",   Category::Status }
@@ -12,7 +14,7 @@ Category ConvertStringToCategory(std::string_view input) // Used to set enum val
     return result = mostc.at(input);
 }
 
-static inline mapOfStringsToPokemonTypes mostpt{
+static inline const mapOfStringsToPokemonTypes mostpt{
         {"Normal",   PokemonType::Normal},
         {"Fire",     PokemonType::Fire},
         {"Water",    PokemonType::Water},

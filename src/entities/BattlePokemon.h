@@ -4,68 +4,17 @@
 #include <ranges>
 #include <string>
 
+#include "pokemonMove.h"
+
 #include "../common/PartyEditResults.h"
 
 class Pokemon;
-class Move;
-enum class PokemonType;
-enum class Category;
-enum class MoveEffect;
 
 enum struct Status { Normal = 0, Burned, Frozen, Paralyzed, Poisoned, Badly_Poisoned, Sleeping };
 
 class BattlePokemon
 {
 public:
-    struct pokemonMove
-    {
-        pokemonMove();
-
-        bool IsActive() const;
-        bool IsDisabled() const;
-
-        void SetMovePointer(Move*);
-        Move* GetMovePointer() const;
-        void ResetMove();
-
-        size_t   GetMoveIndex() const;
-        std::string_view    GetName() const;
-
-        std::string_view GetCategory() const;
-        Category     GetCategoryEnum() const;
-        std::string_view GetMoveType() const;
-        PokemonType  GetMoveTypeEnum() const;
-
-        int              GetPriority() const;
-        MoveEffect GetMoveEffectEnum() const;
-        int          GetEffectChance() const;
-
-        int       GetPP() const;
-        int    GetMaxPP() const;
-        int    GetPower() const;
-        int GetAccuracy() const;
-
-        void DeductPP();
-
-        bool        DoesMakeContact() const;
-        bool    IsAffectedByProtect() const;
-        bool  IsAffectedByMagicCoat() const;
-        bool     IsAffectedBySnatch() const;
-        bool IsAffectedByMirrorMove() const;
-        bool   IsAffectedByKingRock() const;
-        bool           IsSoundBased() const;
-        bool    CanBypassSubstitute() const;
-
-    private:
-        Move* mp_move{ nullptr };
-
-    public:
-        int m_currentPP{ 0 };
-        int m_maxPP{ 0 };
-
-        bool b_isDisabled{ false };
-        bool b_isMimicked{ false };
-    };
 
     struct DetransformData
     {
@@ -73,7 +22,7 @@ public:
 
         void BackupOriginalPokemonData(BattlePokemon*);
 
-        std::array<BattlePokemon::pokemonMove, 4> m_array_moves{};
+        std::array<pokemonMove, 4> m_array_moves{};
 
         Pokemon* mp_pokemon{ nullptr };
 
@@ -116,6 +65,8 @@ public:
     void ReleasePokemon();
 
     SetMoveOutcome SetMove(size_t, std::string_view);
+    std::array<pokemonMove, 4>& GetMoveArray();
+    const std::array<pokemonMove, 4>& GetMoveArray() const;
 
     void SetNickname(std::string_view);
     bool HasNickname() const;
@@ -169,8 +120,8 @@ public:
 
     int GetLevel() const;
 
-    BattlePokemon::pokemonMove& GetMove(size_t);
-    const BattlePokemon::pokemonMove& GetMove(size_t) const;
+    pokemonMove& GetMove(size_t);
+    const pokemonMove& GetMove(size_t) const;
     void DeleteMove(size_t);
     void SwapMoves(size_t, size_t);
     void ReorderMoves(size_t, size_t);
@@ -326,7 +277,7 @@ public:
     void Detransform();
 
     bool IsConverted() const;
-    void SetConversion(BattlePokemon::pokemonMove*);
+    void SetConversion(pokemonMove*);
     void Deconvert();
 
     bool HasSubstitute() const;
@@ -335,7 +286,7 @@ public:
     int GetSubstituteHP() const;
     void DamageSubstitute(int);
 
-    BattlePokemon::pokemonMove& Struggle();
+    pokemonMove& Struggle();
 
     Status currentStatus{ Status::Normal };
 

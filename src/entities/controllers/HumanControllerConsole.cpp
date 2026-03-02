@@ -7,7 +7,7 @@
 
 #include "HumanControllerConsole.h"
 
-PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, BattlePokemon& currentPokemon)
+PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, Player& targetPlayer, BattlePokemon& currentPokemon, BattlePokemon& targetMon, RandomEngine& rng)
 {
     PlayerDecisionOutcome decision{};
 
@@ -77,17 +77,17 @@ PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, Battl
     }
 }
 
-BattlePokemon* HumanControllerConsole::PromptForSwitch(Player& currentPlayer, BattlePokemon& currentPokemon)
+BattlePokemon* HumanControllerConsole::PromptForSwitch(Player& player, Player& targetPlayer, BattlePokemon& currentPokemon, BattlePokemon& targetMon)
 {
-   BattlePokemon* selectedPokemon = SwitchAction(currentPlayer, currentPokemon);
+   BattlePokemon* selectedPokemon = SwitchAction(player, currentPokemon);
     return selectedPokemon;
 }
 
-BattlePokemon::pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& currentPokemon)
+pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& currentPokemon)
 {
     bool struggle = currentPokemon.CheckPPCountForStruggle();
 
-    BattlePokemon::pokemonMove* selectedMove{ nullptr };
+    pokemonMove* selectedMove{ nullptr };
 
     if (struggle)
     {

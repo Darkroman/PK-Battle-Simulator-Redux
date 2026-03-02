@@ -8,14 +8,12 @@
 GameEngine::GameEngine()
     : db(Database::GetInstance()),
     rng(),
-    easyStrategy(rng),
-    aiStrat(easyStrategy),
     players([&] {
         std::vector<std::unique_ptr<Player>> v;
         v.push_back(std::make_unique<Player>("Player One"));
         v.push_back(std::make_unique<Player>("Player Two"));
         v.at(0)->SetController(std::make_unique<HumanControllerConsole>(), ControllerType::Human);
-        v.at(1)->SetController(std::make_unique<AIController>(aiStrat), ControllerType::AI);
+        v.at(1)->SetController(std::make_unique<AIController>(), ControllerType::AI);
         return v;
         }()),
     context(players),
@@ -52,7 +50,7 @@ void GameEngine::Run()
             case AppState::MainMenu:
                 if (!menu)
                 {
-                    menu.emplace(players, rng, aiStrat);
+                    menu.emplace(players, rng);
                 }
 
                 if (menu->RunMenu())

@@ -11,6 +11,7 @@
 #include "../data/StringToTypes.h"
 #include "../ui/EffectivenessText.h"
 #include "../entities/controllers/AIController.h"
+#include "../entities/Player.h"
 
 #include "MoveRoutines.h"
 
@@ -20,11 +21,11 @@ EffectivenessText ToEffectivenessText(BattleStateFlags::Effectiveness e)
 
 	switch (e)
 	{
-		case E::Less:  return EffectivenessText::Less;
-		case E::Super: return EffectivenessText::Super;
-		case E::No:	   return EffectivenessText::No;
-		case E::OHKO:  return EffectivenessText::OHKO;
-		default:	   return EffectivenessText::Normal;
+	case E::Less:  return EffectivenessText::Less;
+	case E::Super: return EffectivenessText::Super;
+	case E::No:	   return EffectivenessText::No;
+	case E::OHKO:  return EffectivenessText::OHKO;
+	default:	   return EffectivenessText::Normal;
 	}
 }
 
@@ -103,7 +104,7 @@ void BasicDamageRoutine(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -237,7 +238,7 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -253,7 +254,7 @@ void NormalHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -275,7 +276,7 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -296,7 +297,7 @@ void IncreasedCritical::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetCriticalHitStage(newCritStage);
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -320,7 +321,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -355,7 +356,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 	int totalDamage{};
 	while (turnCount > 0 && ctx.defendingPokemon->GetCurrentHP() > 0)
 	{
-		int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+		int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 		deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -372,7 +373,7 @@ void MultiHit::DoMove(MoveRoutineDeps& deps)
 	{
 		deps.resultsUI.DisplayMultiAttackMsg(ctx.defendingPokemon->GetNameView(), timesHit);
 	}
-	
+
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
 
 	if (ctx.defendingPokemon->IsBiding() && ctx.defendingPokemon->GetCurrentHP() != 0 && !ctx.flags.hitSubstitute)
@@ -395,7 +396,7 @@ void BurnHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -411,7 +412,7 @@ void BurnHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -435,7 +436,7 @@ void FreezeHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -451,7 +452,7 @@ void FreezeHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -475,7 +476,7 @@ void ParalyzeHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -491,7 +492,7 @@ void ParalyzeHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -515,7 +516,7 @@ void OHKO::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -532,7 +533,7 @@ void OHKO::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// OHKO specific logic done in CalculateDamage()
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
 	deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
@@ -564,7 +565,7 @@ void RazorWind::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetCharging(false);
 	ctx.attackingPlayer->SetCanSwitch(true);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -580,7 +581,7 @@ void RazorWind::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -630,14 +631,14 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
 		return;
 	}
-	
+
 	// Specific accuracy check for gust vs SemiInvulnerableFly done in CalculateHitChance()
 	ctx.flags.hit = deps.calculations.CalculateHitChance(*ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 
@@ -651,8 +652,8 @@ void Gust::DoMove(MoveRoutineDeps& deps)
 	{
 		ctx.initialPowerMultiplier = 20;
 	}
-	
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -674,7 +675,7 @@ void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	if (ctx.defendingPlayer->GetPokemonCount() == 1 || !ctx.defendingPlayer->IsFirst())
+	if (ctx.defendingPlayer->GetPokemonLeft() == 1 || !ctx.defendingPlayer->IsFirst())
 	{
 		deps.resultsUI.DisplayFailedTextDialog();
 		return;
@@ -752,7 +753,7 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetSemiInvulnerableFly(false);
 	ctx.attackingPlayer->SetCanSwitch(true);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -768,7 +769,7 @@ void Fly::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -790,7 +791,7 @@ void PartialTrap::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -806,7 +807,7 @@ void PartialTrap::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -848,7 +849,7 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -876,7 +877,7 @@ void Stomp::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Damage multiplier for when defending Pokemon has minimized is in CalculateDamage()
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -911,7 +912,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -933,7 +934,7 @@ void DoubleHit::DoMove(MoveRoutineDeps& deps)
 	int totalDamage{};
 	while (turnCount != 0 && ctx.defendingPokemon->GetCurrentHP() > 0)
 	{
-		int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+		int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 		deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -971,7 +972,7 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -992,7 +993,7 @@ void JumpKick::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1014,7 +1015,7 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1030,7 +1031,7 @@ void FlinchHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1108,7 +1109,7 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1136,7 +1137,7 @@ void BodySlam::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Damage multiplier for when defending Pokemon has minimized is in CalculateDamage()
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1160,7 +1161,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1179,8 +1180,8 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 	bool hitSubstitute = ctx.defendingPokemon->HasSubstitute() && !ctx.currentMove->CanBypassSubstitute();
 
 	int targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
-	
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1211,7 +1212,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 	auto endRampage = [&]() {
 		deps.statusProcessor.ThrashStop();
 		deps.statusProcessor.ThrashReset();
-	};
+		};
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
@@ -1222,7 +1223,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 		ctx.attackingPokemon->IncrementThrashCounter();
 	}
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1274,7 +1275,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 		ctx.currentMove->DeductPP();
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1305,7 +1306,7 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1323,7 +1324,7 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	int targetHPBegin = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1400,7 +1401,7 @@ void PoisonHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1416,7 +1417,7 @@ void PoisonHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1440,7 +1441,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1462,7 +1463,7 @@ void Twineedle::DoMove(MoveRoutineDeps& deps)
 	int totalDamage{};
 	while (turnCount != 0 && ctx.defendingPokemon->GetCurrentHP() > 0)
 	{
-		int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+		int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 		deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1612,7 +1613,7 @@ void SonicBoom::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1677,7 +1678,7 @@ void Disable::DoMove(MoveRoutineDeps& deps)
 	ctx.defendingPokemon->ResetDisabledCounter();
 
 	deps.resultsUI.DisplayMoveDisabledMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetLastUsedMove()->GetName());
-	
+
 }
 
 void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
@@ -1690,7 +1691,7 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1705,8 +1706,8 @@ void SpecialDefenseDownHit::DoMove(MoveRoutineDeps& deps)
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
-		
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1765,7 +1766,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1780,7 +1781,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1794,7 +1795,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 		std::uniform_int_distribution<int> randomModDistributor(1, 100);
 		int randomNumber{ randomModDistributor(deps.rng.GetGenerator()) };
 
-		if (randomNumber <= ctx.currentMove->GetEffectChance() && 
+		if (randomNumber <= ctx.currentMove->GetEffectChance() &&
 			(!ctx.defendingPokemon->HasSubstitute() || ctx.currentMove->CanBypassSubstitute()) &&
 			ctx.defendingPokemon->GetCurrentHP() != 0)
 		{
@@ -1822,7 +1823,7 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1837,8 +1838,8 @@ void SpeedDownHit::DoMove(MoveRoutineDeps& deps)
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
-		
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1876,7 +1877,7 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1892,7 +1893,7 @@ void AttackDownHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1938,7 +1939,7 @@ void RechargeAttack::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1954,7 +1955,7 @@ void RechargeAttack::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -1982,7 +1983,7 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -1999,7 +2000,7 @@ void LowKick::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Low Kick power calculated in CalculateDamage()
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -2041,7 +2042,7 @@ void Counter::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2081,7 +2082,7 @@ void SeismicToss::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2123,7 +2124,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2138,8 +2139,8 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 		deps.resultsUI.DisplayAttackMissedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 		return;
 	}
-	
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -2153,7 +2154,7 @@ void Leech::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->HealCurrentHP(finalLeech);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
-	
+
 	if (finalLeech > 0)
 	{
 		deps.resultsUI.DisplayEnergyDrainedMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
@@ -2195,7 +2196,7 @@ void LeechSeed::DoMove(MoveRoutineDeps& deps)
 	}
 
 	ctx.defendingPokemon->SetSeededStatus(true);
-	
+
 	deps.resultsUI.DisplaySeededMsg(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView());
 }
 
@@ -2256,7 +2257,7 @@ void SolarBeam::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetCharging(false);
 	ctx.attackingPlayer->SetCanSwitch(true);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2272,7 +2273,7 @@ void SolarBeam::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -2470,7 +2471,7 @@ void DragonRage::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2515,7 +2516,10 @@ void Paralyze::DoMove(MoveRoutineDeps& deps)
 	bool isElectricType = (ctx.defendingPokemon->GetTypeOneEnum() == PokemonType::Electric ||
 		ctx.defendingPokemon->GetTypeTwoEnum() == PokemonType::Electric);
 
-	bool isImmune = (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No || isElectricType);
+	bool electricVsGround = ctx.currentMove->GetMoveTypeEnum() == PokemonType::Electric && ctx.defendingPokemon->GetTypeOneEnum() == PokemonType::Ground ||
+		ctx.defendingPokemon->GetTypeTwoEnum() == PokemonType::Ground;
+
+	bool isImmune = (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No || isElectricType || electricVsGround);
 
 	// Special case: Glare affects Ghosts despite being Normal-type
 	if (ctx.currentMove->GetName() == "Glare")
@@ -2566,7 +2570,7 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2583,7 +2587,7 @@ void Earthquake::DoMove(MoveRoutineDeps& deps)
 	}
 
 	// Damage multiplier for when defending Pokemon is SemiInvulnerableDig is in CalculateDamage()
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -2618,7 +2622,7 @@ void Dig::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetSemiInvulnerableDig(false);
 	ctx.attackingPlayer->SetCanSwitch(true);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2634,7 +2638,7 @@ void Dig::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -2752,7 +2756,7 @@ void Rage::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -2768,7 +2772,7 @@ void Rage::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -2791,13 +2795,13 @@ void Teleport::DoMove(MoveRoutineDeps& deps)
 
 	deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
-	if (ctx.attackingPlayer->GetPokemonCount() == 1)
+	if (ctx.attackingPlayer->GetPokemonLeft() == 1)
 	{
 		deps.resultsUI.DisplayFailedTextDialog();
 		return;
 	}
 
-	BattlePokemon* newPokemon = ctx.attackingPlayer->GetController().PromptForSwitch(*ctx.attackingPlayer, *ctx.attackingPokemon);
+	BattlePokemon* newPokemon = ctx.attackingPlayer->GetController().PromptForSwitch(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	ctx.attackingPlayer->SetPokemonToSwitchTo(newPokemon);
 
 	deps.switchExecutor.ExecuteSwitch(*ctx.attackingPlayer, ctx.attackingPokemon);
@@ -2813,7 +2817,7 @@ void NightShade::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3191,7 +3195,7 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 	{
 		ctx.attackingPokemon->IncrementBideCounter();
 		deps.resultsUI.DisplayBideStoringEnergyMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
-		
+
 		return;
 	}
 
@@ -3209,7 +3213,7 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 	}
 
 	if (ctx.attackingPokemon->GetBideCounter() >= ctx.attackingPokemon->GetBideTurnCount())
-	{		
+	{
 		deps.resultsUI.DisplayBideUnleashedMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 
 		if (ctx.defendingPokemon->GetTypeOneEnum() == PokemonType::Ghost ||
@@ -3300,7 +3304,7 @@ void MirrorMove::DoMove(MoveRoutineDeps& deps)
 
 	ctx.currentMove->DeductPP();
 
-	BattlePokemon::pokemonMove* targetLastUsedMove = ctx.defendingPokemon->GetLastUsedMove();
+	pokemonMove* targetLastUsedMove = ctx.defendingPokemon->GetLastUsedMove();
 
 	if (!targetLastUsedMove || !targetLastUsedMove->IsAffectedByMirrorMove())
 	{
@@ -3329,7 +3333,7 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3358,7 +3362,7 @@ void Explosion::DoMove(MoveRoutineDeps& deps)
 
 	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -3380,7 +3384,7 @@ void AlwaysHit::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3396,7 +3400,7 @@ void AlwaysHit::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -3443,7 +3447,7 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetCharging(false);
 	ctx.attackingPlayer->SetCanSwitch(true);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3459,7 +3463,7 @@ void SkullBash::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -3511,7 +3515,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.defendingPokemon->GetStatus() != Status::Sleeping || ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3527,7 +3531,7 @@ void DreamEater::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -3613,7 +3617,7 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 	ctx.attackingPokemon->SetCharging(false);
 	ctx.attackingPlayer->SetCanSwitch(true);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3634,7 +3638,7 @@ void SkyAttack::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetCriticalHitStage(newCritStage);
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -3697,7 +3701,7 @@ void Psywave::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3804,7 +3808,7 @@ void TriAttack::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3820,7 +3824,7 @@ void TriAttack::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -3871,7 +3875,7 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3957,7 +3961,7 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	deps.calculations.CalculateTypeEffectiveness(*ctx.currentMove, *ctx.defendingPokemon);
+	deps.calculations.CalculateTypeEffectiveness(ctx, *ctx.currentMove, *ctx.defendingPokemon);
 
 	if (ctx.flags.currentEffectiveness == BattleStateFlags::Effectiveness::No)
 	{
@@ -3973,7 +3977,7 @@ void Struggle::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	int damage = deps.calculations.CalculateDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);

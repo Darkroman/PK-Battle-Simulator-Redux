@@ -14,6 +14,7 @@ namespace BattleAIProcedures
 		for (auto player : context.vec_aiPlayers)
 		{
 			player->GetAIController().OnBattleStart(*player, context);
+			player->GetAIController().OnActivePokemonChanged(context);
 		}
 	}
 
@@ -30,7 +31,6 @@ namespace BattleAIProcedures
 		for (auto player : context.vec_aiPlayers)
 		{
 			player->GetAIController().OnMoveResolved(context);
-			player->GetAIController().OnFirstMoveResolved(context);
 		}
 	}
 

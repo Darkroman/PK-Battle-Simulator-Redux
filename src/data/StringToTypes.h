@@ -1,8 +1,7 @@
 #pragma once
 
-#include <sstream>
-#include <string>
 #include <map>
+#include <string>
 
 enum class Category // Used in Moves
 {

@@ -1,8 +1,9 @@
 #include "../data/Pokemon.h"
 #include "../moves/MoveEffectEnums.h"
 #include "../data/StringToTypes.h"
-#include "../battle/RandomEngine.h"
-#include "../battle/BattleContext.h"
+#include "RandomEngine.h"
+#include "BattleContext.h"
+#include "Typechart.h"
 #include "../entities/Player.h"
 
 #include "BattleCalculations.h"
@@ -53,7 +54,7 @@ void BattleCalculations::SetFirst(Player& first, Player& second)
 	m_context.currentMove = (&first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
 }
 
-void BattleCalculations::CalculateCriticalHit(BattlePokemon& source)
+bool BattleCalculations::CalculateCriticalHit(BattleContext& ctx,BattlePokemon& source)
 {
 	size_t stage = source.GetCriticalHitStage();
 	if (stage > 3) stage = 3;
@@ -63,7 +64,9 @@ void BattleCalculations::CalculateCriticalHit(BattlePokemon& source)
 	std::uniform_int_distribution<int> critmoddistributor(0, 23);
 	int roll{ critmoddistributor(m_rng.GetGenerator()) };
 
-	m_context.flags.isCriticalHit = (roll < threshold);
+	ctx.flags.isCriticalHit = (roll < threshold);
+
+	return ctx.flags.isCriticalHit;
 }
 
 std::pair<int, int> BattleCalculations::GetStageRatio(int stage)
@@ -74,19 +77,21 @@ std::pair<int, int> BattleCalculations::GetStageRatio(int stage)
 
 int BattleCalculations::MultiplyEffectiveness(uint16_t effect1, uint16_t effect2)
 {
-	if (effect1 == 0 || effect2 == 0) // Immunity check
+	if (effect1 == 0 || effect2 == 0)
+	{
 		return 0;
+	}
 
 	int product = static_cast<int>(effect1 * effect2);
 	return (product / 4096);
 }
 
-void BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove& currentMove, BattlePokemon& target)
+void BattleCalculations::CalculateTypeEffectiveness(BattleContext& ctx, const pokemonMove& currentMove, const BattlePokemon& target)
 {
 	using Effectiveness = BattleStateFlags::Effectiveness;
 
-	m_context.effectiveness = 4096;
-	m_context.flags.currentEffectiveness = Effectiveness::Normal;
+	ctx.effectiveness = 4096;
+	ctx.flags.currentEffectiveness = Effectiveness::Normal;
 
 	if (currentMove.GetMoveEffectEnum() == MoveEffect::Struggle)
 	{
@@ -100,33 +105,34 @@ void BattleCalculations::CalculateTypeEffectiveness(BattlePokemon::pokemonMove& 
 	uint16_t effect1 = typeChart[moveType][defensiveTypeOne];
 	uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
 
-	int moveEffectiveness = MultiplyEffectiveness(effect1, effect2);
-	m_context.effectiveness = moveEffectiveness;
+	ctx.effectiveness = MultiplyEffectiveness(effect1, effect2);
+
+	int moveEffectiveness = ctx.effectiveness;
 
 	if (moveEffectiveness == 0)
 	{
-		m_context.flags.currentEffectiveness = Effectiveness::No;
+		ctx.flags.currentEffectiveness = Effectiveness::No;
 	}
 	else if (moveEffectiveness > 0 && moveEffectiveness < 4096)
 	{
-		m_context.flags.currentEffectiveness = Effectiveness::Less;
+		ctx.flags.currentEffectiveness = Effectiveness::Less;
 	}
 	else if (moveEffectiveness > 4096)
 	{
-		m_context.flags.currentEffectiveness = Effectiveness::Super;
+		ctx.flags.currentEffectiveness = Effectiveness::Super;
 	}
 	else
 	{
-		m_context.flags.currentEffectiveness = Effectiveness::Normal;
+		ctx.flags.currentEffectiveness = Effectiveness::Normal;
 	}
 
 	if (currentMove.GetMoveEffectEnum() == MoveEffect::OHKO && moveEffectiveness != 0)
 	{
-		m_context.flags.currentEffectiveness = Effectiveness::OHKO;
+		ctx.flags.currentEffectiveness = Effectiveness::OHKO;
 	}
 }
 
-bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target)
+bool BattleCalculations::CalculateHitChance(pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target)
 {
 	if (
 		(target.IsSemiInvulnerableFromFly() && (currentMove.GetMoveEffectEnum() != MoveEffect::Gust && currentMove.GetName() != "Thunder")) ||
@@ -169,9 +175,9 @@ bool BattleCalculations::CalculateHitChance(BattlePokemon::pokemonMove& currentM
 	}
 }
 
-int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target, bool isAI)
+int BattleCalculations::CalculateDamage(BattleContext& ctx, Player& targetPlayer, pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target)
 {
-	auto effectiveness = m_context.effectiveness;
+	int effectiveness = ctx.effectiveness;
 
 	if (effectiveness == 0)
 	{
@@ -184,11 +190,11 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 	{
 		baseDamage = target.GetCurrentHP();
 		target.DamageCurrentHP(baseDamage);
-		m_context.damageTaken = baseDamage;
+		ctx.damageTaken = baseDamage;
 		return baseDamage;
 	}
 
-	CalculateCriticalHit(source);
+	bool isCritical{ CalculateCriticalHit(ctx, source) };
 
 	// START: Calculate total attack and defense values of attacker and defender
 	bool isPhysical{ currentMove.GetCategoryEnum() == Category::Physical };
@@ -198,8 +204,6 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 
 	int sourceStage{ isPhysical ? source.GetAttackStage() : source.GetSpecialAttackStage() };
 	int targetStage{ isPhysical ? target.GetDefenseStage() : target.GetSpecialDefenseStage() };
-
-	bool isCritical{ m_context.flags.isCriticalHit };
 
 	if (isCritical)
 	{
@@ -224,7 +228,7 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 		currentMovePower = CalculateLowKickPower(target);
 	}
 
-	int powerModifier = m_context.initialPowerMultiplier;
+	int powerModifier = ctx.initialPowerMultiplier;
 
 	if (powerModifier > 10)
 	{
@@ -249,7 +253,8 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 	}
 
 	std::uniform_int_distribution<int> dist(85, 100);
-	int randPercent = isAI ? 92 : dist(m_rng.GetGenerator());
+	int randPercent = dist(m_rng.GetGenerator());
+
 
 	interimDamage = interimDamage * randPercent / 100;
 
@@ -298,15 +303,17 @@ int BattleCalculations::CalculateDamage(Player& targetPlayer, BattlePokemon::pok
 		finalDamage = std::max(1, finalDamage);
 	}
 
+	/*
 	if (finalDamage > target.GetCurrentHP())
 	{
 		finalDamage = target.GetCurrentHP();
 	}
+	*/
 	
 	return finalDamage;
 }
 
-void BattleCalculations::ApplyDamage(Player& targetPlayer, BattlePokemon::pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target, int damage)
+void BattleCalculations::ApplyDamage(Player& targetPlayer, pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target, int damage)
 {
 	const int HP_BAR_WIDTH = m_context.HP_BAR_WIDTH;
 
@@ -316,6 +323,7 @@ void BattleCalculations::ApplyDamage(Player& targetPlayer, BattlePokemon::pokemo
 	}
 
 	int currentPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
+	m_context.prevPixels = currentPixel;
 
 	if (target.HasSubstitute() && !currentMove.CanBypassSubstitute())
 	{
@@ -330,6 +338,7 @@ void BattleCalculations::ApplyDamage(Player& targetPlayer, BattlePokemon::pokemo
 		m_context.damageTaken = damage;
 		int newPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
 		m_context.pixelsLost = currentPixel - newPixel;
+		m_context.damageInPixels = m_context.prevPixels - newPixel;
 	}
 
 	bool isMultiStrike = currentMove.GetMoveEffectEnum() == MoveEffect::MultiHit ||

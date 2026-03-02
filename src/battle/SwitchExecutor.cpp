@@ -1,6 +1,7 @@
 #include "SwitchExecutor.h"
 
 #include "BattleContext.h"
+#include "../entities/Player.h"
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../entities/controllers/AIController.h"
 

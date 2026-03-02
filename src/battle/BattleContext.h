@@ -3,7 +3,9 @@
 #include <vector>
 #include <memory>
 
-#include "../entities/Player.h"
+class Player;
+class BattlePokemon;
+struct pokemonMove;
 
 class IPlayerController;
 
@@ -28,11 +30,7 @@ struct BattleStateFlags
 
 struct BattleContext
 {
-    BattleContext(std::vector<std::unique_ptr<Player>>& vec_players)
-        : playerOne(vec_players[0].get()),
-        playerTwo(vec_players[1].get())
-    {
-    }
+    BattleContext(std::vector<std::unique_ptr<Player>>& vec_players);
 
     std::vector<Player*> vec_aiPlayers{};
 
@@ -42,8 +40,13 @@ struct BattleContext
 
     const int HP_BAR_WIDTH{ 400 };
 
+    int battleTurn{ 0 };
+
     int damageTaken{};
+
     int pixelsLost{};
+    int prevPixels{ 400 };
+    int damageInPixels{};
 
     Player* playerOne;
     Player* playerTwo;
@@ -51,8 +54,8 @@ struct BattleContext
     BattlePokemon* playerOneCurrentPokemon{ nullptr };
     BattlePokemon* playerTwoCurrentPokemon{ nullptr };
 
-    BattlePokemon::pokemonMove* playerOneCurrentMove{ nullptr };
-    BattlePokemon::pokemonMove* playerTwoCurrentMove{ nullptr };
+    pokemonMove* playerOneCurrentMove{ nullptr };
+    pokemonMove* playerTwoCurrentMove{ nullptr };
 
     Player* attackingPlayer{ nullptr };
     Player* defendingPlayer{ nullptr };
@@ -60,7 +63,7 @@ struct BattleContext
     BattlePokemon* attackingPokemon{ nullptr };
     BattlePokemon* defendingPokemon{ nullptr };
 
-    BattlePokemon::pokemonMove* currentMove{ nullptr };
+    pokemonMove* currentMove{ nullptr };
 
     int initialPowerMultiplier{ 10 };
     int effectiveness{ 4096 };

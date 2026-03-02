@@ -16,17 +16,24 @@ set(SOURCES
     # entities
     entities/BattlePokemon.cpp
     entities/Player.cpp
-
-    # ai strategies
-    "entities/ai strategies/EasyAIStrategy.cpp"
+    entities/pokemonMove.cpp
 
     # controllers
     "entities/controllers/AIController.cpp"
     "entities/controllers/HumanControllerConsole.cpp"
 
+    # move scoring
+    "entities/controllers/move scoring/AIMoveClassifier.cpp"
+    "entities/controllers/move scoring/AIMoveScoring.cpp"
+    "entities/controllers/move scoring/BasicScoring.cpp"
+
+    # switch logic
+    "entities/controllers/switch logic/AISwitchLogic.cpp"
+
     # battle
     battle/BattleAIManager.cpp
     battle/BattleCalculations.cpp
+    battle/BattleContext.cpp
     battle/BattleManager.cpp
     battle/MoveExecutor.cpp
     battle/PostTurnEffectProcessor.cpp
@@ -59,8 +66,9 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/common
     ${CMAKE_CURRENT_SOURCE_DIR}/data
     ${CMAKE_CURRENT_SOURCE_DIR}/entities
-    "${CMAKE_CURRENT_SOURCE_DIR}/entities/ai strategies"
-    "${CMAKE_CURRENT_SOURCE_DIR}/entities/controllers"
+    ${CMAKE_CURRENT_SOURCE_DIR}/entities/controllers
+    "${CMAKE_CURRENT_SOURCE_DIR}/entities/controllers/move scoring"
+    "${CMAKE_CURRENT_SOURCE_DIR}/entities/controllers/switch logic"
     ${CMAKE_CURRENT_SOURCE_DIR}/battle
     ${CMAKE_CURRENT_SOURCE_DIR}/moves
     ${CMAKE_CURRENT_SOURCE_DIR}/ui

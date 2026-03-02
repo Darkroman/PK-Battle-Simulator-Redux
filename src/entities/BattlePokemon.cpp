@@ -9,8 +9,6 @@
 
 const int EV_TOTAL_ALLOWED = 510;
 
-BattlePokemon::pokemonMove::pokemonMove() {}
-
 BattlePokemon::DetransformData::DetransformData() {}
 
 void BattlePokemon::DetransformData::BackupOriginalPokemonData(BattlePokemon* pokemon)
@@ -218,6 +216,16 @@ SetMoveOutcome BattlePokemon::SetMove(size_t moveslot, std::string_view movename
     outcome.moveName = m_array_moves[moveslot].GetName();
     outcome.result = SetMoveResult::Success;
     return outcome;
+}
+
+std::array<pokemonMove, 4>& BattlePokemon::GetMoveArray()
+{
+    return m_array_moves;
+}
+
+const std::array<pokemonMove, 4>& BattlePokemon::GetMoveArray() const
+{
+    return m_array_moves;
 }
 
 void BattlePokemon::SetNickname(std::string_view input)
@@ -560,13 +568,13 @@ int BattlePokemon::GetLevel() const
     return m_level;
 }
 
-BattlePokemon::pokemonMove& BattlePokemon::GetMove(size_t moveslot)
+pokemonMove& BattlePokemon::GetMove(size_t moveslot)
 {
     --moveslot;
     return m_array_moves[moveslot];
 }
 
-const BattlePokemon::pokemonMove& BattlePokemon::GetMove(size_t moveslot) const
+const pokemonMove& BattlePokemon::GetMove(size_t moveslot) const
 {
     --moveslot;
     return m_array_moves[moveslot];
@@ -600,146 +608,6 @@ void BattlePokemon::ReorderMoves(size_t slotToMove, size_t targetSlot)
     {
         std::rotate(m_array_moves.begin() + slotToMove, m_array_moves.begin() + slotToMove + 1, m_array_moves.begin() + targetSlot + 1);
     }
-}
-
-void BattlePokemon::pokemonMove::SetMovePointer(Move* move)
-{
-    mp_move = move;
-}
-
-Move* BattlePokemon::pokemonMove::GetMovePointer() const
-{
-    return mp_move;
-}
-
-void BattlePokemon::pokemonMove::ResetMove()
-{
-    mp_move = nullptr;
-    m_currentPP = 0;
-    m_maxPP = 0;
-    b_isDisabled = false;
-    b_isMimicked = false;
-}
-
-bool BattlePokemon::pokemonMove::IsActive() const
-{
-    return mp_move != nullptr;
-}
-
-bool BattlePokemon::pokemonMove::IsDisabled() const
-{
-    return b_isDisabled;
-}
-
-size_t BattlePokemon::pokemonMove::GetMoveIndex() const
-{
-    return mp_move->GetMoveIndex();
-}
-
-std::string_view BattlePokemon::pokemonMove::GetName() const
-{
-    return mp_move->GetName();
-}
-
-std::string_view BattlePokemon::pokemonMove::GetCategory() const
-{
-    return mp_move->GetCategory();
-}
-
-Category BattlePokemon::pokemonMove::GetCategoryEnum() const
-{
-    return mp_move->GetCategoryEnum();
-}
-
-std::string_view BattlePokemon::pokemonMove::GetMoveType() const
-{
-    return mp_move->GetMoveType();
-}
-
-PokemonType BattlePokemon::pokemonMove::GetMoveTypeEnum() const
-{
-    return mp_move->GetMoveTypeEnum();
-}
-
-int BattlePokemon::pokemonMove::GetPriority() const
-{
-    return mp_move->GetPriority();
-}
-
-MoveEffect BattlePokemon::pokemonMove::GetMoveEffectEnum() const
-{
-    return mp_move->GetMoveEffectEnum();
-}
-
-int BattlePokemon::pokemonMove::GetEffectChance() const
-{
-    return mp_move->GetEffectChance();
-}
-
-int BattlePokemon::pokemonMove::GetPP() const
-{
-    return mp_move->GetPP();
-}
-
-int BattlePokemon::pokemonMove::GetMaxPP() const
-{
-    return mp_move->GetMaxPP();
-}
-
-int BattlePokemon::pokemonMove::GetPower() const
-{
-    return mp_move->GetPower();
-}
-
-int BattlePokemon::pokemonMove::GetAccuracy() const
-{
-    return mp_move->GetAccuracy();
-}
-
-void BattlePokemon::pokemonMove::DeductPP()
-{
-
-    m_currentPP -= 1;
-}
-
-bool BattlePokemon::pokemonMove::DoesMakeContact() const
-{
-    return mp_move->DoesMakeContact();
-}
-
-bool BattlePokemon::pokemonMove::IsAffectedByProtect() const
-{
-    return mp_move->IsAffectedByProtect();
-}
-
-bool BattlePokemon::pokemonMove::IsAffectedByMagicCoat() const
-{
-    return mp_move->IsAffectedByMagicCoat();
-}
-
-bool BattlePokemon::pokemonMove::IsAffectedBySnatch() const
-{
-    return mp_move->IsAffectedBySnatch();
-}
-
-bool BattlePokemon::pokemonMove::IsAffectedByMirrorMove() const
-{
-    return mp_move->IsAffectedByMirrorMove();
-}
-
-bool BattlePokemon::pokemonMove::IsAffectedByKingRock() const
-{
-    return mp_move->IsAffectedByKingRock();
-}
-
-bool BattlePokemon::pokemonMove::IsSoundBased() const
-{
-    return mp_move->IsSoundBased();
-}
-
-bool BattlePokemon::pokemonMove::CanBypassSubstitute() const
-{
-    return mp_move->CanBypassSubstitute();
 }
 
 int BattlePokemon::GetPP(size_t moveslot) const
@@ -807,12 +675,12 @@ std::string_view BattlePokemon::GetMoveName(size_t moveslot) const
     return m_array_moves[moveslot].GetName();
 }
 
-BattlePokemon::pokemonMove* BattlePokemon::GetLastUsedMove() const
+pokemonMove* BattlePokemon::GetLastUsedMove() const
 {
     return lastUsedMove;
 }
 
-void BattlePokemon::SetLastUsedMove(BattlePokemon::pokemonMove* move)
+void BattlePokemon::SetLastUsedMove(pokemonMove* move)
 {
     lastUsedMove = move;
 }
@@ -1271,7 +1139,7 @@ bool BattlePokemon::MoveIsDisabled() const
     return b_moveIsDisabled;
 }
 
-BattlePokemon::pokemonMove* BattlePokemon::GetDisabledMove() const
+pokemonMove* BattlePokemon::GetDisabledMove() const
 {
     return disabledMove;
 }
@@ -1522,7 +1390,7 @@ bool BattlePokemon::IsConverted() const
     return b_isConverted;
 }
 
-void BattlePokemon::SetConversion(BattlePokemon::pokemonMove* move)
+void BattlePokemon::SetConversion(pokemonMove* move)
 {
     b_isConverted = true;
 
@@ -1571,7 +1439,7 @@ void BattlePokemon::DamageSubstitute(int damage)
     }
 }
 
-BattlePokemon::pokemonMove& BattlePokemon::Struggle()
+pokemonMove& BattlePokemon::Struggle()
 {
     m_struggle.SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(164));
     m_struggle.m_currentPP = 1;
@@ -1677,7 +1545,7 @@ void BattlePokemon::ResetStatsAndMoves()
     m_defense_ev = 0;
     m_specialattack_ev = 0;
     m_specialdefense_ev = 0;
-    m_speed_iv = 0;
+    m_speed_ev = 0;
 
     m_moveCount = 0;
 

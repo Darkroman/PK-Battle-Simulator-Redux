@@ -2,7 +2,6 @@
 
 #include "interfaces/ITextSink.h"
 #include "StatusEffectText.h"
-#include "../battle/BattleContext.h"
 
 // Status changes
 void StatusEffectText::DisplayFellAsleepMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const

@@ -146,6 +146,11 @@ void Player::DecrementFaintedCount()
     --m_faintedPokemon;
 }
 
+int Player::GetPokemonLeft() const
+{
+    return m_PokemonCount - m_faintedPokemon;
+}
+
 bool Player::IsFirst() const
 {
     return b_isFirst;

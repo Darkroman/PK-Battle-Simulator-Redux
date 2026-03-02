@@ -1,6 +1,7 @@
 #include "TurnProcessor.h"
 
 #include "BattleContext.h"
+#include "../entities/Player.h"
 #include "BattleCalculations.h"
 #include "StatusEffectProcessor.h"
 #include "WinChecker.h"

@@ -6,7 +6,39 @@
 ## UPDATES
 
    </summary>
-   
+
+### 3/1/2026
+**MAJOR UPDATE** 
+- **Basic AI implemented!**
+- Implemented Basic AI move scoring largely inspired by Gen 4 Basic AI trainer scoring.
+ - For now final phase of move scoring logic randomly picks between highest tieing scored status move and highest damage move.
+- AI difficulty differentiation planned for future updates.
+ - Easy will be slightly toned down and medium a little more competitive.
+ - Expert AI or hard based scoring implementation planned.
+- Easy AI now behaves more like a standard trainer battle instead of a wild Pokemon battle.
+- AI Switching logic implemented.
+**Fixes**
+- Thunder wave now correctly doesn't affect ground types.
+- Fixed bug where speed EVs were not resetting upon changing Pokémon in the setup menu.
+- Fixed faint-check bug where a player's fainted count was compared against the opponent's Pokémon count.
+ - (This bug had not surfaced prior to switch logic testing)
+**Developer Notes**
+- Added following namespaces and associated methods:
+ - AIMoveScoring
+ - BasicScoring
+ - AILogicSwitch.
+- Added BattleContext.cpp
+- Removed experimental AI stat range adjustments.
+- Removed strategy interfaces; moving forward AI behavior will be determined via a Difficulty enum class.
+- Moved the Type Chart array from BattleCalculations into its own header as inline constexpr.
+- pokemonMove struct has been moved out of the BattlePokemon class into its own struct.
+- Added BattleContext& parameters to a few BattleCalculations methods to clarify when battle state is being modified.
+- AI now uses its own:
+ - Damage calculation method
+ - Move type effectiveness calculation method
+ - Pokemon type effectiveness calculation method
+ - (This helps to differentiate between methods that mutate state as well as reduces cross-class dependencies)
+- Miscellaneous #include cleanup.
 ### 2/20/2026
 - Refactored how CalculateDamage works. Should have largely the same outcomes, just made the code more consistent and easier to follow.
 - One slight change to note is I took from Bulbapedia's damage page for Gen 5 onwards in the "other" section and implemented that here (with rounding up on 0.5 results).
