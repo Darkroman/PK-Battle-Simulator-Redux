@@ -26,6 +26,7 @@ set(SOURCES
     "entities/controllers/move scoring/AIMoveClassifier.cpp"
     "entities/controllers/move scoring/AIMoveScoring.cpp"
     "entities/controllers/move scoring/BasicScoring.cpp"
+    "entities/controllers/move scoring/MediumMoveScoring.cpp"
 
     # switch logic
     "entities/controllers/switch logic/AISwitchLogic.cpp"

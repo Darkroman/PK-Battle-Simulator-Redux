@@ -10,7 +10,15 @@ SwitchExecutor::SwitchExecutor(BattleContext& context, IMoveResultsUI& moveResul
 
 void SwitchExecutor::ExecuteSwitch(Player& player, BattlePokemon*& pokemon)
 {
-	m_moveResultsUI.SwitchOutMsg(player.GetPlayerNameView(), pokemon->GetPokemonNameView());
+	if (!pokemon->IsFainted())
+	{
+		m_moveResultsUI.SwitchOutNoFaintMsg(player.GetPlayerNameView(), pokemon->GetPokemonNameView());
+	}
+	else
+	{
+		m_moveResultsUI.SwitchOutMsg(player.GetPlayerNameView(), pokemon->GetPokemonNameView());
+	}
+
 	pokemon->ResetStatsOnSwitch();
 	pokemon = player.GetPokemonToSwitchTo();
 

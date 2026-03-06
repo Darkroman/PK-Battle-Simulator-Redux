@@ -14,7 +14,8 @@
 
 #include "AIController.h"
 
-AIController::AIController()
+AIController::AIController(Difficulty difficulty)
+	: m_difficulty(difficulty)
  {}
 
 PlayerDecisionOutcome AIController::ChooseAction(Player& player, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon, RandomEngine& rng)
@@ -26,12 +27,10 @@ PlayerDecisionOutcome AIController::ChooseAction(Player& player, Player& targetP
 		decision.action = BattleAction::SwitchPokemon;
 		decision.chosenPokemon = SwitchAction(player, targetPlayer, selfMon, targetMon);
 
-		if (decision.chosenPokemon == nullptr)
+		if (decision.chosenPokemon != nullptr)
 		{
-			decision.action = BattleAction::Fight;
+			return decision;
 		}
-
-		return decision;
 	}
 
 	decision.chosenMove = FightAction(player, targetPlayer, selfMon, targetMon, rng);
@@ -52,6 +51,11 @@ BattlePokemon* AIController::PromptForSwitch(Player& player, Player& targetPlaye
 {
 	BattlePokemon* selectedPokemon = SwitchActionPostKO(player, targetPlayer, selfMon, targetMon);
 	return selectedPokemon;
+}
+
+Difficulty AIController::GetDifficulty()
+{
+	return m_difficulty;
 }
 
 pokemonMove* AIController::FightAction(Player& player, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon, RandomEngine& rng)
@@ -218,9 +222,6 @@ int AIController::AICalculatePokemonTypeEffectiveness(const BattlePokemon& sourc
 	size_t sourceTypeTwo = static_cast<size_t>(source.GetTypeTwoEnum());
 	size_t defensiveTypeOne = static_cast<size_t>(target.GetTypeOneEnum());
 	size_t defensiveTypeTwo = static_cast<size_t>(target.GetTypeTwoEnum());
-
-	//sourceTypeTwo = (sourceTypeTwo == 18) ? 4096 : sourceTypeTwo;
-	//defensiveTypeTwo = (defensiveTypeTwo == 18) ? 4096 : defensiveTypeTwo;
 
 	uint16_t effect1 = typeChart[sourceTypeOne][defensiveTypeOne];
 	uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[sourceTypeOne][defensiveTypeTwo];

@@ -6,6 +6,29 @@
 ## UPDATES
 
    </summary>
+### 3/6/2026
+- **Medium difficulty AI implemented**
+  - Medium difficulty discourages moves that deal less damage than the highest damaging available move.
+    - Will also evaluate charge and recharge based moves.
+  - Easy difficulty has been toned down a bit.
+    - Easy no longer considers the highest damaging move and instead randomly selects from the highest scored moves.
+- **AI Switching Improvements**
+  - Added additional check to mid-turn AI Switch logic.
+    - Considers whether enemy Pokemon's typing is advantageous even without observing any moves.
+  - Separated some mid-turn AI switch logic into easy and medium variants.
+    - Post-KO switching remains unchanged.
+- **UI Improvements**
+  - Added Menu options to change player's controller type to medium difficulty.
+  - The controller selection menu now displays the AI difficulty of each controller type.
+- **Fixes**
+  - Correctly sets player's CanSwitch flag back to true if their pokemon fainted.
+  - Fixed a crash caused by an early return during AI action selection.
+    - The early return set the action to Fight without selecting a move, resulting in a nullptr move error.
+- **Developer Notes**
+  - Added MediumScoringMove.h/.cpp with the MediumScoringMove namespace and associated methods.
+  - AIController constructor is now explicit and takes a Difficulty enum class.
+  - Added AIScoreTag to ScoringResults struct.
+    - Score tags are now initialized when moves are first gathered for scoring.
 
 ### 3/1/2026
 **MAJOR UPDATE** 
@@ -159,7 +182,24 @@ Bug fixes:
 ## BUILD NOTES
 
   </summary>
-This was coded in VS2022 Community, utilizing up to the C++23 standard features (std::filesystem, std::string_view and std::ranges). Uploaded in this repository is a simple CMake build. Only tested on Windows.
+This was coded in VS2022 Community, utilizing up to the C++23 standard features (std::filesystem, std::string_view, std::ranges and std::print). Uploaded in this repository is a simple CMake build. Only tested on Windows.
+</details>
+
+<details open>
+  <summary>
+  
+## HOW TO PLAY
+
+  </summary>
+- On the main menu screen you can choose up to 9 options to edit Player One or Player Two's Pokemon, controller type (human, or different AI difficulties), load or save party.
+  - Each option screen requires pressing the number then hitting enter.
+- The game comes with default teams of gen 1's protagonist Red's based team and the rival Blue's team. Choose Load Party (8) in the menu if you want to use them.
+  - Player One's party is Red's team, and Player Two's party is Blue's team.
+  - You can pick to play one or the other, both, or none by selecting the respective player's controller type. This does mean you can have AI go at eachother.
+- Editing a player's pokemon puts you in a submenu to choose options to add, change, release (delete) pokemon as well as edit their moves, stats, and placing in the party.
+  - You can select between all gen 1's 151 Pokemon, as well as their moves. Names of the Pokemon, moves and their numbers can be used as input.
+    - **note** Move names are hyphen and space sensitive, but not case sensitive.
+- When ready to battle press 9 then enter in the main menu to start! If either team has no pokemon or the pokemon have no moves, it will let you know and kick you back to the main menu.
 </details>
 
 <details open>
@@ -168,9 +208,9 @@ This was coded in VS2022 Community, utilizing up to the C++23 standard features 
 ## GENERAL INFO
 
    </summary>
-This is just a small console based Pokemon battle simulator program. Starts up with a setup menu to customize your own team of 6 Pokemon. You can choose any of the 151 Pokemon and any moves they could learn based on their generation 1 (Red/Blue/Yellow) learnsets. You're able to set a nickname, level, 4 moves, stat IVs and EVs per Pokemon and send them into battle! The battle and move mechanics are more akin to (up to) generation 9 (Scarlet/Violet), so no weird bind move bugs or hyper beam not having a recharge phase when enemy Pokemon faints for example. Generation 2 special attack/defense stat split as well as generation 4 physical/special move split also is incorporated. <br/>
+This is a console based Pokemon battle simulator program. It starts up with a setup menu to customize your own team of 6 Pokemon. You can choose any of the 151 Pokemon and any moves they could learn based on their generation 1 (Red/Blue/Yellow) learnsets. You're able to set a nickname, level, 4 moves, stat IVs and EVs per Pokemon and send them into battle! The battle and move mechanics are more akin to (up to) generation 9 (Scarlet/Violet), so no weird bind move bugs or hyper beam not having a recharge phase when enemy Pokemon faints for example. Generation 2 special attack/defense stat split as well as generation 4 physical/special move split also is incorporated. <br/>
 <br/>
-I started this project a long time ago and have been working on it off and on while also learning C++. I wanted to put what I've learned to practice, and Pokemon is one of my most cherished gaming series of all time. I don't plan on making this into a full graphical game (as there are also some copyright issues with that in any case). Just something to put out there to show what I've learned so far. Along with future updates I hope to be more proficient at architectural/code organization design.
+I started this project a long time ago and have been working on it off and on while also learning C++. I wanted to put what I've learned to practice with Pokemon being one of my most cherished gaming series of all time. This is just something to put out there to show what I've learned so far. Along with future updates I hope to be more proficient at architectural/code organization design.
 </details>
 
 <details>
@@ -197,7 +237,7 @@ I started this project a long time ago and have been working on it off and on wh
 - IVs, and EVs
 - Physical/Special move split from gen 4 onward implemented.
 - All generation 1 volatile and non-volatile status conditions working as they do in later generations.
-- A.I (only an easy mode right now)
+- Easy and Medium A.I difficulties largely based by gen 4's Basic and Strong/Evaluate Attack scoring.
 - There are however no natures, held items, or abilities. Whether I might add them in the future is up in the air.
 </details>
 
@@ -210,5 +250,6 @@ I started this project a long time ago and have been working on it off and on wh
    
 - More sophisticated A.I
 - Code architectural/organizational choices
+- Graphical user interface
 - Not sure if I'll ever add in later generation stuff
 </details>

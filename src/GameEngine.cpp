@@ -13,7 +13,7 @@ GameEngine::GameEngine()
         v.push_back(std::make_unique<Player>("Player One"));
         v.push_back(std::make_unique<Player>("Player Two"));
         v.at(0)->SetController(std::make_unique<HumanControllerConsole>(), ControllerType::Human);
-        v.at(1)->SetController(std::make_unique<AIController>(), ControllerType::AI);
+        v.at(1)->SetController(std::make_unique<AIController>(Difficulty::Easy), ControllerType::AI);
         return v;
         }()),
     context(players),

@@ -4,6 +4,9 @@
 
 #include "ScoringResultsStruct.h"
 #include "BasicScoring.h"
+#include "MediumMoveScoring.h"
+
+#include "AIMoveClassifier.h"
 #include "../../../data/StringToTypes.h"
 #include "../../Player.h"
 #include "../../../battle/BattleCalculations.h"
@@ -34,12 +37,19 @@ namespace AIMoveScoring
 
 			results.emplace_back();
 			results[index].move = &moveArray[i];
+			results[index].tag = AIMoveClassifier::Classify(*results[index].move);
+
 			++index;
 		}
 
-		for (size_t i = 0; i < results.size(); ++i)
+		for (auto& result : results)
 		{
-			results[i] = RunScoringRoutine(results[i], self, targetPlayer, *results[i].move, selfMon, targetMon);
+			result = RunScoringRoutine(result, self, targetPlayer, *result.move, selfMon, targetMon);
+		}
+
+		if (self.GetAIController().GetDifficulty() >= Difficulty::Medium)
+		{
+			MediumMoveScoring::EvaluateBestDamageMove(results, targetMon);
 		}
 
 		//pokemonMove* winningMove = EvaluateScoredMoves(results, rng);
@@ -65,42 +75,20 @@ namespace AIMoveScoring
 				topScores.emplace_back(result);
 			}
 		}
-
-		int highestDamage = INT_MIN;
-		for (const auto& result : topScores)
-		{
-			highestDamage = std::max(highestDamage, result.damage);
-		}
-
-		std::vector<ScoringResults> filtered;
-		filtered.reserve(topScores.size());
-
-		for (const auto& result : topScores)
-		{
-			if (result.damage == 0)
-			{
-				filtered.emplace_back(result);
-			}
-
-			else if (result.damage == highestDamage)
-			{
-				filtered.emplace_back(result);
-			}
-		}
 		
-		std::uniform_int_distribution<size_t> dist(0, filtered.size() - 1);
-		return filtered[dist(rng.GetGenerator())].move;
+		std::uniform_int_distribution<size_t> dist(0, topScores.size() - 1);
+		return topScores[dist(rng.GetGenerator())].move;
 	}
 
 	ScoringResults RunScoringRoutine(ScoringResults& results, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
 	{
 		if (move.GetCategoryEnum() == Category::Status)
 		{
-			results.score += BasicScoring::BaseStatusScoring(self, targetPlayer, move, selfMon, targetMon);
+			results.score += BasicScoring::BaseStatusScoring(results, self, targetPlayer, move, selfMon, targetMon);
 		}
 		else
 		{
-			results.score += BasicScoring::BaseDamageScoring(self, targetPlayer, move, selfMon, targetMon);
+			results.score += BasicScoring::BaseDamageScoring(results, self, targetPlayer, move, selfMon, targetMon);
 			results.damage = self.GetAIController().AICalculateDamage(move, targetPlayer, selfMon, targetMon);
 		}
 

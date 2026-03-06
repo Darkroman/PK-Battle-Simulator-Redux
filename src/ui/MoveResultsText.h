@@ -126,6 +126,8 @@ public:
 
 	void DisplayNoMovesLeftStruggleMsg(std::string_view, std::string_view) const override;
 
+	void SwitchOutNoFaintMsg(std::string_view playerName, std::string_view pokemonName) const override;
+
 	void SwitchOutMsg(std::string_view, std::string_view) const override;
 
 	void PlayerChoosesMsg(std::string_view, std::string_view) const override;

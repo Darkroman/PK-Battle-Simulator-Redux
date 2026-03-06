@@ -5,11 +5,12 @@ class BattlePokemon;
 struct pokemonMove;
 class BattleCalculations;
 class RandomEngine;
+struct ScoringResults;
 
 namespace BasicScoring
 {
-	int BaseDamageScoring(Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon);
-	int BaseStatusScoring(Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon);
+	int BaseDamageScoring(ScoringResults&, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon);
+	int BaseStatusScoring(ScoringResults&, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon);
 
 	int CheckDamageImmunity(pokemonMove& move, Player& self, BattlePokemon& targetMon);
 	int CheckOHKOLevel(BattlePokemon& selfMon, BattlePokemon& targetMon);
@@ -36,6 +37,7 @@ namespace BasicScoring
 	int HazeCheck(BattlePokemon& selfMon, BattlePokemon targetMon);
 	int ForceSwitchCheck(Player& targetPlayer);
 	int HealCheck(BattlePokemon& selfMon);
+	int RestCheck(BattlePokemon& selfMon);
 	int ReflectCheck(Player& self);
 	int LightScreenCheck(Player& self);
 	int MistCheck(Player& self);

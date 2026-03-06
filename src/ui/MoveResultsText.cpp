@@ -351,6 +351,11 @@ void MoveResultsText::DisplayNoMovesLeftStruggleMsg(std::string_view attackingPl
 	m_sink.Emit(std::format("{}'s {} has no moves left!", attackingPlayerName, attackingPokemonName));
 }
 
+void MoveResultsText::SwitchOutNoFaintMsg(std::string_view playerName, std::string_view pokemonName) const
+{
+	m_sink.Emit(std::format("{} switches out {}.", playerName, pokemonName));
+}
+
 void MoveResultsText::SwitchOutMsg(std::string_view playerName, std::string_view pokemonName) const
 {
 	m_sink.Emit(std::format("\n{} switches out {}.", playerName, pokemonName));

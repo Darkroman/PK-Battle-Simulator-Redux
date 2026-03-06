@@ -41,10 +41,12 @@ class AIController : public IPlayerController
 {
 public:
 
-	AIController();
+	explicit AIController(Difficulty);
 
 	PlayerDecisionOutcome ChooseAction(Player&, Player&, BattlePokemon&, BattlePokemon&, RandomEngine&) override;
 	BattlePokemon* PromptForSwitch(Player&, Player&, BattlePokemon&, BattlePokemon&) override;
+
+	Difficulty GetDifficulty();
 
 	void OnBattleStart(Player&, BattleContext&);
 	void OnActivePokemonChanged(BattleContext&);
@@ -74,7 +76,8 @@ private:
 
 public:
 	AIMemory memory;
+	
 
 private:
-
+	Difficulty m_difficulty{};
 };

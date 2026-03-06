@@ -335,6 +335,8 @@ void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& ta
 				m_context.vec_outOfPokemon.push_back(&targetPlayer);
 			}
 		}
+
+		targetPlayer.SetCanSwitch(true);
 	}
 
 	if (source.GetCurrentHP() <= 0 && !source.IsFainted())
@@ -360,5 +362,7 @@ void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& ta
 				m_context.vec_outOfPokemon.push_back(&sourcePlayer);
 			}
 		}
+
+		sourcePlayer.SetCanSwitch(true);
 	}
 }

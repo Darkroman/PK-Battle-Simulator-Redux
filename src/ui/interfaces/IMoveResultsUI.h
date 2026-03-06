@@ -123,6 +123,8 @@ public:
 
 	virtual void DisplayNoMovesLeftStruggleMsg(std::string_view, std::string_view) const = 0;
 
+	virtual void SwitchOutNoFaintMsg(std::string_view playerName, std::string_view pokemonName) const = 0;
+
 	virtual void SwitchOutMsg(std::string_view, std::string_view) const = 0;
 
 	virtual void PlayerChoosesMsg(std::string_view, std::string_view) const = 0;

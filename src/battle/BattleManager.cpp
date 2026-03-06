@@ -195,20 +195,22 @@ void BattleManager::ResetValues()
 	m_context.playerOne->ResetValues();
 	m_context.playerTwo->ResetValues();
 
-	for (size_t i = 1; i <= m_context.playerOne->GetPokemonCount(); ++i)
+	for (size_t i = 1; i <= m_context.playerOne->GetBeltArray().size(); ++i)
 	{
-		if (m_context.playerOne->GetBelt(i).HasPokemon())
+		if (!m_context.playerOne->GetBelt(i).HasPokemon())
 		{
-			m_context.playerOne->GetBelt(i).ResetValues();
+			continue;
 		}
+		m_context.playerOne->GetBelt(i).ResetValues();
 	}
 
-	for (size_t i = 1; i <= m_context.playerTwo->GetPokemonCount(); ++i)
+	for (size_t i = 1; i <= m_context.playerTwo->GetBeltArray().size(); ++i)
 	{
-		if (m_context.playerTwo->GetBelt(i).HasPokemon())
+		if (!m_context.playerTwo->GetBelt(i).HasPokemon())
 		{
-			m_context.playerTwo->GetBelt(i).ResetValues();
+			continue;
 		}
+		m_context.playerTwo->GetBelt(i).ResetValues();
 	}
 
 	for (auto aiPlayers : m_context.vec_aiPlayers)

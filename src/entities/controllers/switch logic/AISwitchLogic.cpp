@@ -25,30 +25,40 @@ namespace AISwitchLogic
 			}
 		}
 
-		// if selfMon has no super effective moves and takes super effective damage from target, find if we have mon that can take at most normal damage and has super effective move
-		if (self.GetAIController().GetObservedMoves().at(0) == nullptr)
+		// if selfMon has no super effective moves and targetMon's pokemon typing is advantageous
+		if (PokemonTypeEffectiveness(self, targetMon, selfMon) > 4096)
 		{
-			return false;
+			return true;
 		}
 
-		for (const auto& observedMove : self.GetAIController().GetObservedMoves())
+		if (self.GetAIController().GetDifficulty() >= Difficulty::Medium)
 		{
-			if (observedMove == nullptr)
+
+			// if selfMon has no super effective moves and takes super effective damage from target, find if we have mon that can take at most normal damage and has super effective move
+			if (self.GetAIController().GetObservedMoves().at(0) == nullptr)
 			{
-				break;
+				return false;
 			}
 
-			if (IsMoveSuperEffective(self, *observedMove, selfMon))
+			for (const auto& observedMove : self.GetAIController().GetObservedMoves())
 			{
-				for (const auto& pokemon : self.GetBeltArray())
+				if (observedMove == nullptr)
 				{
-					if (!pokemon.IsFainted() && IsMoveAtMostEffective(self, *observedMove, pokemon))
+					break;
+				}
+
+				if (IsMoveSuperEffective(self, *observedMove, selfMon))
+				{
+					for (const auto& pokemon : self.GetBeltArray())
 					{
-						for (auto& move : pokemon.GetMoveArray())
+						if (!pokemon.IsFainted() && IsMoveAtMostEffective(self, *observedMove, pokemon))
 						{
-							if (move.IsActive() && IsMoveSuperEffective(self, move, targetMon))
+							for (auto& move : pokemon.GetMoveArray())
 							{
-								return true;
+								if (move.IsActive() && IsMoveSuperEffective(self, move, targetMon))
+								{
+									return true;
+								}
 							}
 						}
 					}
@@ -101,7 +111,7 @@ namespace AISwitchLogic
 		return chosenPokemon;
 	}
 
-	BattlePokemon* ChoosePostKOSwitch(Player & self, Player & targetPlayer, BattlePokemon & selfMon, BattlePokemon & targetMon)
+	BattlePokemon* ChoosePostKOSwitch(Player& self, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon)
 	{
 		std::deque<BattlePokemon*> viablePokemon;
 
@@ -125,7 +135,7 @@ namespace AISwitchLogic
 			for (const auto pokemon : viablePokemon)
 			{
 				// phase 2a: Check for first pokemon that does not take super effective damage from target
-				if (IsMoveAtMostEffective(self, *observedMove, *pokemon))
+				if (!IsMoveSuperEffective(self, *observedMove, *pokemon))
 				{
 					for (const auto& move : pokemon->GetMoveArray())
 					{
@@ -144,7 +154,7 @@ namespace AISwitchLogic
 		// phase 1b: if no observed moves, and previous checks didn't find anything
 		for (const auto pokemon : viablePokemon)
 		{
-			// phase 2b: Check which of our pokemon takes at the most normal effective damage
+			// phase 2b: Check which of our pokemon takes at the most normal effective damage from enemy pokemon's type
 			if (PokemonTypeEffectiveness(self, targetMon, *pokemon) <= 4096)
 			{
 				for (const auto& move : pokemon->GetMoveArray())
@@ -165,7 +175,7 @@ namespace AISwitchLogic
 		return viablePokemon[0];
 	}
 
-	bool IsMoveSuperEffective(Player & self, const pokemonMove & move, const BattlePokemon & pokemon)
+	bool IsMoveSuperEffective(Player& self, const pokemonMove& move, const BattlePokemon& pokemon)
 	{
 		auto MoveEffectiveness = [&](const pokemonMove& move, const BattlePokemon& targetMon) {
 			return self.GetAIController().AICalculateMoveTypeEffectiveness(move, targetMon);
@@ -174,7 +184,7 @@ namespace AISwitchLogic
 		return MoveEffectiveness(move, pokemon) > 4096 && move.GetPower() > 0 && move.m_currentPP > 0;
 	}
 
-	bool IsMoveAtMostEffective(Player & self, const pokemonMove & move, const BattlePokemon & pokemon)
+	bool IsMoveAtMostEffective(Player& self, const pokemonMove& move, const BattlePokemon& pokemon)
 	{
 		auto MoveEffectiveness = [&](const pokemonMove& move, const BattlePokemon& targetMon) {
 			return self.GetAIController().AICalculateMoveTypeEffectiveness(move, targetMon);

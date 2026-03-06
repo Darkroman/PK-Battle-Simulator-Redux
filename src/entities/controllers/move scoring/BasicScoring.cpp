@@ -3,17 +3,18 @@
 #include "BasicScoring.h"
 
 #include "AIMoveClassifier.h"
+#include "ScoringResultsStruct.h"
 #include "../../../data/StringToTypes.h"
 #include "../../Player.h"
 #include "../AIController.h"
 
 namespace BasicScoring
 {
-	int BaseDamageScoring(Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
+	int BaseDamageScoring(ScoringResults& results, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
 	{
 		int delta{};
 
-		auto tags = AIMoveClassifier::Classify(move);
+		auto tags = results.tag;
 
 		delta += CheckDamageImmunity(move, self, targetMon); // score -10 if immune
 
@@ -35,11 +36,11 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int BaseStatusScoring(Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
+	int BaseStatusScoring(ScoringResults& results, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
 	{
 		int delta{};
 
-		auto tags = AIMoveClassifier::Classify(move);
+		auto tags = results.tag;
 
 		switch (tags)
 		{
@@ -113,6 +114,10 @@ namespace BasicScoring
 
 		case AIScoreTag::Healing:
 			delta += HealCheck(selfMon); // if attacker is full hp, score -8
+			break;
+
+		case AIScoreTag::Rest:
+			delta += RestCheck(selfMon); // if attacker is at full hp, score -8
 			break;
 
 		case AIScoreTag::Reflect:
@@ -429,6 +434,18 @@ namespace BasicScoring
 	}
 
 	int HealCheck(BattlePokemon& selfMon)
+	{
+		int delta{};
+
+		if (selfMon.GetCurrentHP() == selfMon.GetMaxHP())
+		{
+			delta -= 8;
+		}
+
+		return delta;
+	}
+
+	int RestCheck(BattlePokemon& selfMon)
 	{
 		int delta{};
 

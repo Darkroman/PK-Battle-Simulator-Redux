@@ -855,7 +855,7 @@ void Menu::ChangePlayerOneType()
 		PrintPlayerOneType();
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
-		//std::cout << "3. Medium A.I.\n";
+		std::cout << "3. Medium A.I.\n";
 		std::cout << "0. Go Back\n";
 
 		std::string input{};
@@ -896,19 +896,22 @@ void Menu::ChangePlayerOneType()
 
 			case 2:
 			{
-				playerStorage[0]->SetController(std::make_unique<AIController>(), ControllerType::AI);
+				playerStorage[0]->SetController(std::make_unique<AIController>(Difficulty::Easy), ControllerType::AI);
 				players[0] = playerStorage[0].get();
 
 				std::cout << "Switched Player One to Easy A.I.\n\n";
 				break;
 			}
-			/*
+			
 			case 3:
 			{
+				playerStorage[0]->SetController(std::make_unique<AIController>(Difficulty::Medium), ControllerType::AI);
+				players[0] = playerStorage[0].get();
+
 				std::cout << "Switched Player One to Medium A.I.\n\n";
 				break;
 			}
-			*/
+			
 			default:
 				std::cout << "Invalid input!\n\n";
 				break;
@@ -924,7 +927,22 @@ void Menu::PrintPlayerOneType()
 	}
 	else
 	{
-		std::cout << "---" << players[0]->GetPlayerNameView() << " is currently A.I.---\n";
+		Difficulty diff = players[0]->GetAIController().GetDifficulty();
+
+		switch (diff)
+		{
+		case Difficulty::Easy:
+			std::cout << "---" << players[0]->GetPlayerNameView() << " is currently Easy A.I.---\n";
+			break;
+
+		case Difficulty::Medium:
+			std::cout << "---" << players[0]->GetPlayerNameView() << " is currently Medium A.I.---\n";
+			break;
+
+		default:
+			std::cout << "---" << players[0]->GetPlayerNameView() << " is currently A.I.---\n";
+			break;
+		}
 	}
 }
 
@@ -1035,7 +1053,7 @@ void Menu::ChangePlayerTwoType()
 		PrintPlayerTwoType();
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
-		//std::cout << "3. Medium A.I.\n";
+		std::cout << "3. Medium A.I.\n";
 		std::cout << "0. Go Back\n";
 
 		std::string input{};
@@ -1076,19 +1094,22 @@ void Menu::ChangePlayerTwoType()
 
 		case 2:
 		{
-			playerStorage[1]->SetController(std::make_unique<AIController>(), ControllerType::AI);
+			playerStorage[1]->SetController(std::make_unique<AIController>(Difficulty::Easy), ControllerType::AI);
 			players[1] = playerStorage[1].get();
 
 			std::cout << "Switched Player Two to Easy A.I.\n\n";
 			break;
 		}
-		/*
+		
 		case 3:
 		{	
-			std::cout << "Switched Player One to Medium A.I.\n\n";
+			playerStorage[1]->SetController(std::make_unique<AIController>(Difficulty::Medium), ControllerType::AI);
+			players[1] = playerStorage[1].get();
+
+			std::cout << "Switched Player Two to Medium A.I.\n\n";
 			break;
 		}
-		*/
+
 		default:
 			std::cout << "Invalid input!\n\n";
 			break;
@@ -1104,7 +1125,22 @@ void Menu::PrintPlayerTwoType()
 	}
 	else
 	{
-		std::cout << "---" << players[1]->GetPlayerNameView() << " is currently A.I.---\n";
+		Difficulty diff = players[1]->GetAIController().GetDifficulty();
+
+		switch (diff)
+		{
+			case Difficulty::Easy:
+				std::cout << "---" << players[1]->GetPlayerNameView() << " is currently Easy A.I.---\n";
+				break;
+
+			case Difficulty::Medium:
+				std::cout << "---" << players[1]->GetPlayerNameView() << " is currently Medium A.I.---\n";
+				break;
+
+			default:
+				std::cout << "---" << players[1]->GetPlayerNameView() << " is currently A.I.---\n";
+				break;
+		}
 	}
 }
 
@@ -2244,7 +2280,7 @@ bool Menu::ReorderMoves(BattlePokemon& pokemon)
 
 void Menu::SetDefaultPokemon()
 {
-	if (players[0]->GetBelt(1).HasPokemon() && players[1]->GetBelt(1).HasPokemon())
+	if (players[0]->GetPokemonCount() > 0 && players[1]->GetPokemonCount() > 0)
 	{
 		return;
 	}
