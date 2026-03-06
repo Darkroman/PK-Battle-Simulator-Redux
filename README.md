@@ -239,7 +239,7 @@ I started this project a long time ago and have been working on it off and on wh
 - IVs, and EVs
 - Physical/Special move split from gen 4 onward implemented.
 - All generation 1 volatile and non-volatile status conditions working as they do in later generations.
-- Easy and Medium A.I difficulties largely based by gen 4's Basic and Strong/Evaluate Attack scoring.
+- Easy and Medium A.I difficulties largely based on gen 4's Basic and Strong/Evaluate Attack scoring.
 - There are however no natures, held items, or abilities. Whether I might add them in the future is up in the air.
 </details>
 
