@@ -36,19 +36,17 @@ public:
 
 	void DisplayEnemySwitchMsg(std::string_view) const override;
 
-	void DisplayFlyChargeMsg(std::string_view) const override;
+	void DisplayFlyChargeMsg(std::string_view, std::string_view) const override;
 
 	void DisplayJumpKickCrashMsg(std::string_view, std::string_view) const override;
 
 	void DisplayRecoilMsg(std::string_view, std::string_view) const override;
 
-	void DisplayRechargeMsg(std::string_view, std::string_view) const override;
-
 	void DisplayEnergyDrainedMsg(std::string_view, std::string_view) const override;
 
 	void DisplaySolarBeamChargeMsg(std::string_view, std::string_view) const override;
 
-	void DisplayDigChargeMsg(std::string_view) const override;
+	void DisplayDigChargeMsg(std::string_view, std::string_view) const override;
 
 	void DisplayRecoveredHPRestoredMsg(std::string_view, std::string_view) const override;
 

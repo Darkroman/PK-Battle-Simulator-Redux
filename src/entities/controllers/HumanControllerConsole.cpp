@@ -39,7 +39,7 @@ PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, Playe
 
         case 1:
             decision.action = BattleAction::Fight;
-            decision.chosenMove = FightAction(player, currentPokemon);
+            decision.chosenMove = FightAction(player, currentPokemon, targetMon);
 
             if (!decision.chosenMove)
             {
@@ -83,7 +83,7 @@ BattlePokemon* HumanControllerConsole::PromptForSwitch(Player& player, Player& t
     return selectedPokemon;
 }
 
-pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& currentPokemon)
+pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& currentPokemon, BattlePokemon& targetMon)
 {
     bool struggle = currentPokemon.CheckPPCountForStruggle();
 
@@ -99,7 +99,7 @@ pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& 
     while (true)
     {
         std::cout << currentPokemon.GetName() << "'s current moves\n";
-        PokemonTextView::DisplayMovesInBattle(currentPokemon);
+        PokemonTextView::DisplayMovesInBattle(currentPokemon, targetMon);
 
         std::string input;
         std::cout << "Option (0 to cancel): ";

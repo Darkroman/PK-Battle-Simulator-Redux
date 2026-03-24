@@ -62,14 +62,7 @@ void MoveResultsText::DisplaySubstituteDamageTextDialog(std::string_view defendi
 {
 	if (hitSubstitute && hasSubstitute)
 	{
-		if (substituteHP > 0)
-		{
-			m_sink.Emit(std::format("The substitute took damage for {}'s {}!", defendingPlayerName, defendingPokemonName));
-		}
-		else
-		{
-			m_sink.Emit(std::format("{}'s {}'s substitute faded!", defendingPlayerName, defendingPokemonName));
-		}
+		m_sink.Emit(std::format("The substitute took damage for {}'s {}!", defendingPlayerName, defendingPokemonName));
 	}
 }
 
@@ -126,7 +119,7 @@ void MoveResultsText::DisplayEnemySwitchMsg(std::string_view attackingPokemonNam
 	m_sink.Emit(std::format("{} was dragged out!", attackingPokemonName));
 }
 
-void MoveResultsText::DisplayFlyChargeMsg(std::string_view attackingPokemonName) const
+void MoveResultsText::DisplayFlyChargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
 	m_sink.Emit(std::format("{} flew up high in the sky!", attackingPokemonName));
 }
@@ -141,11 +134,6 @@ void MoveResultsText::DisplayRecoilMsg(std::string_view attackingPlayerName, std
 	m_sink.Emit(std::format("{}'s {} was damaged by the recoil!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayRechargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
-{
-	m_sink.Emit(std::format("{}'s {} must recharge!", attackingPlayerName, attackingPokemonName));
-}
-
 void MoveResultsText::DisplayEnergyDrainedMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
 {
 	m_sink.Emit(std::format("{}'s {} had its energy drained!", defendingPlayerName, defendingPokemonName));
@@ -156,7 +144,7 @@ void MoveResultsText::DisplaySolarBeamChargeMsg(std::string_view attackingPlayer
 	m_sink.Emit(std::format("{}'s {} absorbed light!", attackingPlayerName, attackingPokemonName));
 }
 
-void MoveResultsText::DisplayDigChargeMsg(std::string_view attackingPokemonName) const
+void MoveResultsText::DisplayDigChargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
 {
 	m_sink.Emit(std::format("{} burrowed its way under the ground!", attackingPokemonName));
 }

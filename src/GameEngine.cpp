@@ -50,7 +50,7 @@ void GameEngine::Run()
             case AppState::MainMenu:
                 if (!menu)
                 {
-                    menu.emplace(players, rng);
+                    menu.emplace(players);
                 }
 
                 if (menu->RunMenu())

@@ -2,6 +2,7 @@
 
 #include "BattleContext.h"
 #include "../entities/pokemonMove.h"
+#include "../moves/MoveRoutines.h"
 
 MoveExecutor::MoveExecutor(
     BattleContext& context,

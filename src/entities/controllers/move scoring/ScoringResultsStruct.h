@@ -9,4 +9,6 @@ struct ScoringResults
 	int score{ 100 };
 	pokemonMove* move{};
 	AIScoreTag tag{};
+	int effectiveness{};
+
 };

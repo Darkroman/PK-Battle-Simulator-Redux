@@ -54,6 +54,11 @@ void StatusEffectText::DisplayFlinchMsg(std::string_view attackingPlayerName, st
 	m_sink.Emit(std::format("{}'s {} flinched and couldn't move!", attackingPlayerName, attackingPokemonName));
 }
 
+void StatusEffectText::DisplayRechargeMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {} must recharge!", attackingPlayerName, attackingPokemonName));
+}
+
 // Barriers / field effects
 void StatusEffectText::DisplayNoLongerProtectedMist(std::string_view playerName) const
 {
@@ -126,6 +131,11 @@ void StatusEffectText::DisplayMoveIsDisabledMsg(std::string_view attackingPlayer
 void StatusEffectText::DisplayMoveNoLongerDisabledMsg(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view disabledMoveName) const
 {
 	m_sink.Emit(std::format("{}'s {}'s {} is no longer disabled!", attackingPlayerName, attackingPokemonName, disabledMoveName));
+}
+
+void StatusEffectText::DisplaySubstituteFadedMsg(std::string_view defendingPlayerName, std::string_view defendingPokemonName) const
+{
+	m_sink.Emit(std::format("{}'s {}'s substitute faded!", defendingPlayerName, defendingPokemonName));
 }
 
 // Faint

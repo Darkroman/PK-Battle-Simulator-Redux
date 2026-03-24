@@ -7,18 +7,16 @@
 #include "../common/PartyEditResults.h"
 
 class Player;
-class RandomEngine;
 
 class Menu
 {
 private:
 	std::vector<std::unique_ptr<Player>>& playerStorage;
 	std::array<Player*, 2> players;
-	RandomEngine& m_rng;
 
 public:
 	Menu() = delete;
-	explicit Menu(std::vector<std::unique_ptr<Player>>&, RandomEngine&);
+	explicit Menu(std::vector<std::unique_ptr<Player>>&);
 
 	SetPokemonResult SetPlayerPokemon(BattlePokemon&, std::string_view);
 	SetMoveResult SetPlayerPokemonMove(BattlePokemon&, size_t, std::string_view);

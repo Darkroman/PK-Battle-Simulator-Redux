@@ -33,19 +33,17 @@ public:
 
 	virtual void DisplayEnemySwitchMsg(std::string_view) const = 0;
 
-	virtual void DisplayFlyChargeMsg(std::string_view) const = 0;
+	virtual void DisplayFlyChargeMsg(std::string_view, std::string_view) const = 0;
 
 	virtual void DisplayJumpKickCrashMsg(std::string_view, std::string_view) const = 0;
 
 	virtual void DisplayRecoilMsg(std::string_view, std::string_view) const = 0;
 
-	virtual void DisplayRechargeMsg(std::string_view, std::string_view) const = 0;
-
 	virtual void DisplayEnergyDrainedMsg(std::string_view, std::string_view) const = 0;
 
 	virtual void DisplaySolarBeamChargeMsg(std::string_view, std::string_view) const = 0;
 
-	virtual void DisplayDigChargeMsg(std::string_view) const = 0;
+	virtual void DisplayDigChargeMsg(std::string_view, std::string_view) const = 0;
 
 	virtual void DisplayRecoveredHPRestoredMsg(std::string_view, std::string_view) const = 0;
 

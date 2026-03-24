@@ -153,7 +153,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(72, "Mega Drain", "Grass", PokemonType::Grass, "Special", Category::Special, 0, MoveEffect::Leech, 0, 15, 24, 40, 100, 0, 1, 0, 0, 1, 1, 0, 0);
 
-	movedex.emplace_back(73, "Leech Seed", "Grass", PokemonType::Grass, "Special", Category::Special, 0, MoveEffect::LeechSeed, 0, 10, 16, 0, 100, 0, 1, 1, 0, 1, 0, 0, 0);
+	movedex.emplace_back(73, "Leech Seed", "Grass", PokemonType::Grass, "Status", Category::Status, 0, MoveEffect::LeechSeed, 0, 10, 16, 0, 100, 0, 1, 1, 0, 1, 0, 0, 0);
 
 	movedex.emplace_back(74, "Growth", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::Growth, 0, 20, 32, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0);
 
@@ -293,7 +293,7 @@ void Database::LoadEmbedMoves()
 
 	movedex.emplace_back(142, "Lovely Kiss", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::SleepMove, 0, 10, 16, 0, 75, 0, 1, 1, 0, 1, 0, 0, 0);
 
-	movedex.emplace_back(143, "Sky Attack", "Flying", PokemonType::Flying, "Physical", Category::Physical, 0, MoveEffect::SkyAttack, 0, 5, 8, 140, 90, 0, 1, 0, 0, 1, 0, 0, 0);
+	movedex.emplace_back(143, "Sky Attack", "Flying", PokemonType::Flying, "Physical", Category::Physical, 0, MoveEffect::SkyAttack, 30, 5, 8, 140, 90, 0, 1, 0, 0, 1, 0, 0, 0);
 
 	movedex.emplace_back(144, "Transform", "Normal", PokemonType::Normal, "Status", Category::Status, 0, MoveEffect::Transform, 0, 10, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 

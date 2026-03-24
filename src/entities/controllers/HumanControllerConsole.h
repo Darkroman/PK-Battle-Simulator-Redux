@@ -12,7 +12,7 @@ public:
 	BattlePokemon* PromptForSwitch(Player&, Player&, BattlePokemon&, BattlePokemon&) override;
 
 private:
-	pokemonMove* FightAction(Player&, BattlePokemon&);
+	pokemonMove* FightAction(Player&, BattlePokemon&, BattlePokemon&);
 	BattlePokemon* SwitchAction(Player&, BattlePokemon&);
 	BattleAction ForfeitAction(Player&);
 };

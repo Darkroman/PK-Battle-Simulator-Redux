@@ -255,7 +255,6 @@ int BattleCalculations::CalculateDamage(BattleContext& ctx, Player& targetPlayer
 	std::uniform_int_distribution<int> dist(85, 100);
 	int randPercent = dist(m_rng.GetGenerator());
 
-
 	interimDamage = interimDamage * randPercent / 100;
 
 	bool hasStab = (currentMove.GetMoveTypeEnum() == source.GetTypeOneEnum() ||
@@ -341,11 +340,7 @@ void BattleCalculations::ApplyDamage(Player& targetPlayer, pokemonMove& currentM
 		m_context.damageInPixels = m_context.prevPixels - newPixel;
 	}
 
-	bool isMultiStrike = currentMove.GetMoveEffectEnum() == MoveEffect::MultiHit ||
-		currentMove.GetMoveEffectEnum() == MoveEffect::DoubleHit ||
-		currentMove.GetMoveEffectEnum() == MoveEffect::Twineedle;
-
-	if (target.IsBiding() && !isMultiStrike && !target.HasSubstitute())
+	if (target.IsBiding() && !m_context.flags.hitSubstitute)
 	{
 		target.AddBideDamage(damage);
 	}

@@ -4,6 +4,11 @@
 
 #include "SaveParty.h"
 
+SaveParty::SaveParty(std::array<Player*, 2> players)
+{
+	SaveParty::players = players;
+}
+
 SaveParty::SaveParty(std::array<Player*, 2> players, int numPlayer) : num(numPlayer)
 {
 	SaveParty::players = players;

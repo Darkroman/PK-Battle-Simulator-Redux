@@ -8,6 +8,7 @@ class Player;
 class SaveParty
 {
 public:
+	explicit SaveParty(std::array<Player*, 2>);
 	explicit SaveParty(std::array<Player*, 2>, int);
 	void SaveFile(std::ofstream&);
 	void SavePlayerName(std::ofstream&);

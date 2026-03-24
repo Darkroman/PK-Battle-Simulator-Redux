@@ -45,6 +45,7 @@ set(SOURCES
     battle/WinChecker.cpp
 
     # moves
+    moves/MoveHelpers.cpp
     moves/MoveRoutines.cpp
 
     # UI

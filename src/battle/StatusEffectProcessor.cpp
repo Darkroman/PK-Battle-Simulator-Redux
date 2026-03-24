@@ -15,7 +15,11 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 
 	if (m_context.attackingPokemon->IsRecharging())
 	{
-		return true;
+		m_statusEffectUI.DisplayRechargeMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
+		m_context.attackingPokemon->SetRecharging(false);
+		m_context.attackingPlayer->SetCanSwitch(true);
+
+		return false;
 	}
 
 	switch (m_context.attackingPokemon->currentStatus)
@@ -48,6 +52,23 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 	{
 		canPerform = false;
 		m_statusEffectUI.DisplayMoveIsDisabledMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView(), m_context.currentMove->GetName());
+
+		if (m_context.attackingPokemon->IsThrashing())
+		{
+			ThrashStop();
+			ThrashReset();
+
+			if (m_context.attackingPokemon->GetThrashCounter() == m_context.attackingPokemon->GetThrashTurnCount() && !m_context.attackingPokemon->IsConfused())
+			{
+				ThrashConfuse();
+			}
+		}
+
+		if (m_context.attackingPokemon->IsBiding())
+		{
+			BideStop();
+			BideReset();
+		}
 	}
 
 	if (m_context.attackingPokemon->IsCharging() && canPerform == false)
@@ -168,7 +189,8 @@ bool StatusEffectProcessor::ConfusedStatus()
 
 			if (m_context.attackingPokemon->IsBiding())
 			{
-				m_context.attackingPokemon->AddBideDamage(finalDamage);
+				BideStop();
+				BideReset();
 			}
 
 			ResetPokemonTurnStatuses();
@@ -190,16 +212,8 @@ bool StatusEffectProcessor::ParalysisStatus()
 
 		if (m_context.attackingPokemon->IsBiding())
 		{
-			if (m_context.attackingPokemon->GetBideCounter() < 2)
-			{
-				m_context.attackingPokemon->IncrementBideCounter();
-			}
-			else
-			{
-				BideStop();
-				BideReset();
-			}
-			
+			BideStop();
+			BideReset();
 		}
 
 		return false;
@@ -253,6 +267,7 @@ void StatusEffectProcessor::CheckSubstituteCondition(Player* targetPlayer, Battl
 	if (targetPokemon->GetSubstituteHP() <= 0 && targetPokemon->HasSubstitute())
 	{
 		targetPokemon->SetSubstitute(false);
+		m_statusEffectUI.DisplaySubstituteFadedMsg(targetPlayer->GetPlayerNameView(), targetPokemon->GetNameView());
 	}
 }
 
@@ -297,17 +312,15 @@ void StatusEffectProcessor::RageCheck()
 // If paralyze or confusion disrupts their charge (hyper beam, fly, dig, solar beam etc)
 void StatusEffectProcessor::ResetPokemonTurnStatuses()
 {
-	if (!m_context.attackingPokemon->IsCharging() && !m_context.attackingPokemon->IsRecharging() && !m_context.attackingPokemon->IsSemiInvulnerable())
+	if (m_context.attackingPokemon->IsCharging() || m_context.attackingPokemon->IsRecharging() || m_context.attackingPokemon->IsSemiInvulnerable())
 	{
-		return;
+		m_context.attackingPlayer->SetCanSwitch(true);
+
+		m_context.attackingPokemon->SetCharging(false);
+		m_context.attackingPokemon->SetRecharging(false);
+		m_context.attackingPokemon->SetSemiInvulnerableDig(false);
+		m_context.attackingPokemon->SetSemiInvulnerableFly(false);
 	}
-
-	m_context.attackingPlayer->SetCanSwitch(true);
-
-	m_context.attackingPokemon->SetCharging(false);
-	m_context.attackingPokemon->SetRecharging(false);
-	m_context.attackingPokemon->SetSemiInvulnerableDig(false);
-	m_context.attackingPokemon->SetSemiInvulnerableFly(false);
 }
 
 void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& source, BattlePokemon& target)

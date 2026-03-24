@@ -5,6 +5,9 @@
 #include "../../data/Database.h"
 #include "../../data/Pokemon.h"
 #include "../../data/Move.h"
+#include "../../data/StringToTypes.h"
+#include "../../moves/MoveEffectEnums.h"
+#include "../../battle/Typechart.h"
 
 #include "PokemonTextView.h"
 
@@ -125,12 +128,12 @@ namespace PokemonTextView
 
             if (pokemon.GetMove(moveSlot).IsActive())
             {
-                std::cout << std::format("{:<12}", pokemon.GetMove(moveSlot).GetName());
+                std::cout << std::format("{:<13}", pokemon.GetMove(moveSlot).GetName());
                 std::cout << " ";
             }
             else
             {
-                std::cout << std::format("{:^12}", "---");
+                std::cout << std::format("{:^13}", "---");
                 std::cout << " ";
             }
 
@@ -142,7 +145,32 @@ namespace PokemonTextView
         std::cout << '\n';
     }
 
-    void DisplayMovesInBattle(const BattlePokemon& pokemon)
+    void DisplayLearnedMovesExpanded(const BattlePokemon& pokemon)
+    {
+        for (size_t moveSlot = 1; moveSlot < 5; ++moveSlot)
+        {
+            const auto& move = pokemon.GetMove(moveSlot);
+            if (move.IsActive())
+            {
+                   std::cout << moveSlot << ". "
+                << std::left << std::setw(13) << move.GetName() << " PP("
+                << std::right << std::setw(2) << move.m_currentPP << "/"
+                << std::right << std::setw(2) << move.m_maxPP << ") "
+                << std::left << "- Power: " << std::setw(4) << move.GetPower()
+                << std::left << "- Accuracy: " << std::setw(4) << move.GetAccuracy()
+                << std::left << "- Type: " << std::setw(9) << move.GetMoveType()
+                << std::left << "- Category: " << std::setw(9) << move.GetCategory()
+                << '\n';
+                
+            }
+            else
+            {
+                std::cout << moveSlot << ". " << "---\n";
+            }
+        }
+    }
+
+    void DisplayMovesInBattle(const BattlePokemon& pokemon, const BattlePokemon& target)
     {
         for (size_t moveSlot = 1; moveSlot < 5; ++moveSlot)
         {
@@ -158,10 +186,16 @@ namespace PokemonTextView
                 }
                 else
                 {
+                    bool isStatus = move.GetCategoryEnum() == Category::Status;
+
                     std::cout << moveSlot << ". "
-                        << std::left << std::setw(12) << move.GetName() << " PP("
+                        << std::left << std::setw(13) << move.GetName() << " PP("
                         << std::right << std::setw(2) << move.m_currentPP << "/"
-                        << std::right << std::setw(2) << move.m_maxPP << ")" << '\n';
+                        << std::right << std::setw(2) << move.m_maxPP << ") "
+                        << std::left << "- Type: " << std::setw(9) << move.GetMoveType()
+                        << std::left << "- Category: " << std::setw(9) << move.GetCategory()
+                        << std::left << "- Effectiveness: " << std::setw(15) << (isStatus ? CalculateStatusMoveEffectiveness(pokemon, target, move) : CalculateDamageMoveEffectiveness(pokemon, target, move))
+                        << '\n';
                 }
             }
             else
@@ -246,5 +280,68 @@ namespace PokemonTextView
             return "NOR";
         }
         
+    }
+
+    std::string_view CalculateStatusMoveEffectiveness(const BattlePokemon& source, const BattlePokemon& target, const pokemonMove& currentMove)
+    {
+        bool isGrassImmune = (currentMove.GetMoveEffectEnum() == MoveEffect::PoisonPowder
+            || currentMove.GetMoveEffectEnum() == MoveEffect::StunSpore
+            || currentMove.GetMoveEffectEnum() == MoveEffect::SleepPowder
+            || currentMove.GetMoveEffectEnum() == MoveEffect::LeechSeed)
+            && (target.GetTypeOneEnum() == PokemonType::Grass || target.GetTypeTwoEnum() == PokemonType::Grass);
+
+        bool isElectricImmune = (currentMove.GetMoveEffectEnum() == MoveEffect::Paralyze || currentMove.GetMoveEffectEnum() == MoveEffect::StunSpore)
+            && (target.GetTypeOneEnum() == PokemonType::Electric || target.GetTypeTwoEnum() == PokemonType::Electric);
+
+        bool isThunderWaveImmune = (currentMove.GetMoveTypeEnum() == PokemonType::Electric
+            && (target.GetTypeOneEnum() == PokemonType::Ground || target.GetTypeTwoEnum() == PokemonType::Ground));
+
+        bool isPoisonImmune = (currentMove.GetMoveTypeEnum() == PokemonType::Poison)
+            && ((target.GetTypeOneEnum() == PokemonType::Poison || target.GetTypeTwoEnum() == PokemonType::Poison)
+            || (target.GetTypeOneEnum() == PokemonType::Steel || target.GetTypeTwoEnum() == PokemonType::Steel));
+
+        if (isGrassImmune || isElectricImmune || isThunderWaveImmune || isPoisonImmune)
+        {
+            return "Immune";
+        }
+        else
+        {
+            return "Effective";
+        }
+    }
+
+    std::string_view CalculateDamageMoveEffectiveness(const BattlePokemon& source, const BattlePokemon& target, const pokemonMove& currentMove)
+    {
+        if (currentMove.GetMoveEffectEnum() == MoveEffect::Struggle)
+        {
+            return "Effective";
+        }
+
+        size_t moveType = static_cast<size_t>(currentMove.GetMoveTypeEnum());
+        size_t defensiveTypeOne = static_cast<size_t>(target.GetTypeOneEnum());
+        size_t defensiveTypeTwo = static_cast<size_t>(target.GetTypeTwoEnum());
+
+        uint16_t effect1 = typeChart[moveType][defensiveTypeOne];
+        uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
+
+        int product = static_cast<int>(effect1 * effect2);
+        int moveEffectiveness = (product / 4096);
+
+        if (moveEffectiveness == 0)
+        {
+            return "Immune";
+        }
+        else if (moveEffectiveness > 0 && moveEffectiveness < 4096)
+        {
+            return "Not Effective";
+        }
+        else if (moveEffectiveness > 4096)
+        {
+            return "Super Effective";
+        }
+        else
+        {
+            return "Effective";
+        }
     }
 }

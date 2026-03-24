@@ -13,10 +13,9 @@
 
 #include "Menu.h"
 #include "../common/InputValidation.h"
-#include "../battle/RandomEngine.h"
 
-Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage, RandomEngine& rng)
-	: playerStorage(playerStorage), m_rng(rng)
+Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage)
+	: playerStorage(playerStorage)
 {
 	players[0] = playerStorage[0].get();
 	players[1] = playerStorage[1].get();
@@ -663,6 +662,8 @@ bool Menu::SetPlayerPokemonSpeedEV(BattlePokemon& pokemon)
 bool Menu::RunMenu()
 {
 	bool exit = false;
+
+	//DatabaseTextView::DisplayMovesWithZeroPower(Database::GetInstance());
 
 	while (exit == false)
 	{
@@ -1800,7 +1801,7 @@ bool Menu::EditChosenPokemonMoves(BattlePokemon& pokemon)
 		std::cout << "Editing " << pokemon.GetPokemonNameView() << "'s moves\n";
 
 		std::cout << "----------\n";
-		PokemonTextView::DisplayLearnedMoves(pokemon);
+		PokemonTextView::DisplayLearnedMovesExpanded(pokemon);
 		std::cout << "----------\n\n";
 
 		std::cout << "1. Add a move\n";
@@ -2077,7 +2078,7 @@ bool Menu::SwapMoves(BattlePokemon& pokemon)
 
 	while (exit == false)
 	{
-		PokemonTextView::DisplayMovesInBattle(pokemon);
+		PokemonTextView::DisplayLearnedMoves(pokemon);
 
 		std::cout << "Enter move slot number to swap (0 to exit): ";
 
@@ -2187,7 +2188,7 @@ bool Menu::ReorderMoves(BattlePokemon& pokemon)
 
 	while (exit == false)
 	{
-		PokemonTextView::DisplayMovesInBattle(pokemon);
+		PokemonTextView::DisplayLearnedMoves(pokemon);
 
 		std::cout << "Choose move to reposition (0 to exit): ";
 

@@ -5,6 +5,7 @@
 #include "../../data/Database.h"
 #include "../../data/Pokemon.h"
 #include "../../data/Move.h"
+#include "../../data/StringToTypes.h"
 
 namespace DatabaseTextView
 {
@@ -54,5 +55,18 @@ namespace DatabaseTextView
             }
         }
         std::cout << '\n';
+    }
+
+    void DisplayMovesWithZeroPower(const Database& db)
+    {
+        const auto& movedex = db.GetMovedexVector();
+
+        for (const auto& move : movedex)
+        {
+            if (move.GetPower() == 0 && move.GetCategoryEnum() != Category::Status)
+            {
+                std::cout << move.GetName() << " - Power: " << move.GetPower() << " - Category: " << move.GetCategory() << '\n';
+            }
+        }
     }
 }

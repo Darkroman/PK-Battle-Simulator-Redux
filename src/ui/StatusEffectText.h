@@ -21,6 +21,7 @@ public:
 	void DisplayHurtItselfConfuseMsg() const override;
 	void DisplayCantMoveParalysisMsg(std::string_view) const override;
 	void DisplayFlinchMsg(std::string_view, std::string_view) const override;
+	void DisplayRechargeMsg(std::string_view, std::string_view) const override;
 
 	// Barriers / field effects
 	void DisplayNoLongerProtectedMist(std::string_view) const override;
@@ -43,6 +44,8 @@ public:
 	// Disable
 	void DisplayMoveIsDisabledMsg(std::string_view, std::string_view, std::string_view) const override;
 	void DisplayMoveNoLongerDisabledMsg(std::string_view, std::string_view, std::string_view) const override;
+
+	void DisplaySubstituteFadedMsg(std::string_view, std::string_view) const override;
 
 	// Faint
 	void DisplayFaintedMsg(std::string_view, std::string_view) const override;

@@ -18,6 +18,7 @@ public:
 	virtual void DisplayHurtItselfConfuseMsg() const = 0;
 	virtual void DisplayCantMoveParalysisMsg(std::string_view) const = 0;
 	virtual void DisplayFlinchMsg(std::string_view, std::string_view) const = 0;
+	virtual void DisplayRechargeMsg(std::string_view, std::string_view) const = 0;
 
 	// Barriers / field effects
 	virtual void DisplayNoLongerProtectedMist(std::string_view) const = 0;
@@ -40,6 +41,8 @@ public:
 	// Disable
 	virtual void DisplayMoveIsDisabledMsg(std::string_view, std::string_view, std::string_view) const = 0;
 	virtual void DisplayMoveNoLongerDisabledMsg(std::string_view, std::string_view, std::string_view) const = 0;
+
+	virtual void DisplaySubstituteFadedMsg(std::string_view, std::string_view) const = 0;
 
 	// Faint
 	virtual void DisplayFaintedMsg(std::string_view, std::string_view) const = 0;
