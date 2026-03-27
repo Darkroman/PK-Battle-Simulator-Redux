@@ -321,26 +321,27 @@ void BattleCalculations::ApplyDamage(Player& targetPlayer, pokemonMove& currentM
 		return;
 	}
 
+	bool hitSubstitute = target.HasSubstitute() && !currentMove.CanBypassSubstitute();
+	m_context.flags.hitSubstitute = hitSubstitute;
+	damage = (hitSubstitute ? std::min(damage, target.GetSubstituteHP()) : std::min(damage, target.GetCurrentHP()));
+
 	int currentPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
 	m_context.prevPixels = currentPixel;
 
-	if (target.HasSubstitute() && !currentMove.CanBypassSubstitute())
+	if (hitSubstitute)
 	{
 		target.DamageSubstitute(damage);
-		m_context.flags.hitSubstitute = true;
 	}
-
 	else
 	{
 		target.DamageCurrentHP(damage);
-		m_context.flags.hitSubstitute = false;
 		m_context.damageTaken = damage;
 		int newPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
 		m_context.pixelsLost = currentPixel - newPixel;
 		m_context.damageInPixels = m_context.prevPixels - newPixel;
 	}
 
-	if (target.IsBiding() && !m_context.flags.hitSubstitute)
+	if (target.IsBiding() && !hitSubstitute)
 	{
 		target.AddBideDamage(damage);
 	}

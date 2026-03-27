@@ -73,7 +73,7 @@ void InflictNVStatus(Status status, int chance, MoveRoutineDeps& deps)
 		statusMessage += "was poisoned!";
 	else if (status == Status::Badly_Poisoned)
 		statusMessage += "was badly poisoned!";
-	else if (status == Status::Sleeping && ctx.defendingPokemon->GetStatus() == Status::Normal)
+	else if (status == Status::Sleeping)
 		statusMessage += "fell asleep!";
 
 
@@ -127,16 +127,18 @@ void MultiStrikeRoutine(MoveRoutineDeps& deps, int turnCount)
 
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
-		if (ctx.currentMove->GetMoveEffectEnum() == MoveEffect::Twineedle)
-		{
-			InflictNVStatus(Status::Poisoned, ctx.currentMove->GetEffectChance(), deps);
-		}
-
 		++timesHit;
+
+		int subHealth = ctx.defendingPokemon->GetSubstituteHP();
 
 		if (ctx.defendingPokemon->GetCurrentHP() <= 0)
 		{
 			break;
+		}
+
+		if (ctx.currentMove->GetMoveEffectEnum() == MoveEffect::Twineedle)
+		{
+			InflictNVStatus(Status::Poisoned, ctx.currentMove->GetEffectChance(), deps);
 		}
 	}
 
@@ -167,7 +169,7 @@ void FlinchRoutine(MoveRoutineDeps& deps)
 {
 	auto& ctx = deps.context;
 
-	if (!ctx.defendingPokemon->IsFainted() && !ctx.flags.hitSubstitute && !ctx.defendingPlayer->IsFirst())
+	if (ctx.defendingPokemon->GetCurrentHP() > 0 && !ctx.flags.hitSubstitute && !ctx.defendingPlayer->IsFirst())
 	{
 		std::uniform_int_distribution<int> randomModDistributor(1, 100);
 		int randomMod = randomModDistributor(deps.rng.GetGenerator());
@@ -177,6 +179,21 @@ void FlinchRoutine(MoveRoutineDeps& deps)
 			ctx.defendingPokemon->SetIsFlinched(true);
 		}
 	}
+}
+
+void RecoilRoutine(MoveRoutineDeps& deps, int recoilDivisor, int targetHPBegin, int targetHPEnd)
+{
+	auto& ctx = deps.context;
+
+	int recoilDamage = (targetHPBegin - targetHPEnd) / recoilDivisor;
+
+	int finalDamage = std::max(1, recoilDamage);
+
+	ctx.attackingPokemon->DamageCurrentHP(finalDamage);
+
+	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
+
+	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
 }
 
 bool HandleCharging(MoveRoutineDeps& deps, ChargeMsgMemFn chargeMsg, const ChargingMoveHooks& hooks)
@@ -272,7 +289,7 @@ void StageDownDamageRoutine(MoveRoutineDeps& deps, int amount, std::string_view 
 	auto playerName = defPlayer.GetPlayerNameView();
 	auto pokemonName = defPkmn.GetNameView();
 
-	if (defPkmn.IsFainted() || ctx.flags.hitSubstitute || defPlayer.HasMist())
+	if (defPkmn.GetCurrentHP() <= 0 || ctx.flags.hitSubstitute || defPlayer.HasMist())
 	{
 		return;
 	}

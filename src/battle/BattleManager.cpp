@@ -119,7 +119,7 @@ void BattleManager::ApplyPlayerTwoAction()
 
 bool BattleManager::RunBattleLoop()
 {
-	int turnCount{ 0 };
+	m_context.battleTurn = 0;
 	bool winCondition{ false };
 
 	AssignFirstPokemon();
@@ -132,9 +132,9 @@ bool BattleManager::RunBattleLoop()
 	{
 		//BattleAIProcedures::UpdateEnemyActivePokemon(m_context);
 
-		++turnCount;
+		++m_context.battleTurn;
 
-		m_battleAnnouncerUI.DisplayTurnNumber(turnCount);
+		m_battleAnnouncerUI.DisplayTurnNumber(m_context.battleTurn);
 
 		m_battleAnnouncerUI.DisplayFightingPokemon(m_context);
 
@@ -184,7 +184,7 @@ bool BattleManager::RunBattleLoop()
 		m_battleAnnouncerUI.NewLine();
 	}
 
-	turnCount = 0;
+	m_context.battleTurn = 0;
 	return winCondition;
 }
 

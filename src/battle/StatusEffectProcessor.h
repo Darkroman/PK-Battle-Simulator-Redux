@@ -29,8 +29,6 @@ public:
 
 	void RageCheck();
 
-	void ResetPokemonTurnStatuses();
-
 	void CheckFaintCondition(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& sourcePokemon, BattlePokemon& targetPokemon);
 
 private:

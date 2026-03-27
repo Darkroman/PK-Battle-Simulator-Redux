@@ -22,6 +22,16 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 		return false;
 	}
 
+	if (m_context.attackingPokemon->IsThrashing())
+	{
+		m_context.attackingPokemon->IncrementThrashCounter();
+	}
+
+	if (m_context.attackingPokemon->IsBiding())
+	{
+		m_context.attackingPokemon->IncrementBideCounter();
+	}
+
 	switch (m_context.attackingPokemon->currentStatus)
 	{
 	case Status::Sleeping:
@@ -31,6 +41,12 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 	case Status::Frozen:
 		canPerform = FrozenStatus();
 		break;
+	}
+
+	if (m_context.currentMove->b_isDisabled && canPerform == true)
+	{
+		canPerform = false;
+		m_statusEffectUI.DisplayMoveIsDisabledMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView(), m_context.currentMove->GetName());
 	}
 
 	if (m_context.attackingPokemon->IsFlinched() && canPerform == true)
@@ -48,39 +64,21 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 		canPerform = ParalysisStatus();
 	}
 
-	if (m_context.currentMove->b_isDisabled && canPerform == true)
-	{
-		canPerform = false;
-		m_statusEffectUI.DisplayMoveIsDisabledMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView(), m_context.currentMove->GetName());
-
-		if (m_context.attackingPokemon->IsThrashing())
-		{
-			ThrashStop();
-			ThrashReset();
-
-			if (m_context.attackingPokemon->GetThrashCounter() == m_context.attackingPokemon->GetThrashTurnCount() && !m_context.attackingPokemon->IsConfused())
-			{
-				ThrashConfuse();
-			}
-		}
-
-		if (m_context.attackingPokemon->IsBiding())
-		{
-			BideStop();
-			BideReset();
-		}
-	}
-
 	if (m_context.attackingPokemon->IsCharging() && canPerform == false)
 	{
 		m_context.attackingPokemon->SetCharging(false);
+		m_context.attackingPlayer->SetCanSwitch(true);
+
+		if (m_context.attackingPokemon->IsSemiInvulnerable())
+		{
+			m_context.attackingPokemon->SetSemiInvulnerableDig(false);
+			m_context.attackingPokemon->SetSemiInvulnerableFly(false);
+		}
 	}
 
 	if (m_context.attackingPokemon->IsThrashing() && canPerform == false)
 	{
-		m_context.attackingPokemon->IncrementThrashCounter();
-
-		if (m_context.attackingPokemon->GetThrashCounter() == m_context.attackingPokemon->GetThrashTurnCount() && !m_context.attackingPokemon->IsConfused())
+		if (m_context.attackingPokemon->GetThrashCounter() >= m_context.attackingPokemon->GetThrashTurnCount() && !m_context.attackingPokemon->IsConfused())
 		{
 			ThrashConfuse();
 		}
@@ -89,19 +87,17 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 		ThrashReset();
 	}
 
-	return canPerform;
-}
-
-bool StatusEffectProcessor::SleepStatus()
-{
-	// Bulbapedia mentions only sleep fully disrupts bide, however on Showdown bide is fully disrupted after flinch, and a full paralysis as well
-	// If someone could test on a Gen 7 cart how bide interacts with certain status effects that would be greatly appreciated
-	if (m_context.attackingPokemon->IsBiding())
+	if (m_context.attackingPokemon->IsBiding() && canPerform == false)
 	{
 		BideStop();
 		BideReset();
 	}
 
+	return canPerform;
+}
+
+bool StatusEffectProcessor::SleepStatus()
+{
 	if (m_context.attackingPokemon->GetSleepCounter() >= m_context.attackingPokemon->GetSleepTurnCount())
 	{
 		m_context.attackingPokemon->ChangeStatus(Status::Normal);
@@ -187,14 +183,6 @@ bool StatusEffectProcessor::ConfusedStatus()
 
 			m_context.attackingPokemon->DamageCurrentHP(finalDamage);
 
-			if (m_context.attackingPokemon->IsBiding())
-			{
-				BideStop();
-				BideReset();
-			}
-
-			ResetPokemonTurnStatuses();
-
 			return false;
 		}
 	}
@@ -208,13 +196,6 @@ bool StatusEffectProcessor::ParalysisStatus()
 	if (randomMod <= 25)
 	{
 		m_statusEffectUI.DisplayCantMoveParalysisMsg(m_context.attackingPokemon->GetNameView());
-		ResetPokemonTurnStatuses();
-
-		if (m_context.attackingPokemon->IsBiding())
-		{
-			BideStop();
-			BideReset();
-		}
 
 		return false;
 	}
@@ -306,20 +287,6 @@ void StatusEffectProcessor::RageCheck()
 	else if (m_context.attackingPokemon->IsRaging() && m_context.currentMove->GetMoveEffectEnum() == MoveEffect::Rage && !m_context.currentMove->b_isDisabled)
 	{
 		m_statusEffectUI.DisplayRageStartedMsg(m_context.attackingPlayer->GetPlayerNameView(), m_context.attackingPokemon->GetNameView());
-	}
-}
-
-// If paralyze or confusion disrupts their charge (hyper beam, fly, dig, solar beam etc)
-void StatusEffectProcessor::ResetPokemonTurnStatuses()
-{
-	if (m_context.attackingPokemon->IsCharging() || m_context.attackingPokemon->IsRecharging() || m_context.attackingPokemon->IsSemiInvulnerable())
-	{
-		m_context.attackingPlayer->SetCanSwitch(true);
-
-		m_context.attackingPokemon->SetCharging(false);
-		m_context.attackingPokemon->SetRecharging(false);
-		m_context.attackingPokemon->SetSemiInvulnerableDig(false);
-		m_context.attackingPokemon->SetSemiInvulnerableFly(false);
 	}
 }
 

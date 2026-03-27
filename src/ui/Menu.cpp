@@ -2287,50 +2287,50 @@ void Menu::SetDefaultPokemon()
 	}
 
 	players[0]->GetBelt(1).SetPokemon("Poketest1");
-	players[0]->GetBelt(2).SetPokemon("Poketest1");
 	players[1]->GetBelt(1).SetPokemon("Poketest2");
-	players[1]->GetBelt(2).SetPokemon("Poketest2");
 
 	if (players[0]->GetBelt(1).GetCurrentHP() != 0)
 	{
-		players[0]->GetBelt(1).SetMove(1, "Thunderbolt");
-		players[0]->GetBelt(2).SetMove(1, "Thunderbolt");
-		players[1]->GetBelt(1).SetMove(1, "Earthquake");
-		players[1]->GetBelt(2).SetMove(1, "Earthquake");
-		//players[1]->GetBelt(1).SetMove(2, "Screech");
-		//players[1]->GetBelt(1).SetMove(3, "Recover");
+		players[0]->GetBelt(1).SetMove(1, "Growth");
+		players[0]->GetBelt(1).SetMove(2, "Minimize");
+		players[1]->GetBelt(1).SetMove(1, "Screech");
+		players[1]->GetBelt(1).SetMove(2, "Substitute");
+		players[1]->GetBelt(1).SetMove(3, "Spore");
+		players[1]->GetBelt(1).SetMove(4, "Confuse Ray");
+
 
 		players[0]->GetBelt(1).IncrementMoveCount();
-		players[0]->GetBelt(2).IncrementMoveCount();
+		players[0]->GetBelt(1).IncrementMoveCount();
 		players[1]->GetBelt(1).IncrementMoveCount();
-		players[1]->GetBelt(2).IncrementMoveCount();
+		players[1]->GetBelt(1).IncrementMoveCount();
+		players[1]->GetBelt(1).IncrementMoveCount();
+		players[1]->GetBelt(1).IncrementMoveCount();
 
 		players[0]->GetBelt(1).SetLevel(100);
-		players[0]->GetBelt(2).SetLevel(100);
 		players[1]->GetBelt(1).SetLevel(100);
-		players[1]->GetBelt(2).SetLevel(100);
 
-		//players[0]->GetBelt(1).SetHPEV(252);
+		players[0]->GetBelt(1).SetHPEV(252);
 		//players[0]->GetBelt(1).SetAttackEV(64);
-		//players[0]->GetBelt(1).SetDefenseEV(252);
+		players[0]->GetBelt(1).SetDefenseEV(252);
 		//players[0]->GetBelt(1).SetHPIV(31);
 		//players[0]->GetBelt(1).SetAttackIV(31);
 		//players[0]->GetBelt(1).SetDefenseIV(31);
 		//players[0]->GetBelt(1).SetSpecialDefenseIV(31);
-		//players[0]->GetBelt(1).SetSpeedIV(31);
+		players[0]->GetBelt(1).SetSpeedIV(30);
 
-		//players[1]->GetBelt(1).SetHPEV(252);
+		players[1]->GetBelt(1).SetHPEV(252);
 		//players[1]->GetBelt(1).SetAttackEV(252);
-		//players[1]->GetBelt(1).SetDefenseEV(252);
+		players[1]->GetBelt(1).SetDefenseEV(252);
 		//players[1]->GetBelt(1).SetSpecialDefenseEV(252);
 		//players[1]->GetBelt(1).SetHPIV(31);
 		//players[1]->GetBelt(1).SetAttackIV(31);
 		//players[1]->GetBelt(1).SetDefenseIV(31);
 		//players[1]->GetBelt(1).SetSpecialDefenseIV(31);
-		//players[1]->GetBelt(1).SetSpeedIV(30);
+		players[1]->GetBelt(1).SetSpeedIV(31);
 
-		//players[0]->GetBelt(1).ChangeStatus(Status::Poisoned);
+		//players[0]->GetBelt(1).ChangeStatus(Status::Paralyzed);
 		//players[0]->GetBelt(1).DamageCurrentHP(players[0]->GetBelt(1).GetMaxHP() - 1);
+		//players[0]->GetBelt(1).SetEvasionStage(5);
 
 		//players[1]->GetBelt(1).ChangeStatus(Status::Poisoned);
 		//players[1]->GetBelt(1).DamageCurrentHP(players[1]->GetBelt(1).GetMaxHP() - 1);

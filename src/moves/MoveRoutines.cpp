@@ -900,15 +900,7 @@ void RecoilQuarter::DoMove(MoveRoutineDeps& deps)
 
 	int targetHPEnd = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	int recoilDamage = (targetHPBegin - targetHPEnd) / 4;
-
-	int finalDamage = std::max(1, recoilDamage);
-
-	ctx.attackingPokemon->DamageCurrentHP(finalDamage);
-
-	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
-
-	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
+	RecoilRoutine(deps, 4, targetHPBegin, targetHPEnd);
 }
 
 void Rampage::DoMove(MoveRoutineDeps& deps)
@@ -922,7 +914,7 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 		ctx.attackingPokemon->SetThrashing(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 
-		std::uniform_int_distribution<int> randomModDistributor(2, 3);
+		std::uniform_int_distribution<int> randomModDistributor(1, 2);
 		int randomMod(randomModDistributor(deps.rng.GetGenerator()));
 		ctx.attackingPokemon->SetThrashTurnCount(randomMod);
 		ctx.attackingPokemon->ResetThrashCounter();
@@ -955,11 +947,6 @@ void Rampage::DoMove(MoveRoutineDeps& deps)
 
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 		deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
-	}
-
-	if (ctx.attackingPokemon->IsThrashing())
-	{
-		ctx.attackingPokemon->IncrementThrashCounter();
 	}
 
 	bool reachedEnd = ctx.attackingPokemon->GetThrashCounter() >= ctx.attackingPokemon->GetThrashTurnCount();
@@ -1014,15 +1001,7 @@ void RecoilThird::DoMove(MoveRoutineDeps& deps)
 
 	int targetHPEnd = hitSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	int recoilDamage = (targetHPBegin - targetHPEnd) / 3;
-
-	int finalDamage = std::max(1, recoilDamage);
-
-	ctx.attackingPokemon->DamageCurrentHP(finalDamage);
-
-	deps.resultsUI.DisplayRecoilMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
-
-	deps.statusProcessor.CheckFaintCondition(*ctx.defendingPlayer, *ctx.attackingPlayer, *ctx.defendingPokemon, *ctx.attackingPokemon);
+	RecoilRoutine(deps, 3, targetHPBegin, targetHPEnd);
 }
 
 void DefenseDown::DoMove(MoveRoutineDeps& deps)
@@ -1217,7 +1196,7 @@ void Confuse::DoMove(MoveRoutineDeps& deps)
 
 	ctx.defendingPokemon->SetConfusedStatus(true);
 
-	std::uniform_int_distribution<int> randomModDistributor(2, 4);
+	std::uniform_int_distribution<int> randomModDistributor(1, 4);
 	int randomMod(randomModDistributor(deps.rng.GetGenerator()));
 	ctx.defendingPokemon->SetConfusedTurnCount(randomMod);
 	ctx.defendingPokemon->ResetConfusedCounter();
@@ -1391,7 +1370,7 @@ void ConfuseHit::DoMove(MoveRoutineDeps& deps)
 
 			ctx.defendingPokemon->SetConfusedStatus(true);
 
-			std::uniform_int_distribution<int> randomModDistributor(2, 4);
+			std::uniform_int_distribution<int> randomModDistributor(1, 4);
 			int randomMod(randomModDistributor(deps.rng.GetGenerator()));
 			ctx.defendingPokemon->SetConfusedTurnCount(randomMod);
 			ctx.defendingPokemon->ResetConfusedCounter();
@@ -2385,26 +2364,7 @@ void Minimize::DoMove(MoveRoutineDeps& deps)
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
-	int evasionStage = ctx.attackingPokemon->GetEvasionStage();
-
-	if (evasionStage >= 6)
-	{
-		deps.resultsUI.DisplayStatRaiseFailMsg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
-	}
-	else if (evasionStage == 5)
-	{
-		++evasionStage;
-		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		deps.resultsUI.DisplayStatRaised1Msg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
-		ctx.attackingPokemon->SetUsedMinimize(true);
-	}
-	else // evasionStage < 5
-	{
-		evasionStage += 2;
-		ctx.attackingPokemon->SetEvasionStage(evasionStage);
-		deps.resultsUI.DisplayStatRaised2Msg("evasiveness", ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
-		ctx.attackingPokemon->SetUsedMinimize(true);
-	}
+	StageUpRoutine(deps, 2, "evasion", [](BattlePokemon& p) { return p.GetEvasionStage(); }, [](BattlePokemon& p, int val) { p.SetEvasionStage(val); });
 }
 
 void DefenseUp2::DoMove(MoveRoutineDeps& deps)
@@ -2524,14 +2484,14 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 
 		deps.resultsUI.UsedTextDialog(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.currentMove->GetName());
 
+		ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
+
 		ctx.attackingPokemon->SetBide(true);
 		ctx.attackingPlayer->SetCanSwitch(false);
 
 		ctx.attackingPokemon->SetBideTurnCount(2);
 		ctx.attackingPokemon->ResetBideCounter();
 	}
-
-	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
 
 	bool isUnleashing = ctx.attackingPokemon->GetBideCounter() >= ctx.attackingPokemon->GetBideTurnCount();
 
@@ -2574,19 +2534,14 @@ void Bide::DoMove(MoveRoutineDeps& deps)
 		deps.statusProcessor.CheckFaintCondition(*ctx.attackingPlayer, *ctx.defendingPlayer, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	}
 
-	if (ctx.attackingPokemon->IsBiding())
+	if (isUnleashing)
 	{
-		if (isUnleashing)
-		{
-			deps.statusProcessor.BideStop();
-			deps.statusProcessor.BideReset();
-		}
-
-		else
-		{
-			ctx.attackingPokemon->IncrementBideCounter();
-			deps.resultsUI.DisplayBideStoringEnergyMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
-		}
+		deps.statusProcessor.BideStop();
+		deps.statusProcessor.BideReset();
+	}
+	else
+	{
+		deps.resultsUI.DisplayBideStoringEnergyMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView());
 	}
 }
 

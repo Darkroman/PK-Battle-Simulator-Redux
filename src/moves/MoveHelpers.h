@@ -10,15 +10,17 @@ struct MoveRoutineDeps;
 
 EffectivenessText ToEffectivenessText(BattleStateFlags::Effectiveness);
 
-void InflictNVStatus(Status, int, MoveRoutineDeps&);
+void InflictNVStatus(Status, int effectChance, MoveRoutineDeps&);
 
 void DamageRoutine(MoveRoutineDeps&);
 
-void MultiStrikeRoutine(MoveRoutineDeps&, int);
+void MultiStrikeRoutine(MoveRoutineDeps&, int turnCount);
 
-void FixedDamageRoutine(MoveRoutineDeps&, int);
+void FixedDamageRoutine(MoveRoutineDeps&, int baseDamage);
 
 void FlinchRoutine(MoveRoutineDeps&);
+
+void RecoilRoutine(MoveRoutineDeps& deps, int recoilDivisor, int targetHPBegin, int targetHPEnd);
 
 using GetStageFn = int (*)(BattlePokemon&);
 using SetStageFn = void (*)(BattlePokemon&, int);
