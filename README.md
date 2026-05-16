@@ -6,6 +6,30 @@
 ## UPDATES
 
    </summary>
+
+### 5/15/2026
+- **AI Switching improvements, additions and bug fixes**
+  - Added a few more gating checks for when AI determines if it should switch or not.
+  - Fixed many bugs when determining which Pokémon to switch to in both mid-turn and post-KO.
+    - Bugs were similar to gen 4's AI switching bugs funnily enough such as using current active pokemon to determine offensive/defensive values.
+  - Easy difficulty AI will not do mid-turn switching.
+- **Hard difficulty AI implemented**
+  - For now just in switching logic. Hard or expert AI type move scoring not implemented yet.
+- **New party Pokémon now default to all 31 IVs**
+  - This includes any Pokémon that are loaded from a saved party file that do not have any IVs.
+- **Saving and loading now more modular**
+  - You can load any saved party file to any player rather than just Red to player one, and Blue to player two.
+  - You can save the party file as any name but the name must starts with a letter.
+- **Developer Notes**
+  - Did a lot of code cleanup in various places.
+    - Changed many for loops to range based for loops where I could.
+    - Fixed up some const correctness.
+    - Made use of std::span.
+    - Added a headless simulation option that tests battles across all your CPU threads (only available through cloning the source and editing).
+    - Various bug fixes that I didn't really document.
+    - If you want to try to simulate many battle iterations yourself, clone this GitHub, edit GameEngine.cpp, change the SetupUI(false) to true, and further down where you see currentState = AppState::InitBattle, change to AppState::Simulate and build.
+    - You can change the amount of iterations under void GameEngine::RunSimulate() with the simIterations variable.
+    - Make sure both players are set to AI when doing this!
    
 ### 3/6/2026
 - **Medium difficulty AI implemented**
@@ -193,15 +217,15 @@ This was coded in VS2022 Community, utilizing up to the C++23 standard features 
 
   </summary>
   
-- On the main menu screen you can choose up to 9 options to edit Player One or Player Two's Pokemon, controller type (human, or different AI difficulties), load or save party.<br/>
-  - Each option screen requires pressing the number then hitting enter.<br/>
-- The game comes with default teams of gen 1's protagonist Red's based team and the rival Blue's team. Choose Load Party (8) in the menu if you want to use them.<br/>
-  - Player One's party is Red's team, and Player Two's party is Blue's team.<br/>
-  - You can pick to play one or the other, both, or none by selecting the respective player's controller type. This does mean you can have AI go at eachother.<br/>
-- Editing a player's pokemon puts you in a submenu to choose options to add, change, release (delete) pokemon as well as edit their moves, stats, and placing in the party.<br/>
-  - You can select between all gen 1's 151 Pokemon, as well as their moves. Names of the Pokemon, moves and their numbers can be used as input.<br/>
-    - **note** Move names are hyphen and space sensitive, but not case sensitive.<br/>
-- When ready to battle press 9 then enter in the main menu to start! If either team has no pokemon or the pokemon have no moves, it will let you know and kick you back to the main menu.<br/>
+- On the main menu screen you can choose up to 9 options to edit Player One or Player Two's Pokemon, controller type (human, or different AI difficulties), load or save party.
+  - Each option screen requires pressing the number then hitting enter.
+- The game comes with default teams of gen 1's protagonist Red's based team and the rival Blue's team. Choose Load Party (8) in the menu if you want to use them.
+  - Player One's party is Red's team, and Player Two's party is Blue's team.
+  - You can pick to play one or the other, both, or none by selecting the respective player's controller type. This does mean you can have AI go at eachother.
+- Editing a player's pokemon puts you in a submenu to choose options to add, change, release (delete) pokemon as well as edit their moves, stats, and placing in the party.
+  - You can select between all gen 1's 151 Pokemon, as well as their moves. Names of the Pokemon, moves and their numbers can be used as input.
+    - **note** Move names are hyphen and space sensitive, but not case sensitive.
+- When ready to battle press 9 then enter in the main menu to start! If either team has no pokemon or the pokemon have no moves, it will let you know and kick you back to the main menu.
 </details>
 
 <details open>
@@ -222,9 +246,17 @@ I started this project a long time ago and have been working on it off and on wh
 
    </summary>
    
-![Setup Menu](https://github.com/user-attachments/assets/3da09c41-9d3a-4c50-83ef-82a5c438c40e) ![Changing Move](https://github.com/user-attachments/assets/77723cef-5437-4dc4-93e6-b8546e79a299) 
+<img src ="https://github.com/user-attachments/assets/710a2dcd-be05-449d-b06f-10c9db0fb95f" width=505 alt="Main Menu">
 
-![Battle 1](https://github.com/user-attachments/assets/7055fbcb-7391-4854-a01e-c61975625706) ![Battle 2](https://github.com/user-attachments/assets/8fc46a2e-2637-40db-abdd-06c234c1d162)
+<img width="1057" alt="Editing Pokemon" src="https://github.com/user-attachments/assets/ea7d15ce-7fcb-4983-bae7-5be89dc16d9b">
+
+<img width="1061" alt="Editing Moves 1" src="https://github.com/user-attachments/assets/9f4fd77d-67cc-41ed-9b2c-f10d9d869bb3" />
+
+<img width="1059" alt="Editing Moves 2" src="https://github.com/user-attachments/assets/3e58c729-aa65-4d43-86aa-5f2d8f8520d3" />
+
+<img width="911" alt="Battle 1" src="https://github.com/user-attachments/assets/0ac9ea40-f106-41d2-a1c9-c88a6a724485" />
+
+<img width="906" alt="Battle 2" src="https://github.com/user-attachments/assets/d0819c75-5937-4dc4-84a8-8d628a0bfa71" />
 </details>
 
 <details>

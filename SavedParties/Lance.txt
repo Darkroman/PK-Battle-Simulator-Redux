@@ -1,0 +1,51 @@
+Player Name: Lance
+
+Pokemon 1:
+Gyarados
+Level: 100
+EVs: 4 HP  / 0 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Dragon Rage
+- Leer
+- Hydro Pump
+- Hyper Beam
+
+Pokemon 2:
+Dragonite
+Level: 100
+EVs: 0 HP  / 0 Atk  / 0 Def  / 252 SpA  / 4 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Thunder Wave
+- Slam
+- Thunderbolt
+- Hyper Beam
+
+Pokemon 3:
+Dragonite
+Level: 100
+EVs: 0 HP  / 0 Atk  / 0 Def  / 252 SpA  / 4 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Bubble Beam
+- Wrap
+- Ice Beam
+- Hyper Beam
+
+Pokemon 4:
+Aerodactyl
+Level: 100
+EVs: 4 HP  / 252 Atk  / 0 Def  / 4 SpA  / 0 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Wing Attack
+- Swift
+- Fly
+- Hyper Beam
+
+Pokemon 5:
+Dragonite
+Level: 100
+EVs: 0 HP  / 0 Atk  / 0 Def  / 252 SpA  / 4 SpD  / 252 Spe
+IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
+- Blizzard
+- Fire Blast
+- Thunder
+- Hyper Beam
