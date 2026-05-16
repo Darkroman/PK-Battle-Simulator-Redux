@@ -1,3 +1,5 @@
+#include "BattleCalculations.h"
+
 #include "../data/Pokemon.h"
 #include "../moves/MoveEffectEnums.h"
 #include "../data/StringToTypes.h"
@@ -6,11 +8,9 @@
 #include "Typechart.h"
 #include "../entities/Player.h"
 
-#include "BattleCalculations.h"
-
 BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng) : m_context(context), m_rng(rng) {}
 
-int BattleCalculations::CalculatePokemonSpeed(BattlePokemon& pokemon)
+int BattleCalculations::CalculatePokemonSpeed(const BattlePokemon& pokemon)
 {
 	auto [numerator, denominator] = GetStageRatio(pokemon.GetSpeedStage());
 
@@ -54,7 +54,7 @@ void BattleCalculations::SetFirst(Player& first, Player& second)
 	m_context.currentMove = (&first == m_context.playerOne) ? m_context.playerOneCurrentMove : m_context.playerTwoCurrentMove;
 }
 
-bool BattleCalculations::CalculateCriticalHit(BattleContext& ctx,BattlePokemon& source)
+bool BattleCalculations::CalculateCriticalHit(BattleContext& ctx, const BattlePokemon& source)
 {
 	size_t stage = source.GetCriticalHitStage();
 	if (stage > 3) stage = 3;
@@ -132,7 +132,7 @@ void BattleCalculations::CalculateTypeEffectiveness(BattleContext& ctx, const po
 	}
 }
 
-bool BattleCalculations::CalculateHitChance(pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target)
+bool BattleCalculations::CalculateHitChance(const pokemonMove& currentMove, const BattlePokemon& source, const BattlePokemon& target)
 {
 	if (
 		(target.IsSemiInvulnerableFromFly() && (currentMove.GetMoveEffectEnum() != MoveEffect::Gust && currentMove.GetName() != "Thunder")) ||
@@ -175,7 +175,7 @@ bool BattleCalculations::CalculateHitChance(pokemonMove& currentMove, BattlePoke
 	}
 }
 
-int BattleCalculations::CalculateDamage(BattleContext& ctx, Player& targetPlayer, pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target)
+int BattleCalculations::CalculateDamage(BattleContext& ctx, const Player& targetPlayer, const pokemonMove& currentMove, const BattlePokemon& source, BattlePokemon& target)
 {
 	int effectiveness = ctx.effectiveness;
 
@@ -312,7 +312,7 @@ int BattleCalculations::CalculateDamage(BattleContext& ctx, Player& targetPlayer
 	return finalDamage;
 }
 
-void BattleCalculations::ApplyDamage(Player& targetPlayer, pokemonMove& currentMove, BattlePokemon& source, BattlePokemon& target, int damage)
+void BattleCalculations::ApplyDamage(const pokemonMove& currentMove, BattlePokemon& target, int damage)
 {
 	const int HP_BAR_WIDTH = m_context.HP_BAR_WIDTH;
 
@@ -348,7 +348,7 @@ void BattleCalculations::ApplyDamage(Player& targetPlayer, pokemonMove& currentM
 }
 
 // Calculate power of low kick based on target Pokemon's weight (in hectograms)
-int BattleCalculations::CalculateLowKickPower(BattlePokemon& target)
+int BattleCalculations::CalculateLowKickPower(const BattlePokemon& target)
 {
 	int pokemonWeight = target.GetPokemonDatabasePointer()->GetPokemonWeightHg();
 

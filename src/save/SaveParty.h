@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <filesystem>
 #include <array>
 
 class Player;
@@ -8,20 +9,19 @@ class Player;
 class SaveParty
 {
 public:
-	explicit SaveParty(std::array<Player*, 2>);
-	explicit SaveParty(std::array<Player*, 2>, int);
-	void SaveFile(std::ofstream&);
-	void SavePlayerName(std::ofstream&);
-	void SavePokemonName(std::ofstream&, int);
-	void SavePokemonLevel(std::ofstream&, int);
-	void SavePokemonEVs(std::ofstream&, int);
-	void SavePokemonIVs(std::ofstream&, int);
-	void SavePokemonMoves(std::ofstream&, int);
+	explicit SaveParty(Player* player, std::filesystem::path);
 	void Save();
+	void SavePlayerName();
+	void SavePokemonName(int);
+	void SavePokemonLevel(int);
+	void SavePokemonEVs(int);
+	void SavePokemonIVs(int);
+	void SavePokemonMoves(int);
 
 private:
-	std::array<Player*, 2> players;
-	std::ofstream outFile;
+	std::array<Player*, 2> players{};
+	Player* player{};
+	std::ofstream outFile{};
 	int num{};
 	int numberOfPokemon{};
 	int numberOfMoves{};

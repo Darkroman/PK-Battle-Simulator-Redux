@@ -4,13 +4,11 @@
 
 #include "ScoringResultsStruct.h"
 #include "AIMoveClassifier.h"
-#include "../../../data/StringToTypes.h"
 #include "../../Player.h"
-#include "../AIController.h"
 
 namespace MediumMoveScoring
 {
-	void EvaluateBestDamageMove(std::vector<ScoringResults>& results, BattlePokemon& targetMon)
+	void EvaluateBestDamageMove(std::vector<ScoringResults>& results, const BattlePokemon& targetMon)
 	{
 		std::vector<ScoringResults*> damagingMoves{};
 		damagingMoves.reserve(results.size());

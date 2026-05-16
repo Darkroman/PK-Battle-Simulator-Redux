@@ -13,6 +13,7 @@ class IStatusEffectUI;
 #include "MoveExecutor.h"
 #include "TurnProcessor.h"
 #include "PostTurnEffectProcessor.h"
+#include "BattleAction.h"
 
 class BattleManager
 {

@@ -6,42 +6,77 @@
 
 #include "../entities/Player.h"
 
-LoadParty::LoadParty(std::array<Player*, 2> players, int numPlayer) : num(numPlayer)
+LoadParty::LoadParty(Player* player, std::filesystem::path path) : player(player)
 {
-	LoadParty::players = players;
+	inFile.open(path);
 }
 
-void LoadParty::LoadFile(std::ifstream& inFile)
+void LoadParty::Load()
 {
-	if (num == 0)
+	if (!inFile.is_open())
 	{
-		inFile.open("PlayerOneSave.txt");
+		std::cerr << "File does not exist!\n\n";
+		return;
 	}
 
-	if (num == 1)
+	for (auto& pokemon : player->GetBeltArray())
 	{
-		inFile.open("PlayerTwoSave.txt");
+		if (pokemon.HasPokemon())
+		{
+			pokemon.ReleasePokemon();
+		}
 	}
+
+	LoadPlayerName();
+
+	while (std::getline(inFile, line))
+	{
+		int check{ 0 };
+		if (beltpos > 6)
+		{
+			return;
+		}
+		else
+		{
+			check = LoadPokemonName();
+		}
+
+
+		if (check < 0)
+		{
+			continue;
+		}
+		else
+		{
+			LoadPokemonLevel();
+			LoadPokemonEVs();
+			LoadPokemonIVs();
+			LoadPokemonMoves();
+		}
+	}
+
+	std::cout << "File Loaded Successfully!\n\n";
+
+	inFile.close();
 }
 
-void LoadParty::LoadPlayerName(std::ifstream& inFile)
+void LoadParty::LoadPlayerName()
 {
-	for (int i = players[num]->GetPokemonCount(); i > 0; --i)
+	for (int i = player->GetPokemonCount(); i > 0; --i)
 	{
-		players[num]->DecrementPokemonCount();
+		player->DecrementPokemonCount();
 	}
 
 	std::getline(inFile, line, ':');
 	inFile >> std::ws;
 
 	std::getline(inFile, line);
-	players[num]->SetName(line);
+	player->SetName(line);
 	inFile >> std::ws;
 }
 
-int LoadParty::LoadPokemonName(std::ifstream& inFile)
+int LoadParty::LoadPokemonName()
 {
-	std::getline(inFile, line);
 	std::string c = line.substr(8);
 	beltpos = std::stoi(c);
 
@@ -56,9 +91,9 @@ int LoadParty::LoadPokemonName(std::ifstream& inFile)
 
 	if (line.compare("-0") == 0)
 	{
-		if (players[num]->GetBelt(beltpos).HasPokemon())
+		if (player->GetBelt(beltpos).HasPokemon())
 		{
-			players[num]->GetBelt(beltpos).ReleasePokemon();
+			player->GetBelt(beltpos).ReleasePokemon();
 		}
 
 		inFile >> std::ws;
@@ -70,8 +105,8 @@ int LoadParty::LoadPokemonName(std::ifstream& inFile)
 
 	if (begpos == std::string::npos)
 	{
-		players[num]->GetBelt(beltpos).SetPokemon(line);
-		players[num]->IncrementPokemonCount();
+		player->GetBelt(beltpos).SetPokemon(line);
+		player->IncrementPokemonCount();
 	}
 	else
 	{
@@ -82,10 +117,10 @@ int LoadParty::LoadPokemonName(std::ifstream& inFile)
 
 		std::string pokemonName = line.substr(begpos + 1, endpos - begpos - 1);
 
-		players[num]->GetBelt(beltpos).SetPokemon(pokemonName);
-		players[num]->GetBelt(beltpos).SetNickname(nick);
+		player->GetBelt(beltpos).SetPokemon(pokemonName);
+		player->GetBelt(beltpos).SetNickname(nick);
 
-		players[num]->IncrementPokemonCount();
+		player->IncrementPokemonCount();
 	}
 
 	inFile >> std::ws;
@@ -93,17 +128,17 @@ int LoadParty::LoadPokemonName(std::ifstream& inFile)
 	return 1;
 }
 
-void LoadParty::LoadPokemonLevel(std::ifstream& inFile)
+void LoadParty::LoadPokemonLevel()
 {
 	std::getline(inFile, line);
 	line.erase(line.find_last_not_of(" \t\n\r\f\v") + 1);
 
 	size_t endpos = line.length();
 	std::string levelNum = line.substr(7, endpos);
-	players[num]->GetBelt(beltpos).SetLevel(std::stoi(levelNum));
+	player->GetBelt(beltpos).SetLevel(std::stoi(levelNum));
 }
 
-void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
+void LoadParty::LoadPokemonEVs()
 {
 	filepos = inFile.tellg();
 
@@ -148,7 +183,7 @@ void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
 			if (posHP != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posHP, "HP");
-				players[num]->GetBelt(beltpos).SetHPEV(std::stoi(substr));
+				player->GetBelt(beltpos).SetHPEV(std::stoi(substr));
 
 				posHP = std::string::npos;
 			}
@@ -156,7 +191,7 @@ void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
 			else if (posAtk != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posAtk, "Atk");
-				players[num]->GetBelt(beltpos).SetAttackEV(std::stoi(substr));
+				player->GetBelt(beltpos).SetAttackEV(std::stoi(substr));
 
 				posAtk = std::string::npos;
 			}
@@ -164,7 +199,7 @@ void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
 			else if (posDef != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posDef, "Def");
-				players[num]->GetBelt(beltpos).SetDefenseEV(std::stoi(substr));
+				player->GetBelt(beltpos).SetDefenseEV(std::stoi(substr));
 
 				posDef = std::string::npos;
 			}
@@ -172,7 +207,7 @@ void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
 			else if (posSpA != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posSpA, "SpA");
-				players[num]->GetBelt(beltpos).SetSpecialAttackEV(std::stoi(substr));
+				player->GetBelt(beltpos).SetSpecialAttackEV(std::stoi(substr));
 
 				posSpA = std::string::npos;
 			}
@@ -180,7 +215,7 @@ void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
 			else if (posSpD != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posSpD, "SpD");
-				players[num]->GetBelt(beltpos).SetSpecialDefenseEV(std::stoi(substr));
+				player->GetBelt(beltpos).SetSpecialDefenseEV(std::stoi(substr));
 
 				posSpD = std::string::npos;
 			}
@@ -188,7 +223,7 @@ void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
 			else if (posSpe != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posSpe, "Spe");
-				players[num]->GetBelt(beltpos).SetSpeedEV(std::stoi(substr));
+				player->GetBelt(beltpos).SetSpeedEV(std::stoi(substr));
 
 				posSpe = std::string::npos;
 			}
@@ -203,7 +238,7 @@ void LoadParty::LoadPokemonEVs(std::ifstream& inFile)
 	}
 }
 
-void LoadParty::LoadPokemonIVs(std::ifstream& inFile)
+void LoadParty::LoadPokemonIVs()
 {
 	filepos = inFile.tellg();
 
@@ -248,49 +283,73 @@ void LoadParty::LoadPokemonIVs(std::ifstream& inFile)
 			if (posHP != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posHP, "HP");
-				players[num]->GetBelt(beltpos).SetHPIV(std::stoi(substr));
+				player->GetBelt(beltpos).SetHPIV(std::stoi(substr));
 
 				posHP = std::string::npos;
 			}
+			else
+			{
+				player->GetBelt(beltpos).SetHPIV(31);
+			}
 
-			else if (posAtk != std::string::npos)
+			if (posAtk != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posAtk, "Atk");
-				players[num]->GetBelt(beltpos).SetAttackIV(std::stoi(substr));
+				player->GetBelt(beltpos).SetAttackIV(std::stoi(substr));
 
 				posAtk = std::string::npos;
 			}
+			else
+			{
+				player->GetBelt(beltpos).SetAttackIV(31);
+			}
 
-			else if (posDef != std::string::npos)
+			if (posDef != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posDef, "Def");
-				players[num]->GetBelt(beltpos).SetDefenseIV(std::stoi(substr));
+				player->GetBelt(beltpos).SetDefenseIV(std::stoi(substr));
 
 				posDef = std::string::npos;
 			}
+			else
+			{
+				player->GetBelt(beltpos).SetDefenseIV(31);
+			}
 
-			else if (posSpA != std::string::npos)
+			if (posSpA != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posSpA, "SpA");
-				players[num]->GetBelt(beltpos).SetSpecialAttackIV(std::stoi(substr));
+				player->GetBelt(beltpos).SetSpecialAttackIV(std::stoi(substr));
 
 				posSpA = std::string::npos;
 			}
+			else
+			{
+				player->GetBelt(beltpos).SetSpecialAttackIV(31);
+			}
 
-			else if (posSpD != std::string::npos)
+			if (posSpD != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posSpD, "SpD");
-				players[num]->GetBelt(beltpos).SetSpecialDefenseIV(std::stoi(substr));
+				player->GetBelt(beltpos).SetSpecialDefenseIV(std::stoi(substr));
 
 				posSpD = std::string::npos;
 			}
+			else
+			{
+				player->GetBelt(beltpos).SetSpecialDefenseIV(31);
+			}
 
-			else if (posSpe != std::string::npos)
+			if (posSpe != std::string::npos)
 			{
 				substr = LoadPosition(section, substr, posSpe, "Spe");
-				players[num]->GetBelt(beltpos).SetSpeedIV(std::stoi(substr));
+				player->GetBelt(beltpos).SetSpeedIV(std::stoi(substr));
 
 				posSpe = std::string::npos;
+			}
+			else
+			{
+				player->GetBelt(beltpos).SetSpeedIV(31);
 			}
 
 		} while (i < count);
@@ -299,10 +358,16 @@ void LoadParty::LoadPokemonIVs(std::ifstream& inFile)
 	else
 	{
 		inFile.seekg(filepos);
+		player->GetBelt(beltpos).SetHPIV(31);
+		player->GetBelt(beltpos).SetAttackIV(31);
+		player->GetBelt(beltpos).SetDefenseIV(31);
+		player->GetBelt(beltpos).SetSpecialAttackIV(31);
+		player->GetBelt(beltpos).SetSpecialDefenseIV(31);
+		player->GetBelt(beltpos).SetSpeedIV(31);
 	}
 }
 
-void LoadParty::LoadPokemonMoves(std::ifstream& inFile)
+void LoadParty::LoadPokemonMoves()
 {
 	int moveNum{ 1 };
 	while (!line.empty())
@@ -320,9 +385,9 @@ void LoadParty::LoadPokemonMoves(std::ifstream& inFile)
 		if (found != std::string::npos)
 		{
 			std::string moveName = line.substr(2);
-			players[num]->GetBelt(beltpos).SetMove(moveNum, moveName);
+			player->GetBelt(beltpos).SetMove(moveNum, moveName);
 			++moveNum;
-			players[num]->GetBelt(beltpos).IncrementMoveCount();
+			player->GetBelt(beltpos).IncrementMoveCount();
 		}
 
 		if (inFile.eof())
@@ -332,52 +397,9 @@ void LoadParty::LoadPokemonMoves(std::ifstream& inFile)
 	}
 }
 
-void LoadParty::Load()
-{
-	LoadFile(inFile);
-
-	if (!inFile.is_open())
-	{
-		std::cerr << "File does not exist! Try saving a party beforehand.\n\n";
-		return;
-	}
-
-	LoadPlayerName(inFile);
-
-	while (!inFile.eof())
-	{
-		int check{ 0 };
-		if (beltpos > 6)
-		{
-			return;
-		}
-		else
-		{
-			check = LoadPokemonName(inFile);
-		}
-		
-
-		if (check < 0)
-		{
-			continue;
-		}
-		else
-		{
-			LoadPokemonLevel(inFile);
-			LoadPokemonEVs(inFile);
-			LoadPokemonIVs(inFile);
-			LoadPokemonMoves(inFile);
-		}
-	}
-
-	std::cout << "File Loaded Successfully!\n\n";
-	
-	inFile.close();
-}
-
 std::string& LoadPosition(const std::string& section, std::string& substr, size_t posStat, std::string_view stat)
 {
-	posStat = section.find_first_of(stat);
+	posStat = section.find(stat);
 
 	substr = section.substr(0, posStat - 1);
 	return substr;

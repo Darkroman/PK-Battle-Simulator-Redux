@@ -11,5 +11,5 @@ struct ScoringResults;
 
 namespace MediumMoveScoring
 {
-	void EvaluateBestDamageMove(std::vector<ScoringResults>& results, BattlePokemon& targetMon);
+	void EvaluateBestDamageMove(std::vector<ScoringResults>& results, const BattlePokemon& targetMon);
 }

@@ -3,7 +3,6 @@
 #include "BattleContext.h"
 #include "../entities/Player.h"
 #include "SwitchExecutor.h"
-#include "../ui/interfaces/IMoveResultsUI.h"
 #include "../entities/controllers/AIController.h"
 
 WinChecker::WinChecker(BattleContext& context, SwitchExecutor& switchExecutor)
@@ -29,9 +28,11 @@ bool WinChecker::CheckWinCondition(Player& sourcePlayer, Player& targetPlayer)
 		targetPlayer.SetWinCondition(true);
 		return true;
 	}
+
+	return false;
 }
 
-bool WinChecker::CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& sourcePokemon, BattlePokemon& targetPokemon)
+bool WinChecker::CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, const BattlePokemon& sourcePokemon, const BattlePokemon& targetPokemon)
 {
 	bool winCondition{ false };
 

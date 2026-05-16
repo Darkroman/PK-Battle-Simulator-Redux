@@ -1,3 +1,5 @@
+#include "MoveHelpers.h"
+
 #include "MoveRoutineDeps.h"
 #include "MoveEffectEnums.h"
 #include "../entities/Player.h"
@@ -6,8 +8,6 @@
 #include "../ui/interfaces/IMoveResultsUI.h"
 #include "../battle/BattleCalculations.h"
 #include "../battle/StatusEffectProcessor.h"
-
-#include "MoveHelpers.h"
 
 EffectivenessText ToEffectivenessText(BattleStateFlags::Effectiveness e)
 {
@@ -85,8 +85,8 @@ void InflictNVStatus(Status status, int chance, MoveRoutineDeps& deps)
 
 	if (status == Status::Sleeping)
 	{
-		std::uniform_int_distribution<int> randomModDistributor(1, 3);
-		int randomMod(randomModDistributor(deps.rng.GetGenerator()));
+		std::uniform_int_distribution<int> sleepTurnDistributor(1, 3);
+		int randomMod(sleepTurnDistributor(deps.rng.GetGenerator()));
 		ctx.defendingPokemon->SetSleepTurnCount(randomMod);
 		ctx.defendingPokemon->ResetSleepCounter();
 	}
@@ -99,10 +99,9 @@ void DamageRoutine(MoveRoutineDeps& deps)
 	auto& ctx = deps.context;
 	auto& calc = deps.calculations;
 	auto& resultsUI = deps.resultsUI;
-	auto& statusProcessor = deps.statusProcessor;
 
 	int damage = calc.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
-	calc.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
+	calc.ApplyDamage(*ctx.currentMove, *ctx.defendingPokemon, damage);
 	resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
 	resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
@@ -119,7 +118,7 @@ void MultiStrikeRoutine(MoveRoutineDeps& deps, int turnCount)
 	for (int i = 0; i < turnCount; ++i)
 	{
 		int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
-		deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, damage);
+		deps.calculations.ApplyDamage(*ctx.currentMove, *ctx.defendingPokemon, damage);
 		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
 		deps.resultsUI.DisplayEffectivenessTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ToEffectivenessText(ctx.flags.currentEffectiveness));
@@ -128,8 +127,6 @@ void MultiStrikeRoutine(MoveRoutineDeps& deps, int turnCount)
 		deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);
 
 		++timesHit;
-
-		int subHealth = ctx.defendingPokemon->GetSubstituteHP();
 
 		if (ctx.defendingPokemon->GetCurrentHP() <= 0)
 		{
@@ -160,7 +157,7 @@ void FixedDamageRoutine(MoveRoutineDeps& deps, int fixedDamage)
 
 	int finalDamage = std::min(fixedDamage, maxDamage);
 
-	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, finalDamage);
+	deps.calculations.ApplyDamage(*ctx.currentMove, *ctx.defendingPokemon, finalDamage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(fixedDamage);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 }

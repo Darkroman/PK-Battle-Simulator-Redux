@@ -1,5 +1,17 @@
-#include "BattlePokemon.h"
+#include "pokemonMove.h"
+
 #include "../data/Move.h"
+#include "../data/Database.h"
+
+pokemonMove::pokemonMove() {}
+
+pokemonMove::pokemonMove(size_t dexNumber) :
+    mp_move(Database::GetInstance().GetPointerToMovedexNumber(dexNumber)),
+    m_currentPP(1),
+    m_maxPP(1)
+{
+
+}
 
 void pokemonMove::SetMovePointer(Move* move)
 {
@@ -20,9 +32,24 @@ void pokemonMove::ResetMove()
     b_isMimicked = false;
 }
 
-bool pokemonMove::IsActive() const
+bool pokemonMove::HasMove() const
 {
     return mp_move != nullptr;
+}
+
+bool pokemonMove::IsActive() const
+{
+    if (mp_move != nullptr)
+    {
+        if (m_currentPP <= 0 || b_isDisabled)
+        {
+            return false;
+        }
+        
+        return true;
+    }
+
+    return false;
 }
 
 bool pokemonMove::IsDisabled() const

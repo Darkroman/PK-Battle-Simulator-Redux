@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <span>
 
 #include "BattlePokemon.h"
 
@@ -13,15 +14,22 @@ class Player
 {
 public:
     explicit Player(std::string_view);
+    Player(const Player& other);
 
     ~Player();
 
     bool IsAI() const;
+    IPlayerController& GetController();
     IPlayerController& GetController() const;
     AIController& GetAIController();
+    AIController& GetAIController() const;
     void SetController(std::unique_ptr<IPlayerController>, ControllerType);
 
-    const std::array<BattlePokemon, 6>& GetBeltArray() const;
+    //std::array<BattlePokemon, 6>& GetBeltArray();
+    //const std::array<BattlePokemon, 6>& GetBeltArray() const;
+    std::span<BattlePokemon> GetBeltArray();
+    std::span<const BattlePokemon> GetBeltArray() const;
+
     std::array<BattlePokemon, 6> CopyBelt();
     void AssignBelt(std::array<BattlePokemon, 6>&);
     void SwapPokemon(size_t, size_t);
@@ -58,7 +66,7 @@ public:
     void SetHasSwitched(bool);
 
     void SetPokemonToSwitchTo(BattlePokemon*);
-    BattlePokemon* GetPokemonToSwitchTo();
+    BattlePokemon* GetPokemonToSwitchTo() const;
 
     void SetWinCondition(bool);
 
@@ -119,5 +127,4 @@ protected:
     int m_mistCounter{};
     int m_lightscreenCounter{};
     int m_reflectCounter{};
-
 };

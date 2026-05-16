@@ -1,8 +1,8 @@
 #pragma once
 
 #include <array>
-#include <ranges>
 #include <string>
+#include <span>
 
 #include "pokemonMove.h"
 
@@ -65,8 +65,10 @@ public:
     void ReleasePokemon();
 
     SetMoveOutcome SetMove(size_t, std::string_view);
-    std::array<pokemonMove, 4>& GetMoveArray();
-    const std::array<pokemonMove, 4>& GetMoveArray() const;
+    //std::array<pokemonMove, 4>& GetMoveArray();
+    //const std::array<pokemonMove, 4>& GetMoveArray() const;
+    std::span<pokemonMove> GetMoveArray();
+    std::span<const pokemonMove> GetMoveArray() const;
 
     void SetNickname(std::string_view);
     bool HasNickname() const;
@@ -127,7 +129,7 @@ public:
     void ReorderMoves(size_t, size_t);
     int GetPP(size_t) const;
     int GetMaxPP(size_t) const;
-    bool CheckPPCountForStruggle();
+    bool WillPerformStruggle() const;
 
     bool HasPokemon() const;
     bool HasMove(size_t);
@@ -286,8 +288,6 @@ public:
     int GetSubstituteHP() const;
     void DamageSubstitute(int);
 
-    pokemonMove& Struggle();
-
     Status currentStatus{ Status::Normal };
 
 private:
@@ -311,8 +311,6 @@ private:
 
     std::array<pokemonMove, 4> m_array_moves{};
 
-    pokemonMove m_struggle;
-
     int m_level{ 50 };
     int m_currentHP{ 0 };
     //int m_maxHP{0};
@@ -322,12 +320,12 @@ private:
     //int m_specialdefense{0};
     //int m_speed{0};
 
-    int m_hp_iv{ 0 };
-    int m_attack_iv{ 0 };
-    int m_defense_iv{ 0 };
-    int m_specialattack_iv{ 0 };
-    int m_specialdefense_iv{ 0 };
-    int m_speed_iv{ 0 };
+    int m_hp_iv{ 31 };
+    int m_attack_iv{ 31 };
+    int m_defense_iv{ 31 };
+    int m_specialattack_iv{ 31 };
+    int m_specialdefense_iv{ 31 };
+    int m_speed_iv{ 31 };
 
     int m_hp_ev{ 0 };
     int m_attack_ev{ 0 };

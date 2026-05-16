@@ -7,12 +7,16 @@ struct pokemonMove;
 class HumanControllerConsole : public IPlayerController
 {
 public:
+	HumanControllerConsole() = default;
+	HumanControllerConsole(const HumanControllerConsole& other) = default;
 
-	PlayerDecisionOutcome ChooseAction(Player&, Player&, BattlePokemon&, BattlePokemon&, RandomEngine&) override;
-	BattlePokemon* PromptForSwitch(Player&, Player&, BattlePokemon&, BattlePokemon&) override;
+	std::unique_ptr<IPlayerController> clone() const override;
+
+	PlayerDecisionOutcome ChooseAction(Player&, const Player&, BattlePokemon&, const BattlePokemon&, RandomEngine&) override;
+	BattlePokemon* PromptForSwitch(Player&, const Player&, const BattlePokemon&, const BattlePokemon&) override;
 
 private:
-	pokemonMove* FightAction(Player&, BattlePokemon&, BattlePokemon&);
-	BattlePokemon* SwitchAction(Player&, BattlePokemon&);
-	BattleAction ForfeitAction(Player&);
+	pokemonMove* FightAction(const Player&, BattlePokemon&, const BattlePokemon&);
+	BattlePokemon* SwitchAction(Player&, const BattlePokemon&);
+	BattleAction ForfeitAction(const Player&);
 };

@@ -1,10 +1,10 @@
+#include "StatusEffectProcessor.h"
+
 #include "BattleContext.h"
 #include "RandomEngine.h"
 #include "../ui/interfaces/IStatusEffectUI.h"
 #include "../moves/MoveEffectEnums.h"
 #include "../entities/Player.h"
-
-#include "StatusEffectProcessor.h"
 
 StatusEffectProcessor::StatusEffectProcessor(BattleContext& context, RandomEngine& rng, IStatusEffectUI& statusEffectUI)
 	: m_context(context), m_rng(rng), m_statusEffectUI(statusEffectUI) {}
@@ -175,7 +175,7 @@ bool StatusEffectProcessor::ConfusedStatus()
 			int sourceAttack{ m_context.attackingPokemon->GetAttack() };
 			int targetDefense{ m_context.attackingPokemon->GetDefense() };
 
-			int baseDamage = (((((2 * level / 5) + 2) * 40 * sourceAttack) / targetDefense) / 50) + 2;
+			int baseDamage = (((((2 * level / 5) + 2) * confusePower * sourceAttack) / targetDefense) / 50) + 2;
 
 			std::uniform_int_distribution<int> damagemoddistributor(85, 100);
 			int damageMod{ damagemoddistributor(m_rng.GetGenerator()) };
@@ -312,7 +312,7 @@ void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& ta
 		{
 			if (std::find(m_context.vec_outOfPokemon.begin(), m_context.vec_outOfPokemon.end(), &targetPlayer) == m_context.vec_outOfPokemon.end())
 			{
-				m_context.vec_outOfPokemon.push_back(&targetPlayer);
+				m_context.vec_outOfPokemon.emplace_back(&targetPlayer);
 			}
 		}
 
@@ -339,7 +339,7 @@ void StatusEffectProcessor::CheckFaintCondition(Player& sourcePlayer, Player& ta
 		{
 			if (std::find(m_context.vec_outOfPokemon.begin(), m_context.vec_outOfPokemon.end(), &sourcePlayer) == m_context.vec_outOfPokemon.end())
 			{
-				m_context.vec_outOfPokemon.push_back(&sourcePlayer);
+				m_context.vec_outOfPokemon.emplace_back(&sourcePlayer);
 			}
 		}
 

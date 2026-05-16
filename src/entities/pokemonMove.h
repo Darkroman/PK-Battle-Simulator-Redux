@@ -9,8 +9,10 @@ enum class MoveEffect;
 
 struct pokemonMove
 {
-    //pokemonMove();
+    pokemonMove();
+    pokemonMove(size_t);
 
+    bool HasMove() const;
     bool IsActive() const;
     bool IsDisabled() const;
 

@@ -1,6 +1,7 @@
 #include <utility>
-#include <set>
 #include <algorithm>
+
+#include "AIController.h"
 
 #include "../../battle/BattleContext.h"
 #include "../../battle/Typechart.h"
@@ -12,30 +13,36 @@
 #include "move scoring/AIMoveScoring.h"
 #include "switch logic/AISwitchLogic.h"
 
-#include "AIController.h"
-
 AIController::AIController(Difficulty difficulty)
 	: m_difficulty(difficulty)
  {}
 
-PlayerDecisionOutcome AIController::ChooseAction(Player& player, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon, RandomEngine& rng)
+std::unique_ptr<IPlayerController> AIController::clone() const
+{
+	return std::make_unique<AIController>(*this);
+}
+
+PlayerDecisionOutcome AIController::ChooseAction(Player& player, const Player& targetPlayer, BattlePokemon& selfMon, const BattlePokemon& targetMon, RandomEngine& rng)
 {
 	PlayerDecisionOutcome decision{};
 
-	if (AISwitchLogic::WantsToSwitch(player, targetPlayer, selfMon, targetMon))
+	if (player.GetAIController().GetDifficulty() >= Difficulty::Medium)
 	{
-		decision.action = BattleAction::SwitchPokemon;
-		decision.chosenPokemon = SwitchAction(player, targetPlayer, selfMon, targetMon);
-
-		if (decision.chosenPokemon != nullptr)
+		if (AISwitchLogic::WantsToSwitch(player, targetPlayer, selfMon, targetMon))
 		{
-			return decision;
+			decision.action = BattleAction::SwitchPokemon;
+			decision.chosenPokemon = SwitchAction(player, targetPlayer, selfMon, targetMon);
+
+			if (decision.chosenPokemon != nullptr)
+			{
+				return decision;
+			}
 		}
 	}
 
 	decision.chosenMove = FightAction(player, targetPlayer, selfMon, targetMon, rng);
 
-	if (decision.chosenMove == &selfMon.Struggle())
+	if (decision.chosenMove == &GetStruggle())
 	{
 		decision.action = BattleAction::Struggle;
 	}
@@ -47,44 +54,49 @@ PlayerDecisionOutcome AIController::ChooseAction(Player& player, Player& targetP
 	return decision;
 }
 
-BattlePokemon* AIController::PromptForSwitch(Player& player, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon)
+BattlePokemon* AIController::PromptForSwitch(Player& player, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 {
 	BattlePokemon* selectedPokemon = SwitchActionPostKO(player, targetPlayer, selfMon, targetMon);
 	return selectedPokemon;
 }
 
-Difficulty AIController::GetDifficulty()
+Difficulty AIController::GetDifficulty() const
 {
 	return m_difficulty;
 }
 
-pokemonMove* AIController::FightAction(Player& player, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon, RandomEngine& rng)
+pokemonMove* AIController::FightAction(const Player& player, const Player& targetPlayer, BattlePokemon& selfMon, const BattlePokemon& targetMon, RandomEngine& rng)
 {
+	if (selfMon.WillPerformStruggle())
+	{
+		return &GetStruggle();
+	}
+
 	pokemonMove* selectedMove = AIMoveScoring::GetWinningMove(player, targetPlayer, selfMon, targetMon, rng);
 
     return selectedMove;
 }
 
-BattlePokemon* AIController::SwitchAction(Player& player, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon)
+BattlePokemon* AIController::SwitchAction(Player& player, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 {
 	BattlePokemon* selectedPokemon = AISwitchLogic::ChooseSwitch(player, targetPlayer, selfMon, targetMon);
 
 	return selectedPokemon;
 }
 
-BattlePokemon* AIController::SwitchActionPostKO(Player& player, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon)
+BattlePokemon* AIController::SwitchActionPostKO(Player& player, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 {
 	BattlePokemon* selectedPokemon = AISwitchLogic::ChoosePostKOSwitch(player, targetPlayer, selfMon, targetMon);
 
 	return selectedPokemon;
 }
 
-BattleAction AIController::ForfeitAction(Player&)
+BattleAction AIController::ForfeitAction(const Player&)
 {
 	return BattleAction::Forfeit;
 }
 
-void AIController::OnBattleStart(Player& self, BattleContext& context)
+void AIController::OnBattleStart(const Player& self, BattleContext& context)
 {
 	if (&self == context.playerOne)
 	{
@@ -98,10 +110,9 @@ void AIController::OnBattleStart(Player& self, BattleContext& context)
 	}
 
 	GetOpponentParty(*memory.opponentPlayer);
-	//InitEstimatedStatRanges();
 }
 
-void AIController::OnActivePokemonChanged(BattleContext& context)
+void AIController::OnActivePokemonChanged(const BattleContext& context)
 {
 	if (memory.selfPlayer == context.playerOne)
 	{
@@ -113,52 +124,50 @@ void AIController::OnActivePokemonChanged(BattleContext& context)
 	}
 }
 
-void AIController::GetOpponentParty(Player& opponent)
+void AIController::GetOpponentParty(const Player& opponent)
 {
     for (size_t i = 0; i < memory.opponentMemory.size(); ++i)
     {
-        memory.opponentMemory.at(i).pokemon = &(opponent.GetBelt(i + 1));
+		memory.opponentMemory[i].pokemon = &(opponent.GetBelt(i + 1));
     }
 }
 
-std::array<pokemonMove*, 4> AIController::GetObservedMoves()
+std::array<const pokemonMove*, 4> AIController::GetObservedMoves() const
 {
-	auto it = FindActivePokemonSlot();
+	const auto* activePokemon = memory.slotOfActivePokemon;
 
-	if (it == memory.opponentMemory.end() || it->pokemon->IsFainted())
+	if (activePokemon == nullptr || activePokemon->pokemon->IsFainted())
 	{
-		std::array<pokemonMove*, 4> empty{};
-		return empty;
+		return std::array<const pokemonMove*, 4>{};
 	}
 
-	return it->observedMoves.moves;
+	return activePokemon->observedMoves.moves;
 }
 
-void AIController::UpdateObservedMoves(pokemonMove& currentMove)
+void AIController::UpdateObservedMoves(const pokemonMove& currentMove)
 {
-	auto it = FindActivePokemonSlot();
+	auto* activePokemon = memory.slotOfActivePokemon;
 
-	if (it == memory.opponentMemory.end() || it->pokemon->IsFainted())
+	if (activePokemon == nullptr || activePokemon->pokemon->IsFainted())
 	{
 		return;
 	}
 
 	memory.activeOpponent.opponentLastUsedMove = &currentMove;
 
-	auto& moves = it->observedMoves.moves;
-	auto& revealed = it->observedMoves.revealed;
+	auto& observed = activePokemon->observedMoves;
 
-	for (size_t moveSlot = 0; moveSlot < moves.size(); ++moveSlot)
+	for (size_t moveSlot = 0; moveSlot < observed.moves.size(); ++moveSlot)
 	{
-		if (moves.at(moveSlot) != nullptr && moves.at(moveSlot)->GetName() == currentMove.GetName())
+		if (observed.moves[moveSlot] != nullptr && observed.moves[moveSlot]->GetName() == currentMove.GetName())
 		{
 			return;
 		}
 
-		if (moves.at(moveSlot) == nullptr)
+		if (observed.moves[moveSlot] == nullptr)
 		{
-			moves.at(moveSlot) = &currentMove;
-			revealed.at(moveSlot) = true;
+			observed.moves[moveSlot] = &currentMove;
+			observed.revealed[moveSlot] = true;
 			return;
 		}
 	}
@@ -179,12 +188,13 @@ void AIController::ResetObservedMoves()
 	}
 }
 
-void AIController::UpdateOpponentActivePokemon(BattlePokemon& activeOpponentMon)
+void AIController::UpdateOpponentActivePokemon(const BattlePokemon& activeOpponentMon)
 {
 	memory.activeOpponent.opponentActivePokemon = &activeOpponentMon;
+	memory.slotOfActivePokemon = FindActivePokemonSlot();
 }
 
-void AIController::OnMoveResolved(BattleContext& context)
+void AIController::OnMoveResolved(const BattleContext& context)
 {
 	if (!memory.selfPlayer || !memory.opponentPlayer)
 	{
@@ -197,45 +207,47 @@ void AIController::OnMoveResolved(BattleContext& context)
 		return;
 	}
 
-	bool amIAttacker = (memory.selfPlayer == context.attackingPlayer);
 	bool amIDefender = (memory.selfPlayer == context.defendingPlayer);
 
-	BattlePokemon& attackingPokemon = *context.attackingPokemon;
-	BattlePokemon& defendingPokemon = *context.defendingPokemon;
-	pokemonMove& moveUsed = *context.currentMove;
-
-	if (amIAttacker)
-	{
-		//UpdateEnemyHPandDefenseStats(context, moveUsed, attackingPokemon, defendingPokemon);
-	}
+	const pokemonMove& moveUsed = *context.currentMove;
 
 	if (amIDefender)
 	{
-		//UpdateEnemyOffenseStats(context, moveUsed, defendingPokemon, attackingPokemon);
-		UpdateObservedMoves(moveUsed);	
+		UpdateObservedMoves(moveUsed);
 	}
 }
 
 int AIController::AICalculatePokemonTypeEffectiveness(const BattlePokemon& source, const BattlePokemon& target)
 {
-	size_t sourceTypeOne = static_cast<size_t>(source.GetTypeOneEnum());
-	size_t sourceTypeTwo = static_cast<size_t>(source.GetTypeTwoEnum());
-	size_t defensiveTypeOne = static_cast<size_t>(target.GetTypeOneEnum());
-	size_t defensiveTypeTwo = static_cast<size_t>(target.GetTypeTwoEnum());
+	size_t atk1 = static_cast<size_t>(source.GetTypeOneEnum());
+	size_t atk2 = static_cast<size_t>(source.GetTypeTwoEnum());
+	size_t def1 = static_cast<size_t>(target.GetTypeOneEnum());
+	size_t def2 = static_cast<size_t>(target.GetTypeTwoEnum());
 
-	uint16_t effect1 = typeChart[sourceTypeOne][defensiveTypeOne];
-	uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[sourceTypeOne][defensiveTypeTwo];
-	uint16_t effect3 = (sourceTypeTwo == 18)    ? 4096 : typeChart[sourceTypeTwo][defensiveTypeOne];
-	uint16_t effect4 = (sourceTypeTwo == 18)    ? 4096 : (defensiveTypeTwo == 18) ? 4096 : typeChart[sourceTypeTwo][defensiveTypeTwo];
+	bool atk2Exists = (atk2 != 18);
 
-	int productOne = effect1 * effect2 / 4096;
-	int productTwo = effect3 * effect4 / 4096;
+	int score1 = typeChart[atk1][def1];
+	if (def2 != 18)
+		score1 = (score1 * typeChart[atk1][def2]) / 4096;
 
-	return productOne * productTwo / 4096;
+	int score2 = 0;
+	if (atk2Exists)
+	{
+		score2 = typeChart[atk2][def1];
+		if (def2 != 18)
+			score2 = (score2 * typeChart[atk2][def2]) / 4096;
+	}
+
+	return std::max(score1, score2);
 }
 
 int AIController::AICalculateMoveTypeEffectiveness(const pokemonMove& currentMove, const BattlePokemon& target)
 {
+	if (currentMove.GetCategoryEnum() == Category::Status)
+	{
+		return 0;
+	}
+
 	size_t moveType = static_cast<size_t>(currentMove.GetMoveTypeEnum());
 	size_t defensiveTypeOne = static_cast<size_t>(target.GetTypeOneEnum());
 	size_t defensiveTypeTwo = static_cast<size_t>(target.GetTypeTwoEnum());
@@ -404,7 +416,7 @@ int AIController::AICalculateDamage(const pokemonMove& currentMove, const Player
 	return finalDamage;
 }
 
-std::array<PersistentMemory, 6>::iterator AIController::FindActivePokemonSlot()
+PersistentMemory* AIController::FindActivePokemonSlot()
 {
 	auto it = std::find_if(
 		memory.opponentMemory.begin(),
@@ -414,5 +426,19 @@ std::array<PersistentMemory, 6>::iterator AIController::FindActivePokemonSlot()
 			return memory.activeOpponent.opponentActivePokemon == mem.pokemon;
 		});
 
-	return it;
+	return (it == memory.opponentMemory.end()) ? nullptr : &(*it);
 }
+/*
+const PersistentMemory* AIController::FindActivePokemonSlot() const
+{
+	auto it = std::find_if(
+		memory.opponentMemory.begin(),
+		memory.opponentMemory.end(),
+		[this](const PersistentMemory& mem)
+		{
+			return memory.activeOpponent.opponentActivePokemon == mem.pokemon;
+		});
+
+	return (it == memory.opponentMemory.end()) ? nullptr : &(*it);
+}
+*/

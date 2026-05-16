@@ -14,7 +14,7 @@ class BattleCalculations
 public:
 	BattleCalculations(BattleContext&, RandomEngine&);
 
-	int CalculatePokemonSpeed(BattlePokemon&);
+	int CalculatePokemonSpeed(const BattlePokemon&);
 
 	void RandomizeTurnOrder();
 
@@ -22,7 +22,7 @@ public:
 
 	void SetFirst(Player&, Player&);
 
-	bool CalculateCriticalHit(BattleContext&, BattlePokemon&);
+	bool CalculateCriticalHit(BattleContext&, const BattlePokemon&);
 
 	std::pair<int, int> GetStageRatio(int);
 
@@ -30,13 +30,13 @@ public:
 
 	void CalculateTypeEffectiveness(BattleContext&, const pokemonMove&, const BattlePokemon&);
 
-	bool CalculateHitChance(pokemonMove&, BattlePokemon&, BattlePokemon&);
+	bool CalculateHitChance(const pokemonMove&, const BattlePokemon&, const BattlePokemon&);
 
-	int CalculateDamage(BattleContext&, Player&, pokemonMove&, BattlePokemon&, BattlePokemon&);
+	int CalculateDamage(BattleContext&, const Player&, const pokemonMove&, const BattlePokemon&, BattlePokemon&);
 
-	void ApplyDamage(Player&, pokemonMove&, BattlePokemon&, BattlePokemon&, int);
+	void ApplyDamage(const pokemonMove&, BattlePokemon&, int);
 
-	int CalculateLowKickPower(BattlePokemon&);
+	int CalculateLowKickPower(const BattlePokemon&);
 
 private:
 	RandomEngine& m_rng;

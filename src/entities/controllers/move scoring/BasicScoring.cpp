@@ -10,7 +10,7 @@
 
 namespace BasicScoring
 {
-	int BaseDamageScoring(ScoringResults& results, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
+	int BaseDamageScoring(ScoringResults& results, const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -36,7 +36,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int BaseStatusScoring(ScoringResults& results, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
+	int BaseStatusScoring(ScoringResults& results, const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -152,7 +152,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int CheckDamageImmunity(pokemonMove& move, Player& self, BattlePokemon& targetMon)
+	int CheckDamageImmunity(const pokemonMove& move, const Player& self, const BattlePokemon& targetMon)
 	{
 		int effectiveness = self.GetAIController().AICalculateMoveTypeEffectiveness(move, targetMon);
 
@@ -166,7 +166,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int CheckOHKOLevel(BattlePokemon& selfMon, BattlePokemon& targetMon)
+	int CheckOHKOLevel(const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -181,7 +181,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int CheckExplosionLastPokemon(Player& self, Player& targetPlayer)
+	int CheckExplosionLastPokemon(const Player& self, const Player& targetPlayer)
 	{
 		int delta{};
 
@@ -202,7 +202,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int DreamEaterSleepCheck(BattlePokemon& targetMon)
+	int DreamEaterSleepCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -214,7 +214,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int SleepCheck(pokemonMove& move, BattlePokemon& targetMon)
+	int SleepCheck(const pokemonMove& move, const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -229,7 +229,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int PoisonCheck(pokemonMove& move, BattlePokemon& targetMon)
+	int PoisonCheck(const pokemonMove& move, const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -249,7 +249,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int ParalyzeCheck(pokemonMove& move, BattlePokemon& targetMon)
+	int ParalyzeCheck(const pokemonMove& move, const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -271,7 +271,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int ConfuseCheck(BattlePokemon& targetMon)
+	int ConfuseCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -283,7 +283,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int SelfAttackBoostCheck(BattlePokemon& selfMon)
+	int SelfAttackBoostCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -295,7 +295,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int SelfDefenseBoostCheck(BattlePokemon& selfMon)
+	int SelfDefenseBoostCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -307,7 +307,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int GrowthCheck(BattlePokemon& selfMon)
+	int GrowthCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -319,7 +319,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int SelfSpecialDefenseBoostCheck(BattlePokemon& selfMon)
+	int SelfSpecialDefenseBoostCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -331,7 +331,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int SelfSpeedBoostCheck(BattlePokemon& selfMon)
+	int SelfSpeedBoostCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -343,7 +343,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int SelfEvasionBoostCheck(BattlePokemon& selfMon)
+	int SelfEvasionBoostCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -355,7 +355,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int TargetAttackReductionCheck(BattlePokemon& targetMon)
+	int TargetAttackReductionCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -367,7 +367,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int TargetDefenseReductionCheck(BattlePokemon& targetMon)
+	int TargetDefenseReductionCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -379,7 +379,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int TargetSpeedReductionCheck(BattlePokemon& targetMon)
+	int TargetSpeedReductionCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -391,7 +391,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int TargetAccuracyReductionCheck(BattlePokemon& targetMon)
+	int TargetAccuracyReductionCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -403,7 +403,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int HazeCheck(BattlePokemon& selfMon, BattlePokemon targetMon)
+	int HazeCheck(const BattlePokemon& selfMon, const BattlePokemon targetMon)
 	{
 		int delta{};
 
@@ -421,7 +421,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int ForceSwitchCheck(Player& targetPlayer)
+	int ForceSwitchCheck(const Player& targetPlayer)
 	{
 		int delta{};
 
@@ -433,7 +433,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int HealCheck(BattlePokemon& selfMon)
+	int HealCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -445,7 +445,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int RestCheck(BattlePokemon& selfMon)
+	int RestCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -457,7 +457,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int ReflectCheck(Player& self)
+	int ReflectCheck(const Player& self)
 	{
 		int delta{};
 
@@ -469,7 +469,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int LightScreenCheck(Player& self)
+	int LightScreenCheck(const Player& self)
 	{
 		int delta{};
 
@@ -481,7 +481,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int MistCheck(Player& self)
+	int MistCheck(const Player& self)
 	{
 		int delta{};
 
@@ -493,7 +493,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int FocusEnergyCheck(BattlePokemon& selfMon)
+	int FocusEnergyCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -505,7 +505,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int SubstituteCheck(BattlePokemon& selfMon)
+	int SubstituteCheck(const BattlePokemon& selfMon)
 	{
 		int delta{};
 
@@ -524,7 +524,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int LeechSeedCheck(BattlePokemon& targetMon)
+	int LeechSeedCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 
@@ -538,7 +538,7 @@ namespace BasicScoring
 		return delta;
 	}
 
-	int DisableCheck(BattlePokemon& targetMon)
+	int DisableCheck(const BattlePokemon& targetMon)
 	{
 		int delta{};
 

@@ -1,6 +1,6 @@
 #pragma once
+
 #include <array>
-#include <vector>
 
 #include "IPlayerController.h"
 
@@ -11,30 +11,29 @@ enum class Difficulty { Easy, Medium, Hard };
 
 struct ObservedPokemonMoves
 {
-	std::array<pokemonMove*, 4> moves{};
+	std::array<const pokemonMove*, 4> moves{};
 	std::array<bool, 4> revealed{};
 };
 
 struct PersistentMemory
 {
-	BattlePokemon* pokemon;
+	const BattlePokemon* pokemon;
 	ObservedPokemonMoves observedMoves{};
-	pokemonMove* strongestMove{};
 };
 
 struct ActiveOpponentPokemonMemory
 {
-	BattlePokemon* opponentActivePokemon{};
-	pokemonMove* opponentLastUsedMove{};
+	const BattlePokemon* opponentActivePokemon{};
+	const pokemonMove* opponentLastUsedMove{};
 };
 
 struct AIMemory
 {
-	Player* selfPlayer{};
-	Player* opponentPlayer{};
+	const Player* selfPlayer{};
+	const Player* opponentPlayer{};
 	std::array<PersistentMemory, 6> opponentMemory{};
 	ActiveOpponentPokemonMemory activeOpponent{};
-	int slotOfActivePokemon{};
+	PersistentMemory* slotOfActivePokemon{};
 };
 
 class AIController : public IPlayerController
@@ -42,42 +41,45 @@ class AIController : public IPlayerController
 public:
 
 	explicit AIController(Difficulty);
+	AIController(const AIController& other) = default;
+	std::unique_ptr<IPlayerController> clone() const override;
 
-	PlayerDecisionOutcome ChooseAction(Player&, Player&, BattlePokemon&, BattlePokemon&, RandomEngine&) override;
-	BattlePokemon* PromptForSwitch(Player&, Player&, BattlePokemon&, BattlePokemon&) override;
+	PlayerDecisionOutcome ChooseAction(Player&, const Player&, BattlePokemon&, const BattlePokemon&, RandomEngine&) override;
+	BattlePokemon* PromptForSwitch(Player&, const Player&, const BattlePokemon&, const BattlePokemon&) override;
 
-	Difficulty GetDifficulty();
+	Difficulty GetDifficulty() const;
 
-	void OnBattleStart(Player&, BattleContext&);
-	void OnActivePokemonChanged(BattleContext&);
+	void OnBattleStart(const Player&, BattleContext&);
+	void OnActivePokemonChanged(const BattleContext&);
 
-	std::array<pokemonMove*, 4> GetObservedMoves();
+	std::array<const pokemonMove*, 4> GetObservedMoves() const;
+
 	void ResetObservedMoves();
 
-	void OnMoveResolved(BattleContext&);
+	void OnMoveResolved(const BattleContext&);
 	int  AICalculatePokemonTypeEffectiveness(const BattlePokemon& source, const BattlePokemon& target);
 	int  AICalculateMoveTypeEffectiveness(const pokemonMove& currentMove, const BattlePokemon& target);
 	int  AICalculateDamage(const pokemonMove&, const Player&, const BattlePokemon&, const BattlePokemon&);
 
 private:
-	pokemonMove* FightAction(Player&, Player&, BattlePokemon&, BattlePokemon&, RandomEngine&);
+	pokemonMove* FightAction(const Player&, const Player&, BattlePokemon&, const BattlePokemon&, RandomEngine&);
 
-	BattlePokemon* SwitchAction(Player&, Player&, BattlePokemon&, BattlePokemon&);
-	BattlePokemon* SwitchActionPostKO(Player&, Player&, BattlePokemon&, BattlePokemon&);
+	BattlePokemon* SwitchAction(Player&, const Player&, const BattlePokemon&, const BattlePokemon&);
+	BattlePokemon* SwitchActionPostKO(Player&, const Player&, const BattlePokemon&, const BattlePokemon&);
 
-	BattleAction ForfeitAction(Player&);
+	BattleAction ForfeitAction(const Player&);
 
-	void GetOpponentParty(Player&);
+	void GetOpponentParty(const Player&);
 
-	void UpdateObservedMoves(pokemonMove&);
-	void UpdateOpponentActivePokemon(BattlePokemon&);
+	void UpdateObservedMoves(const pokemonMove&);
+	void UpdateOpponentActivePokemon(const BattlePokemon&);
 
-	std::array<PersistentMemory, 6>::iterator FindActivePokemonSlot();
+	PersistentMemory* FindActivePokemonSlot();
+	//const PersistentMemory* FindActivePokemonSlot() const;
 
 public:
 	AIMemory memory;
 	
-
 private:
 	Difficulty m_difficulty{};
 };

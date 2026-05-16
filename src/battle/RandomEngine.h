@@ -1,7 +1,6 @@
 #pragma once
 
 #include <random>
-#include <chrono>
 
 class RandomEngine
 {
@@ -13,6 +12,7 @@ private:
 public:
 
 	RandomEngine();
+	RandomEngine(int t);
 
 	std::mt19937& GetGenerator();
 };

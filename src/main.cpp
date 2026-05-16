@@ -1,6 +1,6 @@
 #include "GameEngine.h"
 
-int main(int argc, char* argv[])
+int main()
 {
     GameEngine engine;
     engine.Run();

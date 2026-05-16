@@ -1,5 +1,9 @@
 #include <deque>
 
+#include "MoveRoutines.h"
+
+#include "MoveHelpers.h"
+#include "MoveRoutineDeps.h"
 #include "../data/Database.h"
 #include "../battle/BattleCalculations.h"
 #include "../battle/StatusEffectProcessor.h"
@@ -8,14 +12,8 @@
 #include "../battle/SwitchExecutor.h"
 #include "../data/Move.h"
 #include "../data/StringToTypes.h"
-#include "../ui/EffectivenessText.h"
 #include "../entities/controllers/AIController.h"
 #include "../entities/Player.h"
-
-#include "MoveHelpers.h"
-#include "MoveRoutineDeps.h"
-
-#include "MoveRoutines.h"
 
 void Execute(MoveEffect ID, MoveRoutineDeps& deps)
 {
@@ -500,14 +498,13 @@ void ForceSwitch::DoMove(MoveRoutineDeps& deps)
 		return;
 	}
 
-	std::deque<BattlePokemon*> enemyPokemonList{};
+	std::vector<BattlePokemon*> enemyPokemonList{};
 
-	for (size_t i = 1; i <= 6; ++i)
+	for (auto& candidateMon : ctx.defendingPlayer->GetBeltArray())
 	{
-		BattlePokemon& candidateMon = ctx.defendingPlayer->GetBelt(i);
-		if (&candidateMon && &candidateMon != ctx.defendingPokemon && candidateMon.GetCurrentHP() > 0)
+		if (candidateMon.HasPokemon() && &candidateMon != ctx.defendingPokemon && !candidateMon.IsFainted())
 		{
-			enemyPokemonList.push_back(&candidateMon);
+			enemyPokemonList.emplace_back(&candidateMon);
 		}
 	}
 
@@ -2262,7 +2259,7 @@ void Mimic::DoMove(MoveRoutineDeps& deps)
 	deps.resultsUI.DisplayLearnedMimicMoveMsg(ctx.attackingPlayer->GetPlayerNameView(), ctx.attackingPokemon->GetNameView(), ctx.defendingPokemon->GetLastUsedMove()->GetName());
 
 	ctx.currentMove->SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(
-		ctx.defendingPokemon->GetLastUsedMove()->GetMoveIndex() - 1));
+	ctx.defendingPokemon->GetLastUsedMove()->GetMoveIndex() - 1));
 	ctx.currentMove->m_currentPP = ctx.defendingPokemon->GetLastUsedMove()->GetPP();
 	ctx.currentMove->m_maxPP = ctx.defendingPokemon->GetLastUsedMove()->GetPP();
 	ctx.currentMove->b_isMimicked = true;
@@ -2310,8 +2307,6 @@ void EvasionUp::DoMove(MoveRoutineDeps& deps)
 	ctx.currentMove->DeductPP();
 
 	ctx.attackingPokemon->SetLastUsedMove(ctx.currentMove);
-
-	int evasionStage = ctx.attackingPokemon->GetEvasionStage();
 
 	StageUpRoutine(deps, 1, "evasion", [](BattlePokemon& p) { return p.GetEvasionStage(); }, [](BattlePokemon& p, int val) { p.SetEvasionStage(val); });
 }
@@ -3089,7 +3084,7 @@ void SuperFang::DoMove(MoveRoutineDeps& deps)
 
 	int finalDamage = std::max(1, hpSource / 2);
 
-	deps.calculations.ApplyDamage(*ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon, finalDamage);
+	deps.calculations.ApplyDamage(*ctx.currentMove, *ctx.defendingPokemon, finalDamage);
 	deps.resultsUI.DisplaySubstituteDamageTextDialog(ctx.defendingPlayer->GetPlayerNameView(), ctx.defendingPokemon->GetNameView(), ctx.defendingPokemon->GetSubstituteHP(), ctx.defendingPokemon->HasSubstitute(), ctx.flags.hitSubstitute);
 
 	deps.statusProcessor.CheckSubstituteCondition(ctx.defendingPlayer, ctx.defendingPokemon);

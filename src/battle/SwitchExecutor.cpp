@@ -22,7 +22,7 @@ void SwitchExecutor::ExecuteSwitch(Player& player, BattlePokemon*& pokemon)
 	pokemon->ResetStatsOnSwitch();
 	pokemon = player.GetPokemonToSwitchTo();
 
-	BattlePokemon* newPokemon{ nullptr };
+	const BattlePokemon* newPokemon{ nullptr };
 
 	if (&player == m_context.playerOne)
 	{
@@ -53,9 +53,9 @@ void SwitchExecutor::ExecuteSwitch(Player& player, BattlePokemon*& pokemon)
 		m_moveResultsUI.PlayerChoosesMsg(player.GetPlayerNameView(), newPokemon->GetPokemonNameView());
 	}
 
-	for (auto player : m_context.vec_aiPlayers)
+	for (auto& aiPlayer : m_context.vec_aiPlayers)
 	{
-		player->GetAIController().OnActivePokemonChanged(m_context);
+		aiPlayer->GetAIController().OnActivePokemonChanged(m_context);
 	}
 
 	player.SetIsSwitching(false);

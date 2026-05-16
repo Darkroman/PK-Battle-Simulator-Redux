@@ -11,7 +11,7 @@ public:
     WinChecker(BattleContext& context, SwitchExecutor& switchExecutor);
 
     bool CheckWinCondition(Player& sourcePlayer, Player& targetPlayer);
-    bool CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, BattlePokemon& sourcePokemon, BattlePokemon& targetPokemon);
+    bool CheckWinOrSwitch(Player& sourcePlayer, Player& targetPlayer, const BattlePokemon& sourcePokemon, const BattlePokemon& targetPokemon);
 
 private:
     BattleContext& m_context;

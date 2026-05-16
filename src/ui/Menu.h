@@ -3,9 +3,11 @@
 #include <vector>
 #include <array>
 #include <memory>
+#include <filesystem>
 
 #include "../common/PartyEditResults.h"
 
+class BattlePokemon;
 class Player;
 
 class Menu
@@ -13,6 +15,7 @@ class Menu
 private:
 	std::vector<std::unique_ptr<Player>>& playerStorage;
 	std::array<Player*, 2> players;
+	std::string path = "./SavedParties";
 
 public:
 	Menu() = delete;
@@ -66,11 +69,13 @@ public:
 	bool SwapMoves(BattlePokemon&);
 	bool ReorderMoves(BattlePokemon&);
 
-	void SaveYourParty(std::array<Player*, 2>);
-	void SavePlayerNumberParty(std::array<Player*, 2>, int);
+	void SaveYourParty();
+	bool SavePlayerParty(size_t choice);
 
-	void LoadYourParty(std::array<Player*, 2>);
-	void LoadPlayerNumberParty(std::array<Player*, 2>, int);
+	void LoadYourParty();
+	bool LoadToPlayer(std::filesystem::path);
+	std::vector<std::filesystem::path> ListSavedParties();
+	std::vector<std::filesystem::path> GetSavedParties();
 
 	bool IsPokemonSetupIncomplete();
 

@@ -1,8 +1,5 @@
 #pragma once
 
-#include "../../battle/BattleAction.h"
-#include "../../entities/BattlePokemon.h"
-
 struct BattleContext;
 class Player;
 

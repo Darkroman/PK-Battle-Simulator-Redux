@@ -9,40 +9,40 @@ struct ScoringResults;
 
 namespace BasicScoring
 {
-	int BaseDamageScoring(ScoringResults&, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon);
-	int BaseStatusScoring(ScoringResults&, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon);
+	int BaseDamageScoring(ScoringResults&, const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon);
+	int BaseStatusScoring(ScoringResults&, const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon);
 
-	int CheckDamageImmunity(pokemonMove& move, Player& self, BattlePokemon& targetMon);
-	int CheckOHKOLevel(BattlePokemon& selfMon, BattlePokemon& targetMon);
-	int CheckExplosionLastPokemon(Player& self, Player& targetPlayer);
-	int DreamEaterSleepCheck(BattlePokemon& targetMon);
+	int CheckDamageImmunity(const pokemonMove& move, const Player& self, const BattlePokemon& targetMon);
+	int CheckOHKOLevel(const BattlePokemon& selfMon, const BattlePokemon& targetMon);
+	int CheckExplosionLastPokemon(const Player& self, const Player& targetPlayer);
+	int DreamEaterSleepCheck(const BattlePokemon& targetMon);
 
-	int SleepCheck(pokemonMove& move, BattlePokemon& targetMon);
-	int PoisonCheck(pokemonMove& move, BattlePokemon& targetMon);
-	int ParalyzeCheck(pokemonMove& move, BattlePokemon& targetMon);
-	int ConfuseCheck(BattlePokemon& targetMon);
+	int SleepCheck(const pokemonMove& move, const BattlePokemon& targetMon);
+	int PoisonCheck(const pokemonMove& move, const BattlePokemon& targetMon);
+	int ParalyzeCheck(const pokemonMove& move, const BattlePokemon& targetMon);
+	int ConfuseCheck(const BattlePokemon& targetMon);
 
-	int SelfAttackBoostCheck(BattlePokemon& selfMon);
-	int SelfDefenseBoostCheck(BattlePokemon& selfMon);
-	int GrowthCheck(BattlePokemon& selfMon);
-	int SelfSpecialDefenseBoostCheck(BattlePokemon& selfMon);
-	int SelfSpeedBoostCheck(BattlePokemon& selfMon);
-	int SelfEvasionBoostCheck(BattlePokemon& selfMon);
+	int SelfAttackBoostCheck(const BattlePokemon& selfMon);
+	int SelfDefenseBoostCheck(const BattlePokemon& selfMon);
+	int GrowthCheck(const BattlePokemon& selfMon);
+	int SelfSpecialDefenseBoostCheck(const BattlePokemon& selfMon);
+	int SelfSpeedBoostCheck(const BattlePokemon& selfMon);
+	int SelfEvasionBoostCheck(const BattlePokemon& selfMon);
 
-	int TargetAttackReductionCheck(BattlePokemon& targetMon);
-	int TargetDefenseReductionCheck(BattlePokemon& targetMon);
-	int TargetSpeedReductionCheck(BattlePokemon& targetMon);
-	int TargetAccuracyReductionCheck(BattlePokemon& targetMon);
+	int TargetAttackReductionCheck(const BattlePokemon& targetMon);
+	int TargetDefenseReductionCheck(const BattlePokemon& targetMon);
+	int TargetSpeedReductionCheck(const BattlePokemon& targetMon);
+	int TargetAccuracyReductionCheck(const BattlePokemon& targetMon);
 
-	int HazeCheck(BattlePokemon& selfMon, BattlePokemon targetMon);
-	int ForceSwitchCheck(Player& targetPlayer);
-	int HealCheck(BattlePokemon& selfMon);
-	int RestCheck(BattlePokemon& selfMon);
-	int ReflectCheck(Player& self);
-	int LightScreenCheck(Player& self);
-	int MistCheck(Player& self);
-	int FocusEnergyCheck(BattlePokemon& selfMon);
-	int SubstituteCheck(BattlePokemon& selfMon);
-	int LeechSeedCheck(BattlePokemon& targetMon);
-	int DisableCheck(BattlePokemon& targetMon);
+	int HazeCheck(const BattlePokemon& selfMon, const BattlePokemon targetMon);
+	int ForceSwitchCheck(const Player& targetPlayer);
+	int HealCheck(const BattlePokemon& selfMon);
+	int RestCheck(const BattlePokemon& selfMon);
+	int ReflectCheck(const Player& self);
+	int LightScreenCheck(const Player& self);
+	int MistCheck(const Player& self);
+	int FocusEnergyCheck(const BattlePokemon& selfMon);
+	int SubstituteCheck(const BattlePokemon& selfMon);
+	int LeechSeedCheck(const BattlePokemon& targetMon);
+	int DisableCheck(const BattlePokemon& targetMon);
 }

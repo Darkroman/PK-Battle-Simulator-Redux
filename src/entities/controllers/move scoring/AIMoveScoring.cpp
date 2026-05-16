@@ -9,28 +9,22 @@
 #include "AIMoveClassifier.h"
 #include "../../../data/StringToTypes.h"
 #include "../../Player.h"
-#include "../../../battle/BattleCalculations.h"
 #include "../../../battle/RandomEngine.h"
 #include "../AIController.h"
 
 namespace AIMoveScoring
 {
-	pokemonMove* GetWinningMove(Player& self, Player& targetPlayer, BattlePokemon& selfMon, BattlePokemon& targetMon, RandomEngine& rng)
+	pokemonMove* GetWinningMove(const Player& self, const Player& targetPlayer, BattlePokemon& selfMon, const BattlePokemon& targetMon, RandomEngine& rng)
 	{
-		if (selfMon.CheckPPCountForStruggle())
-		{
-			return &selfMon.Struggle();
-		}
-
 		std::vector<ScoringResults> results{};
 		results.reserve(4);
 
-		auto& moveArray = selfMon.GetMoveArray();
+		const auto moveArray = selfMon.GetMoveArray();
 
 		size_t index{};
 		for (size_t i = 0; i < 4; ++i)
 		{
-			if (moveArray[i].GetMovePointer() == nullptr || moveArray[i].m_currentPP == 0)
+			if (!moveArray[i].IsActive())
 			{
 				continue;
 			}
@@ -80,7 +74,7 @@ namespace AIMoveScoring
 		return topScores[dist(rng.GetGenerator())].move;
 	}
 
-	ScoringResults RunScoringRoutine(ScoringResults& results, Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
+	ScoringResults RunScoringRoutine(ScoringResults& results, const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 	{
 		if (move.GetCategoryEnum() == Category::Status)
 		{
@@ -95,8 +89,37 @@ namespace AIMoveScoring
 		return results;
 	}
 
-	int SwitchDamageScoringRoutine(Player& self, Player& targetPlayer, pokemonMove& move, BattlePokemon& selfMon, BattlePokemon& targetMon)
+	int SwitchDamageScoringRoutine(const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 	{
 		return self.GetAIController().AICalculateDamage(move, targetPlayer, selfMon, targetMon);
+	}
+
+	int CalculateSpeed(const BattlePokemon& pokemon)
+	{
+		auto GetStageRatio = [](int stage) -> std::pair<int, int>
+			{
+				if (stage < 0)
+				{
+					return { 2, -stage + 2 };
+				}
+
+				if (stage == 0)
+				{
+					return { 2, 2 };
+				}
+
+				return { 2 + stage, 2 };
+			};
+
+		auto [numerator, denominator] = GetStageRatio(pokemon.GetSpeedStage());
+
+		int speed = pokemon.GetSpeed() * numerator / denominator;
+
+		if (pokemon.GetStatus() == Status::Paralyzed)
+		{
+			speed /= 2;
+		}
+
+		return speed;
 	}
 }

@@ -1,9 +1,7 @@
 #include "BattleAnnouncerText.h"
+
 #include "../battle/BattleContext.h"
-#include "../common/InputValidation.h"
 #include "../entities/Player.h"
-#include "views/PokemonTextView.h"
-#include "../entities/controllers/IPlayerController.h"
 
 #include <iostream>
 

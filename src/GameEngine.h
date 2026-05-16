@@ -1,28 +1,30 @@
 #pragma once
 
+#include <optional>
+
 #include "entities/Player.h"
 #include "battle/RandomEngine.h"
 #include "battle/BattleContext.h"
-#include "ui/ConsoleTextSink.h"
-#include "ui/MoveResultsText.h"
-#include "ui/BattleAnnouncerText.h"
-#include "ui/StatusEffectText.h"
+#include "ui/interfaces/ITextSink.h"
+#include "ui/interfaces/IBattleAnnouncerUI.h"
+#include "ui/interfaces/IMoveResultsUI.h"
+#include "ui/interfaces/IStatusEffectUI.h"
 #include "ui/Menu.h"
 #include "battle/BattleManager.h"
 
-#include <optional>
-
 class Database;
 
-enum class AppState { MainMenu, InitBattle, Battle, Victory, Exit };
+enum class AppState { MainMenu, InitBattle, Battle, Victory, Simulate, Exit };
 
 class GameEngine
 {
 public:
     GameEngine();
     void Run();
+    void RunSimulate();
 
 private:
+    void SetupUI(bool headless);
     void Bootstrap();
     void PresetupBattle();
 
@@ -32,13 +34,16 @@ private:
     std::vector<std::unique_ptr<Player>> players;
     BattleContext context;
 
-    ConsoleTextSink textSink;
-
-    BattleAnnouncerText battleAnnouncerText;
-    MoveResultsText moveResultsText;
-    StatusEffectText statusEffectText;
+    std::unique_ptr<ITextSink> textSink;
+    std::unique_ptr<IBattleAnnouncerUI> battleAnnouncer;
+    std::unique_ptr<IMoveResultsUI> moveResults;
+    std::unique_ptr<IStatusEffectUI> statusEffect;
 
     AppState currentState = AppState::MainMenu;
     std::optional<Menu> menu;
     std::optional<BattleManager> battleManager;
+
+    unsigned int simIterations{};
+    int playerOneVictories{};
+    int playerTwoVictories{};
 };

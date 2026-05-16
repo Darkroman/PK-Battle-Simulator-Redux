@@ -1,7 +1,5 @@
 #pragma once
 
-#include <variant>
-
 enum class MoveEffect
 {
 	NormalHit = 0,

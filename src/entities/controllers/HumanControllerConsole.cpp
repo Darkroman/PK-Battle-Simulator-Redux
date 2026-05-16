@@ -1,20 +1,24 @@
 #include <iostream>
 #include <string>
 
+#include "HumanControllerConsole.h"
+
 #include "../../common/InputValidation.h"
 #include "../../ui/views/PokemonTextView.h"
 #include "../Player.h"
 
-#include "HumanControllerConsole.h"
+std::unique_ptr<IPlayerController> HumanControllerConsole::clone() const
+{
+    return std::make_unique<HumanControllerConsole>(*this);
+}
 
-PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, Player& targetPlayer, BattlePokemon& currentPokemon, BattlePokemon& targetMon, RandomEngine& rng)
+PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, const Player& targetPlayer, BattlePokemon& currentPokemon, const BattlePokemon& targetMon, RandomEngine& rng)
 {
     PlayerDecisionOutcome decision{};
 
     std::cout << player.GetPlayerNameView() << " choose your action\n";
 
-    BattleAction action = BattleAction::None;
-    while (action == BattleAction::None)
+    while (decision.action == BattleAction::None)
     {
         std::cout << "1. Fight \t";
         std::cout << "2. Switch Pokemon";
@@ -43,6 +47,7 @@ PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, Playe
 
             if (!decision.chosenMove)
             {
+                decision.action = BattleAction::None;
                 continue;
             }
 
@@ -59,6 +64,7 @@ PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, Playe
 
             if (!decision.chosenPokemon)
             {
+                decision.action = BattleAction::None;
                 continue;
             }
 
@@ -69,32 +75,31 @@ PlayerDecisionOutcome HumanControllerConsole::ChooseAction(Player& player, Playe
             break;
 
         default:
+            decision.action = BattleAction::None;
             std::cout << "Invalid input!\n\n";
             break;
         }
-
-        return decision;
     }
+
+    return decision;
 }
 
-BattlePokemon* HumanControllerConsole::PromptForSwitch(Player& player, Player& targetPlayer, BattlePokemon& currentPokemon, BattlePokemon& targetMon)
+BattlePokemon* HumanControllerConsole::PromptForSwitch(Player& player, const Player& targetPlayer, const BattlePokemon& currentPokemon, const BattlePokemon& targetMon)
 {
-   BattlePokemon* selectedPokemon = SwitchAction(player, currentPokemon);
+    BattlePokemon* selectedPokemon = SwitchAction(player, currentPokemon);
     return selectedPokemon;
 }
 
-pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& currentPokemon, BattlePokemon& targetMon)
+pokemonMove* HumanControllerConsole::FightAction(const Player& player, BattlePokemon& currentPokemon, const BattlePokemon& targetMon)
 {
-    bool struggle = currentPokemon.CheckPPCountForStruggle();
-
-    pokemonMove* selectedMove{ nullptr };
-
-    if (struggle)
+    if (currentPokemon.WillPerformStruggle())
     {
         std::cout << "You are out of PP for all moves. All you can do is Struggle.\n\n";
-        
-        return selectedMove = &currentPokemon.Struggle();
+
+        return &GetStruggle();
     }
+
+    pokemonMove* selectedMove{ nullptr };
 
     while (true)
     {
@@ -125,11 +130,6 @@ pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& 
             continue;
         }
 
-        if (choice > 0 && struggle)
-        {
-            return selectedMove = &currentPokemon.Struggle();
-        }
-
         if (currentPokemon.GetMove(choice).b_isDisabled)
         {
             std::cout << "This move is currently disabled!\n\n";
@@ -142,7 +142,7 @@ pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& 
             continue;
         }
 
-        if (!currentPokemon.GetMove(choice).IsActive())
+        if (!currentPokemon.GetMove(choice).HasMove())
         {
             std::cout << "There is no move there!\n\n";
             continue;
@@ -156,7 +156,7 @@ pokemonMove* HumanControllerConsole::FightAction(Player& player, BattlePokemon& 
     }
 }
 
-BattlePokemon* HumanControllerConsole::SwitchAction(Player& currentPlayer, BattlePokemon& currentPokemon)
+BattlePokemon* HumanControllerConsole::SwitchAction(Player& currentPlayer, const BattlePokemon& currentPokemon)
 {
     std::cout << "Choose Pokemon to switch out! 0 to cancel.\n";
 
@@ -221,7 +221,7 @@ BattlePokemon* HumanControllerConsole::SwitchAction(Player& currentPlayer, Battl
     }
 }
 
-BattleAction HumanControllerConsole::ForfeitAction(Player& sourcePlayer)
+BattleAction HumanControllerConsole::ForfeitAction(const Player& sourcePlayer)
 {
     std::cout << sourcePlayer.GetPlayerNameView() << " has forfeited!\n";
     return BattleAction::Forfeit;

@@ -38,16 +38,6 @@ struct BattleContext
 
     BattleStateFlags flags;
 
-    const int HP_BAR_WIDTH{ 400 };
-
-    int battleTurn{ 0 };
-
-    int damageTaken{};
-
-    int pixelsLost{};
-    int prevPixels{ 400 };
-    int damageInPixels{};
-
     Player* playerOne;
     Player* playerTwo;
 
@@ -64,6 +54,16 @@ struct BattleContext
     BattlePokemon* defendingPokemon{ nullptr };
 
     pokemonMove* currentMove{ nullptr };
+
+    const int HP_BAR_WIDTH{ 400 };
+
+    int battleTurn{ 0 };
+
+    int damageTaken{};
+
+    int pixelsLost{};
+    int prevPixels{ 400 };
+    int damageInPixels{};
 
     int initialPowerMultiplier{ 10 };
     int effectiveness{ 4096 };

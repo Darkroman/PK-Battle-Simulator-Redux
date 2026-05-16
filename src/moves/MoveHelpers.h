@@ -2,6 +2,7 @@
 
 #include <string_view>
 
+#include "../ui/EffectivenessText.h"
 #include "../entities/BattlePokemon.h"
 #include "../battle/BattleContext.h"
 

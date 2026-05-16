@@ -1,9 +1,9 @@
+#include "BattlePokemon.h"
+
 #include "../data/Pokemon.h"
 #include "../data/Move.h"
 #include "../data/Database.h"
 #include "../common/InputValidation.h"
-
-#include "BattlePokemon.h"
 
 //BattlePokemon::BattlePokemon() {}
 
@@ -217,13 +217,23 @@ SetMoveOutcome BattlePokemon::SetMove(size_t moveslot, std::string_view movename
     outcome.result = SetMoveResult::Success;
     return outcome;
 }
-
+/*
 std::array<pokemonMove, 4>& BattlePokemon::GetMoveArray()
 {
     return m_array_moves;
 }
 
 const std::array<pokemonMove, 4>& BattlePokemon::GetMoveArray() const
+{
+    return m_array_moves;
+}
+*/
+std::span<pokemonMove> BattlePokemon::GetMoveArray()
+{
+    return m_array_moves;
+}
+
+std::span<const pokemonMove> BattlePokemon::GetMoveArray() const
 {
     return m_array_moves;
 }
@@ -622,26 +632,19 @@ int BattlePokemon::GetMaxPP(size_t moveslot) const
     return m_array_moves[moveslot].m_maxPP;
 }
 
-bool BattlePokemon::CheckPPCountForStruggle()
+bool BattlePokemon::WillPerformStruggle() const
 {
-    int zeroPPCount{ 0 }, disabledCount{ 0 };
+    int inactiveCount{ 0 };
 
-    for (size_t i = 0; i < 4; ++i)
+    for (const auto& move : m_array_moves)
     {
-        if (GetMove(i + 1).IsActive())
+        if (!move.IsActive())
         {
-            if (GetMove(i + 1).m_currentPP == 0)
-            {
-                ++zeroPPCount;
-            }
-            if (GetMove(i + 1).b_isDisabled)
-            {
-                ++disabledCount;
-            }
+            ++inactiveCount;
         }
     }
 
-    if (zeroPPCount + disabledCount >= GetMoveCount())
+    if (inactiveCount >= m_array_moves.size())
     {
         return true;
     }
@@ -656,7 +659,7 @@ bool BattlePokemon::HasPokemon() const
 bool BattlePokemon::HasMove(size_t moveslot)
 {
     --moveslot;
-    return (m_array_moves[moveslot].IsActive()) ? true : false;
+    return (m_array_moves[moveslot].HasMove()) ? true : false;
 }
 
 void BattlePokemon::IncrementMoveCount()
@@ -1439,15 +1442,6 @@ void BattlePokemon::DamageSubstitute(int damage)
     }
 }
 
-pokemonMove& BattlePokemon::Struggle()
-{
-    m_struggle.SetMovePointer(Database::GetInstance().GetPointerToMovedexNumber(164));
-    m_struggle.m_currentPP = 1;
-    m_struggle.m_maxPP = 1;
-
-    return m_struggle;
-}
-
 void BattlePokemon::ResetStatsOnSwitch()
 {
     if (IsTransformed())
@@ -1614,7 +1608,7 @@ void BattlePokemon::ResetValues()
 
     for (auto& i : m_array_moves)
     {
-        if (i.IsActive())
+        if (i.HasMove())
         {
             i.m_currentPP = i.m_maxPP;
             i.b_isDisabled = false;

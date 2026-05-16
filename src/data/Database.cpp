@@ -1,8 +1,8 @@
+#include "Database.h"
+
 #include "Pokemon.h"
 #include "Move.h"
 #include "StringToTypes.h"
-
-#include "Database.h"
 
 Database::Database()
 {

@@ -1,3 +1,5 @@
+#include "BattleManager.h"
+
 #include "BattleContext.h"
 #include "RandomEngine.h"
 #include "../ui/interfaces/IBattleAnnouncerUI.h"
@@ -7,8 +9,6 @@
 #include "BattleAIManager.h"
 #include "../entities/controllers/IPlayerController.h"
 #include "../entities/controllers/AIController.h"
-
-#include "BattleManager.h"
 
 BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleAnnouncerUI& battleAnnouncerUI, IMoveResultsUI& moveResultsUI, IStatusEffectUI& statusEffectUI)
 	: m_context(context)
@@ -28,20 +28,20 @@ BattleManager::BattleManager(BattleContext& context, RandomEngine& rng, IBattleA
 
 void BattleManager::AssignFirstPokemon()
 {
-	for (size_t i = 1; i < 7; ++i)
+	for (auto& pokemon : m_context.playerOne->GetBeltArray())
 	{
-		if (m_context.playerOne->GetBelt(i).HasPokemon())
+		if (pokemon.HasPokemon())
 		{
-			m_context.playerOneCurrentPokemon = &(m_context.playerOne->GetBelt(i));
+			m_context.playerOneCurrentPokemon = &pokemon;
 			break;
 		}
 	}
 
-	for (size_t i = 1; i < 7; ++i)
+	for (auto& pokemon : m_context.playerTwo->GetBeltArray())
 	{
-		if (m_context.playerTwo->GetBelt(i).HasPokemon())
+		if (pokemon.HasPokemon())
 		{
-			m_context.playerTwoCurrentPokemon = &(m_context.playerTwo->GetBelt(i));
+			m_context.playerTwoCurrentPokemon = &pokemon;
 			break;
 		}
 	}
@@ -77,7 +77,7 @@ void BattleManager::ApplyPlayerOneAction()
 
 		case BattleAction::Forfeit:
 			m_context.playerOne->SetForfeit(true);
-			m_context.vec_outOfPokemon.push_back(m_context.playerOne);
+			m_context.vec_outOfPokemon.emplace_back(m_context.playerOne);
 			break;
 	}
 }
@@ -112,7 +112,7 @@ void BattleManager::ApplyPlayerTwoAction()
 
 	case BattleAction::Forfeit:
 		m_context.playerTwo->SetForfeit(true);
-		m_context.vec_outOfPokemon.push_back(m_context.playerTwo);
+		m_context.vec_outOfPokemon.emplace_back(m_context.playerTwo);
 		break;
 	}
 }
@@ -130,8 +130,6 @@ bool BattleManager::RunBattleLoop()
 
 	while (winCondition == false)
 	{
-		//BattleAIProcedures::UpdateEnemyActivePokemon(m_context);
-
 		++m_context.battleTurn;
 
 		m_battleAnnouncerUI.DisplayTurnNumber(m_context.battleTurn);
@@ -195,25 +193,25 @@ void BattleManager::ResetValues()
 	m_context.playerOne->ResetValues();
 	m_context.playerTwo->ResetValues();
 
-	for (size_t i = 1; i <= m_context.playerOne->GetBeltArray().size(); ++i)
+	for (auto& pokemon : m_context.playerOne->GetBeltArray())
 	{
-		if (!m_context.playerOne->GetBelt(i).HasPokemon())
+		if (!pokemon.HasPokemon())
 		{
 			continue;
 		}
-		m_context.playerOne->GetBelt(i).ResetValues();
+		pokemon.ResetValues();
 	}
 
-	for (size_t i = 1; i <= m_context.playerTwo->GetBeltArray().size(); ++i)
+	for (auto& pokemon : m_context.playerTwo->GetBeltArray())
 	{
-		if (!m_context.playerTwo->GetBelt(i).HasPokemon())
+		if (!pokemon.HasPokemon())
 		{
 			continue;
 		}
-		m_context.playerTwo->GetBelt(i).ResetValues();
+		pokemon.ResetValues();
 	}
 
-	for (auto aiPlayers : m_context.vec_aiPlayers)
+	for (const auto* aiPlayers : m_context.vec_aiPlayers)
 	{
 		aiPlayers->GetAIController().ResetObservedMoves();
 	}

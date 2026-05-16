@@ -1,11 +1,21 @@
-#include "../data/Database.h"
-
 #include "Player.h"
-#include "../ui/views/PokemonTextView.h"
+
 #include "controllers/AIController.h"
 
 Player::Player(std::string_view name) :
     m_name(name) {}
+
+Player::Player(const Player& other) :
+    belt(other.belt),
+    m_name(other.m_name),
+    m_PokemonCount(other.m_PokemonCount),
+    e_type(other.e_type)
+{
+    if (other.uptr_controller)
+    {
+        uptr_controller = other.uptr_controller->clone();
+    }
+}
 
 Player::~Player() = default;
 
@@ -21,6 +31,11 @@ bool Player::IsAI() const
     }
 }
 
+IPlayerController& Player::GetController()
+{
+    return *uptr_controller;
+}
+
 IPlayerController& Player::GetController() const
 {
     return *uptr_controller;
@@ -31,13 +46,35 @@ AIController& Player::GetAIController()
     return static_cast<AIController&>(*uptr_controller);
 }
 
+AIController& Player::GetAIController() const
+{
+    return static_cast<AIController&>(*uptr_controller);
+}
+
 void Player::SetController(std::unique_ptr<IPlayerController> controller, ControllerType type)
 {
     uptr_controller = std::move(controller);
     e_type = type;
 }
 
+/*
+std::array<BattlePokemon, 6>& Player::GetBeltArray()
+{
+    return belt;
+}
+*/
+/*
 const std::array<BattlePokemon, 6>& Player::GetBeltArray() const
+{
+    return belt;
+}
+*/
+std::span<BattlePokemon> Player::GetBeltArray()
+{
+    return belt;
+}
+
+std::span<const BattlePokemon> Player::GetBeltArray() const
 {
     return belt;
 }
@@ -196,10 +233,11 @@ void Player::SetPokemonToSwitchTo(BattlePokemon* pokemon)
     pokemonToSwitchTo = pokemon;
 }
 
-BattlePokemon* Player::GetPokemonToSwitchTo()
+BattlePokemon* Player::GetPokemonToSwitchTo() const
 {
     return pokemonToSwitchTo;
 }
+
 
 void Player::SetWinCondition(bool won)
 {
@@ -305,15 +343,23 @@ bool Player::HasPendingPostTurnEffect() const
 
 void Player::ResetValues()
 {
+    pokemonToSwitchTo = nullptr;
+
+    b_isFirst = false;
+
+    m_faintedPokemon = 0;
+
     b_canSwitch = true;
     b_isSwitching = false;
+    b_hasSwitched = false;
     b_hasWon = false;
     b_hasForfeited = false;
+
     b_hasMist = false;
     b_hasLightScreen = false;
     b_hasReflect = false;
 
-    m_faintedPokemon = 0;
-
-    pokemonToSwitchTo = nullptr;
+    m_mistCounter = 0;
+    m_lightscreenCounter = 0;
+    m_reflectCounter = 0;
 }

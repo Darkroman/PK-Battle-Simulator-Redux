@@ -1,17 +1,15 @@
 #include <iostream>
-#include <algorithm>
+
+#include "Menu.h"
 
 #include "../entities/Player.h"
 #include "../entities/controllers/AIController.h"
 #include "../entities/controllers/HumanControllerConsole.h"
-
 #include "../data/Database.h"
 #include "../save/SaveParty.h"
 #include "../save/LoadParty.h"
 #include "../ui/views/PokemonTextView.h"
 #include "../ui/views/DatabaseTextView.h"
-
-#include "Menu.h"
 #include "../common/InputValidation.h"
 
 Menu::Menu(std::vector<std::unique_ptr<Player>>& playerStorage)
@@ -107,8 +105,7 @@ bool Menu::SetPlayerPokemonNickname(BattlePokemon& pokemon)
 
 bool Menu::SetPlayerPokemonLevel(BattlePokemon& pokemon)
 {
-	bool exit = false;
-	while (exit == false)
+	while (true)
 	{
 		std::cout << "Set level 1 to 100: ";
 		std::string input{};
@@ -140,13 +137,12 @@ bool Menu::SetPlayerPokemonLevel(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonHPIV(BattlePokemon& pokemon)
 {
-	bool exit = false;
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayIVs(pokemon);
 		std::cout << "Set HP IV between 0 and 31: ";
@@ -179,13 +175,12 @@ bool Menu::SetPlayerPokemonHPIV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonAttackIV(BattlePokemon& pokemon)
 {
-	bool exit = false;
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayIVs(pokemon);
 		std::cout << "Set Attack IV between 0 and 31: ";
@@ -218,13 +213,12 @@ bool Menu::SetPlayerPokemonAttackIV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonDefenseIV(BattlePokemon& pokemon)
 {
-	bool exit = false;
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayIVs(pokemon);
 		std::cout << "Set Defense IV between 0 and 31: ";
@@ -257,13 +251,12 @@ bool Menu::SetPlayerPokemonDefenseIV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonSpecialAttackIV(BattlePokemon& pokemon)
 {
-	bool exit = false;
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayIVs(pokemon);
 		std::cout << "Set Special Attack IV between 0 and 31: ";
@@ -296,13 +289,12 @@ bool Menu::SetPlayerPokemonSpecialAttackIV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonSpecialDefenseIV(BattlePokemon& pokemon)
 {
-	bool exit = false;
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayIVs(pokemon);
 		std::cout << "Set Special Defense IV between 0 and 31: ";
@@ -335,13 +327,12 @@ bool Menu::SetPlayerPokemonSpecialDefenseIV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonSpeedIV(BattlePokemon& pokemon)
 {
-	bool exit = false;
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayIVs(pokemon);
 		std::cout << "Set Speed IV between 0 and 31: ";
@@ -374,14 +365,13 @@ bool Menu::SetPlayerPokemonSpeedIV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonHPEV(BattlePokemon& pokemon)
 {
-	bool exit = false;
 	SetEVResult result{};
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayEVs(pokemon);
 		std::cout << pokemon.GetPokemonNameView() << " currently has " << pokemon.GetTotalEVs() << " EV points used.\n";
@@ -421,14 +411,13 @@ bool Menu::SetPlayerPokemonHPEV(BattlePokemon& pokemon)
 				return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonAttackEV(BattlePokemon& pokemon)
 {
-	bool exit = false;
 	SetEVResult result{};
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayEVs(pokemon);
 		std::cout << pokemon.GetPokemonNameView() << " currently has " << pokemon.GetTotalEVs() << " EV points used.\n";
@@ -468,14 +457,13 @@ bool Menu::SetPlayerPokemonAttackEV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonDefenseEV(BattlePokemon& pokemon)
 {
-	bool exit = false;
 	SetEVResult result{};
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayEVs(pokemon);
 		std::cout << pokemon.GetPokemonNameView() << " currently has " << pokemon.GetTotalEVs() << " EV points used.\n";
@@ -515,14 +503,13 @@ bool Menu::SetPlayerPokemonDefenseEV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonSpecialAttackEV(BattlePokemon& pokemon)
 {
-	bool exit = false;
 	SetEVResult result{};
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayEVs(pokemon);
 		std::cout << pokemon.GetPokemonNameView() << " currently has " << pokemon.GetTotalEVs() << " EV points used.\n";
@@ -562,14 +549,13 @@ bool Menu::SetPlayerPokemonSpecialAttackEV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonSpecialDefenseEV(BattlePokemon& pokemon)
 {
-	bool exit = false;
 	SetEVResult result{};
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayEVs(pokemon);
 		std::cout << pokemon.GetPokemonNameView() << " currently has " << pokemon.GetTotalEVs() << " EV points used.\n";
@@ -609,14 +595,13 @@ bool Menu::SetPlayerPokemonSpecialDefenseEV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SetPlayerPokemonSpeedEV(BattlePokemon& pokemon)
 {
-	bool exit = false;
 	SetEVResult result{};
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayEVs(pokemon);
 		std::cout << pokemon.GetPokemonNameView() << " currently has " << pokemon.GetTotalEVs() << " EV points used.\n";
@@ -656,16 +641,14 @@ bool Menu::SetPlayerPokemonSpeedEV(BattlePokemon& pokemon)
 			return false;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::RunMenu()
 {
-	bool exit = false;
-
 	//DatabaseTextView::DisplayMovesWithZeroPower(Database::GetInstance());
 
-	while (exit == false)
+	while (true)
 	{
 		std::cout << "---Main Menu:---\n";
 
@@ -698,8 +681,7 @@ bool Menu::RunMenu()
 		switch (choice)
 		{
 		case 0:
-			exit = true;
-			return exit;
+			return true;
 		
 		case 1:
 			ChangePlayerOneName();
@@ -726,11 +708,11 @@ bool Menu::RunMenu()
 			break;
 
 		case 7:
-			SaveYourParty(players);
+			SaveYourParty();
 			break;
 
 		case 8:
-			LoadYourParty(players);
+			LoadYourParty();
 			break;
 
 		case 9:
@@ -745,7 +727,7 @@ bool Menu::RunMenu()
 			break;
 		}
 	}
-	return exit;
+	return false;
 }
 
 void Menu::ChangePlayerOneName()
@@ -849,14 +831,14 @@ void Menu::EditPlayerOnePokemon()
 
 void Menu::ChangePlayerOneType()
 {
-	bool exit = false;
-	while(exit == false)
+	while (true)
 	{
 		std::cout << "---Change Player One's Controller Type---\n";
 		PrintPlayerOneType();
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
 		std::cout << "3. Medium A.I.\n";
+		std::cout << "4. Hard A.I.\n";
 		std::cout << "0. Go Back\n";
 
 		std::string input{};
@@ -866,7 +848,6 @@ void Menu::ChangePlayerOneType()
 
 		if (input == "00")
 		{
-			exit = true;
 			return;
 		}
 
@@ -882,7 +863,6 @@ void Menu::ChangePlayerOneType()
 		{
 			case 0:
 			{
-				exit = true;
 				return;
 			}
 
@@ -910,6 +890,15 @@ void Menu::ChangePlayerOneType()
 				players[0] = playerStorage[0].get();
 
 				std::cout << "Switched Player One to Medium A.I.\n\n";
+				break;
+			}
+
+			case 4:
+			{
+				playerStorage[0]->SetController(std::make_unique<AIController>(Difficulty::Hard), ControllerType::AI);
+				players[0] = playerStorage[0].get();
+
+				std::cout << "Switched Player One to Hard A.I.\n\n";
 				break;
 			}
 			
@@ -940,6 +929,10 @@ void Menu::PrintPlayerOneType()
 			std::cout << "---" << players[0]->GetPlayerNameView() << " is currently Medium A.I.---\n";
 			break;
 
+		case Difficulty::Hard:
+			std::cout << "---" << players[0]->GetPlayerNameView() << " is currently Hard A.I.---\n";
+			break;
+
 		default:
 			std::cout << "---" << players[0]->GetPlayerNameView() << " is currently A.I.---\n";
 			break;
@@ -967,7 +960,7 @@ void Menu::ChangePlayerTwoName()
 
 void Menu::EditPlayerTwoPokemon()
 {
-	bool exit = false;
+	bool exit{ false };
 
 	while (exit == false)
 	{
@@ -990,7 +983,6 @@ void Menu::EditPlayerTwoPokemon()
 
 		if (input == "00")
 		{
-			exit = true;
 			return;
 		}
 
@@ -1005,7 +997,6 @@ void Menu::EditPlayerTwoPokemon()
 		switch (choice)
 		{
 		case 0:
-			exit = true;
 			std::cout << "Going back to main menu...\n\n";
 			return;
 
@@ -1055,6 +1046,7 @@ void Menu::ChangePlayerTwoType()
 		std::cout << "1. Human\n";
 		std::cout << "2. Easy A.I.\n";
 		std::cout << "3. Medium A.I.\n";
+		std::cout << "4. Hard A.I.\n";
 		std::cout << "0. Go Back\n";
 
 		std::string input{};
@@ -1111,6 +1103,15 @@ void Menu::ChangePlayerTwoType()
 			break;
 		}
 
+		case 4:
+		{
+			playerStorage[1]->SetController(std::make_unique<AIController>(Difficulty::Hard), ControllerType::AI);
+			players[1] = playerStorage[1].get();
+
+			std::cout << "Switched Player Two to Hard A.I.\n\n";
+			break;
+		}
+
 		default:
 			std::cout << "Invalid input!\n\n";
 			break;
@@ -1136,6 +1137,10 @@ void Menu::PrintPlayerTwoType()
 
 			case Difficulty::Medium:
 				std::cout << "---" << players[1]->GetPlayerNameView() << " is currently Medium A.I.---\n";
+				break;
+
+			case Difficulty::Hard:
+				std::cout << "---" << players[1]->GetPlayerNameView() << " is currently Hard A.I.---\n";
 				break;
 
 			default:
@@ -1208,9 +1213,7 @@ bool Menu::ChangePokemon(Player& player)
 	std::cout << "---Change Pokemon---\n"
 	"Be aware that when you change a Pokemon, its moves, IVs, and EVs will be reset!\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayPlayerPokemon(player);
 
@@ -1290,16 +1293,14 @@ bool Menu::ChangePokemon(Player& player)
 			std::cout << "Changed " << OldPokemonName << " to " << pokemon.GetPokemonNameView() << "\n\n";
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::DeletePokemon(Player& player)
 {
 	std::cout << "---Release Pokemon---\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayPlayerPokemon(player);
 
@@ -1349,16 +1350,14 @@ bool Menu::DeletePokemon(Player& player)
 			
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SwapPokemon(Player& player)
 {
 	std::cout << "---Swap Pokemon---\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayPlayerPokemon(player);
 
@@ -1416,8 +1415,7 @@ bool Menu::SwapPokemon(Player& player)
 
 			if (secondPickInput == "00")
 			{
-				exit = true;
-				break;
+				return true;
 			}
 
 			if (!IsDigits(secondPickInput))
@@ -1463,16 +1461,14 @@ bool Menu::SwapPokemon(Player& player)
 			break;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::ReorderPokemon(Player& player)
 {
 	std::cout << "---Reposition Pokemon---\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayPlayerPokemon(player);
 
@@ -1530,8 +1526,7 @@ bool Menu::ReorderPokemon(Player& player)
 
 			if (secondPickInput == "00")
 			{
-				exit = true;
-				break;
+				return true;
 			}
 
 			if (!IsDigits(secondPickInput))
@@ -1564,7 +1559,7 @@ bool Menu::ReorderPokemon(Player& player)
 			break;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::EditPokemonStats(Player& player)
@@ -1865,8 +1860,6 @@ bool Menu::EditChosenPokemonMoves(BattlePokemon& pokemon)
 
 bool Menu::AddMove(BattlePokemon& pokemon)
 {
-	bool exit = false;
-
 	if (pokemon.GetMoveCount() >= 4)
 	{
 		std::cout << "You can't add anymore moves! Go to last menu option and select change moves.\n\n";
@@ -1924,16 +1917,14 @@ bool Menu::AddMove(BattlePokemon& pokemon)
 		std::cout << "Added move " << pokemon.GetMoveName(moveslot) << ".\n\n";
 		
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::ChangeMove(BattlePokemon& pokemon)
 {
 	std::cout << "---Change Move---\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		std::cout << pokemon.GetPokemonNameView() << ": ";
 		PokemonTextView::DisplayLearnedMoves(pokemon);
@@ -2009,16 +2000,14 @@ bool Menu::ChangeMove(BattlePokemon& pokemon)
 			std::cout << "Changed " << OldMoveName << " to " << pokemon.GetMoveName(moveslot) << "\n\n";
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::DeleteMove(BattlePokemon& pokemon)
 {
 	std::cout << "---Delete Move---\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		std::cout << pokemon.GetPokemonNameView() << ": ";
 		PokemonTextView::DisplayLearnedMoves(pokemon);
@@ -2053,7 +2042,7 @@ bool Menu::DeleteMove(BattlePokemon& pokemon)
 		}
 		else
 		{
-			if (!pokemon.GetMove(moveSlot).IsActive())
+			if (!pokemon.GetMove(moveSlot).HasMove())
 			{
 				std::cout << "There is no move to delete in this slot!\n\n";
 				continue;
@@ -2067,16 +2056,14 @@ bool Menu::DeleteMove(BattlePokemon& pokemon)
 
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::SwapMoves(BattlePokemon& pokemon)
 {
 	std::cout << "---Swap Moves---\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayLearnedMoves(pokemon);
 
@@ -2111,7 +2098,7 @@ bool Menu::SwapMoves(BattlePokemon& pokemon)
 
 		std::string firstMoveName{};
 
-		if (!pokemon.GetMove(firstSlot).IsActive())
+		if (!pokemon.GetMove(firstSlot).HasMove())
 		{
 			firstMoveName = "Empty Slot";
 		}
@@ -2132,8 +2119,7 @@ bool Menu::SwapMoves(BattlePokemon& pokemon)
 
 			if (secondPickInput == "00")
 			{
-				exit = true;
-				break;
+				return true;
 			}
 
 			if (!IsDigits(secondPickInput))
@@ -2163,7 +2149,7 @@ bool Menu::SwapMoves(BattlePokemon& pokemon)
 
 			std::string secondMoveName{};
 
-			if (!pokemon.GetMove(secondSlot).IsActive())
+			if (!pokemon.GetMove(secondSlot).HasMove())
 			{
 				secondMoveName = "Empty Slot";
 			}
@@ -2177,16 +2163,14 @@ bool Menu::SwapMoves(BattlePokemon& pokemon)
 			break;
 		}
 	}
-	return exit;
+	return false;
 }
 
 bool Menu::ReorderMoves(BattlePokemon& pokemon)
 {
 	std::cout << "---Reposition Moves---\n";
 
-	bool exit = false;
-
-	while (exit == false)
+	while (true)
 	{
 		PokemonTextView::DisplayLearnedMoves(pokemon);
 
@@ -2221,7 +2205,7 @@ bool Menu::ReorderMoves(BattlePokemon& pokemon)
 
 		std::string firstMoveName{};
 
-		if (!pokemon.GetMove(slotToMove).IsActive())
+		if (!pokemon.GetMove(slotToMove).HasMove())
 		{
 			firstMoveName = "Empty Slot";
 		}
@@ -2242,8 +2226,7 @@ bool Menu::ReorderMoves(BattlePokemon& pokemon)
 
 			if (secondPickInput == "00")
 			{
-				exit = true;
-				break;
+				return true;
 			}
 
 			if (!IsDigits(secondPickInput))
@@ -2276,7 +2259,7 @@ bool Menu::ReorderMoves(BattlePokemon& pokemon)
 			break;
 		}
 	}
-	return exit;
+	return false;
 }
 
 void Menu::SetDefaultPokemon()
@@ -2369,21 +2352,29 @@ void Menu::SetDefaultPokemon()
 	players[1]->SetPokemonCount(pokemonCount);
 }
 
-void Menu::SaveYourParty(std::array<Player*, 2> players)
+void Menu::SaveYourParty()
 {
 	bool exit = false;
 
 	while (exit == false)
 	{
-		std::cout << "---Save Party---\n";
-		std::cout << "1. Save Player One's party\n";
-		std::cout << "2. Save Player Two's party\n";
-		std::cout << "0 to go back\n";
+		int index{ 1 };
+		for (const auto& player : players)
+		{
+			std::cout << index << ". " << player->GetPlayerNameView() << '\n';
+			++index;
+		}
+
+		std::cout << "Select which player you'd like to save the party of (1 or 2, 0 exit): ";
 
 		std::string input{};
-		std::cout << "Option: ";
 		std::getline(std::cin >> std::ws, input);
 		std::cout << '\n';
+
+		if (input == "0" || input == "00")
+		{
+			return;
+		}
 
 		if (!IsDigits(input) || input.size() > 10)
 		{
@@ -2391,86 +2382,263 @@ void Menu::SaveYourParty(std::array<Player*, 2> players)
 			continue;
 		}
 
-		int choice{ std::stoi(input) };
+		size_t choice = stoul(input);
 
-		switch (choice)
-		{
-		case 0:
-			exit = true;
-			return;
-
-		case 1:
-			SavePlayerNumberParty(players, choice);
-			break;
-
-		case 2:
-			SavePlayerNumberParty(players, choice);
-			break;
-
-		default:
-			std::cout << "Invalid input!\n\n";
-			break;
-		}
-	}
-}
-
-void Menu::SavePlayerNumberParty(std::array<Player*, 2> players, int num)
-{
-	--num;
-	SaveParty savedParty(players, num);
-	savedParty.Save();
-}
-
-void Menu::LoadYourParty(std::array<Player*, 2> players)
-{
-	bool exit = false;
-
-	while (exit == false)
-	{
-		std::cout << "---Load Party---\n";
-		std::cout << "1. Load Player One's saved party\n";
-		std::cout << "2. Load Player Two's saved party\n";
-		std::cout << "0 to go back\n";
-
-		std::string input{};
-		std::cout << "Option: ";
-		std::getline(std::cin >> std::ws, input);
-		std::cout << '\n';
-
-		if (!IsDigits(input) || input.size() > 10)
+		if (choice > players.size())
 		{
 			std::cout << "Invalid input!\n\n";
 			continue;
 		}
 
-		int choice{ std::stoi(input) };
+		--choice;
 
-		switch (choice)
+		exit = SavePlayerParty(choice);
+	}
+}
+
+bool Menu::SavePlayerParty(size_t choice)
+{
+	namespace fs = std::filesystem;
+
+	std::vector<fs::path> files = GetSavedParties();
+
+	while (true)
+	{
+		std::cout << "Type the name of save file (0 to go back, 00 to main menu ... do not include number as first character: ";
+
+		std::string input{};
+		std::getline(std::cin >> std::ws, input);
+		std::cout << '\n';
+
+		if (input == "0")
 		{
-		case 0:
-			exit = true;
-			return;
+			return false;
+		}
+		else if (input == "00")
+		{
+			return true;
+		}
 
-		case 1:
-			LoadPlayerNumberParty(players, choice);
-			break;
-
-		case 2:
-			LoadPlayerNumberParty(players, choice);
-			break;
-
-		default:
+		if (IsDigits(input))
+		{
 			std::cout << "Invalid input!\n\n";
-			break;
+			continue;
+		}
+
+		input = NormalizeUserInput(input);
+
+		fs::path fullPath = path + "/" + input + ".txt";
+
+		auto it = std::find_if(files.begin(),
+			files.end(),
+			[&](std::filesystem::path file)
+			{
+				return file == fullPath;
+			});
+
+		if (it != files.end())
+		{
+			std::cout << "This saved party name already exists, would you like to overwrite it? (Y/N): ";
+			std::string yn{};
+			std::getline(std::cin >> std::ws, yn);
+
+			if (yn == "n" || yn == "N")
+			{
+				continue;
+			}
+			else if (yn == "y" || yn == "Y")
+			{
+				SaveParty savedParty(players[choice], fullPath);
+				savedParty.Save();
+				return true;
+			}
+			else
+			{
+				std::cout << "Invalid input!\n\n";
+				continue;
+			}
+		}
+
+		SaveParty savedParty(players[choice], fullPath);
+		savedParty.Save();
+		return true;
+	}
+}
+
+void Menu::LoadYourParty()
+{
+	namespace fs = std::filesystem;
+
+	bool exit = false;
+
+	while (exit == false)
+	{
+		std::vector<std::filesystem::path> files = ListSavedParties();
+
+		std::cout << "Type the name or the number of the party to load (0 to exit to main menu): ";
+
+		std::string input{};
+		std::getline(std::cin >> std::ws, input);
+		std::cout << '\n';
+
+		if (input == "0" || input == "00")
+		{
+			return;
+		}
+
+		if (IsDigits(input))
+		{
+			size_t choice = std::stoul(input);
+
+			if (choice > files.size())
+			{
+				std::cout << "Invalid input!\n\n";
+				continue;
+			}
+			--choice;
+
+			fs::path fullPath = files[choice].string();
+
+			exit = LoadToPlayer(fullPath);
+		}
+		else
+		{
+			input = NormalizeUserInput(input);
+
+			fs::path fullPath = path + "/" + input + ".txt";
+
+			auto it = std::find_if(files.begin(),
+				files.end(),
+				[&](std::filesystem::path file)
+				{
+					return file == fullPath;
+				});
+
+			if (it == files.end())
+			{
+				std::cout << "File not found!\n";
+				continue;
+			}
+
+			else
+			{
+				exit = LoadToPlayer(fullPath);
+			}
 		}
 	}
 }
 
-void Menu::LoadPlayerNumberParty(std::array<Player*, 2> players, int num)
+bool Menu::LoadToPlayer(std::filesystem::path filePath)
 {
-	--num;
-	LoadParty savedParty(players, num);
-	savedParty.Load();
+	while (true)
+	{
+		std::string playerNum{};
+
+		std::cout << "Select player 1 or 2 to load party to (0 to cancel, 00 to go back to main menu): ";
+		std::getline(std::cin >> std::ws, playerNum);
+		std::cout << '\n';
+
+		if (!IsDigits(playerNum) || playerNum.size() > 10)
+		{
+			std::cout << "Invalid input!\n\n";
+			continue;
+		}
+
+		if (playerNum == "00")
+		{
+			return true;
+		}
+
+		size_t choice{ std::stoul(playerNum) };
+
+		if (choice == 0)
+		{
+			return false;
+		}
+
+		--choice;
+
+		if (choice == 0 || choice == 1)
+		{
+			LoadParty savedParty(players[choice], filePath);
+			savedParty.Load();
+			PokemonTextView::DisplayPlayerPokemon(*players[choice]);
+			return false;
+		}
+		else
+		{
+			std::cout << "Invalid input!\n\n";
+		}
+	}
+	return false;
+}
+
+std::vector<std::filesystem::path> Menu::ListSavedParties()
+{
+	namespace fs = std::filesystem;
+
+	std::cout << "Saved Parties:\n";
+
+	std::vector<fs::path> files{};
+
+	try
+	{
+		if (fs::exists(path) && fs::is_directory(path))
+		{
+			size_t i{ 1 };
+			for (const auto& entry : fs::directory_iterator(path))
+			{
+				if (fs::is_regular_file(entry) && entry.path().extension() == ".txt")
+				{
+					files.emplace_back(entry.path());
+
+					std::cout << i << ". " << entry.path().stem().string() << "\n";
+				}
+				++i;
+			}
+		}
+		else
+		{
+			std::cout << "No saved parties folder found.\n";
+		}
+	}
+	catch (const fs::filesystem_error& e)
+	{
+		std::cerr << "Error: " << e.what() << "\n\n";
+	}
+
+	return files;
+}
+
+std::vector<std::filesystem::path> Menu::GetSavedParties()
+{
+	namespace fs = std::filesystem;
+
+	std::vector<fs::path> files{};
+
+	try
+	{
+		if (fs::exists(path) && fs::is_directory(path))
+		{
+			for (const auto& entry : fs::directory_iterator(path))
+			{
+				if (fs::is_regular_file(entry) && entry.path().extension() == ".txt")
+				{
+					files.emplace_back(entry.path());
+				}
+			}
+		}
+		else
+		{
+			std::cout << "No saved parties folder found.\n";
+		}
+	}
+	catch (const fs::filesystem_error& e)
+	{
+		std::cerr << "Error: " << e.what() << "\n\n";
+	}
+
+	return files;
 }
 
 bool Menu::IsPokemonSetupIncomplete()
@@ -2491,7 +2659,7 @@ bool Menu::IsPokemonSetupIncomplete()
 		return true;
 	}
 
-	for (auto& player : players)
+	for (const auto& player : players)
 	{
 		for (auto& pokemon : player->GetBeltArray())
 		{
@@ -2501,7 +2669,7 @@ bool Menu::IsPokemonSetupIncomplete()
 			}
 
 			int emptyMoveCount{};
-			for (auto& move : pokemon.GetMoveArray())
+			for (const auto& move : pokemon.GetMoveArray())
 			{
 				if (move.GetMovePointer() == nullptr)
 				{

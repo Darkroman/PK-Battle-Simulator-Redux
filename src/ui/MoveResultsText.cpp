@@ -1,6 +1,7 @@
 #include <format>
 
 #include "MoveResultsText.h"
+
 #include "interfaces/ITextSink.h"
 
 void MoveResultsText::UsedTextDialog(std::string_view attackingPlayerName, std::string_view attackingPokemonName, std::string_view currentMoveName) const

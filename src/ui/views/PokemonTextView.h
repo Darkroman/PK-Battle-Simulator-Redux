@@ -1,6 +1,5 @@
 #pragma once
 
-
 class BattlePokemon;
 class Player;
 struct pokemonMove;
@@ -20,6 +19,6 @@ namespace PokemonTextView
     void DisplayPlayerPokemon(const Player&);
     std::string_view DisplayPokemonStatus(const BattlePokemon&);
 
-    std::string_view CalculateStatusMoveEffectiveness(const BattlePokemon&, const BattlePokemon&, const pokemonMove&);
-    std::string_view CalculateDamageMoveEffectiveness(const BattlePokemon&, const BattlePokemon&, const pokemonMove&);
+    std::string_view CalculateStatusMoveEffectiveness(const BattlePokemon&, const pokemonMove&);
+    std::string_view CalculateDamageMoveEffectiveness(const BattlePokemon&, const pokemonMove&);
 }

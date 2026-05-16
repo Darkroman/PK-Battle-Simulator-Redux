@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AIScoreTag.h"
+
 struct pokemonMove;
 
 struct ScoringResults
