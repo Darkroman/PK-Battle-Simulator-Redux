@@ -207,7 +207,7 @@ Bug fixes:
 ## BUILD NOTES
 
   </summary>
-This was coded in VS2022 Community, utilizing up to the C++23 standard features (std::filesystem, std::string_view, std::ranges and std::print). Uploaded in this repository is a simple CMake build. Only tested on Windows.
+This was coded in VS2026 Community, utilizing up to the C++23 standard features. Uploaded in this repository is a simple CMake build. Only tested on Windows.
 </details>
 
 <details open>
@@ -219,12 +219,10 @@ This was coded in VS2022 Community, utilizing up to the C++23 standard features 
   
 - On the main menu screen you can choose up to 9 options to edit Player One or Player Two's Pokemon, controller type (human, or different AI difficulties), load or save party.
   - Each option screen requires pressing the number then hitting enter.
-- The game comes with default teams of gen 1's protagonist Red's based team and the rival Blue's team. Choose Load Party (8) in the menu if you want to use them.
-  - Player One's party is Red's team, and Player Two's party is Blue's team.
-  - You can pick to play one or the other, both, or none by selecting the respective player's controller type. This does mean you can have AI go at eachother.
+- The game comes with default teams of gen 1's protagonist Red's based team, the rival Blue's team and Lance's Yellow version team. Choose Load Party (8) in the menu if you want to use them.
 - Editing a player's pokemon puts you in a submenu to choose options to add, change, release (delete) pokemon as well as edit their moves, stats, and placing in the party.
   - You can select between all gen 1's 151 Pokemon, as well as their moves. Names of the Pokemon, moves and their numbers can be used as input.
-    - **note** Move names are hyphen and space sensitive, but not case sensitive.
+    - **note:** Move names are hyphen and space sensitive, but not case sensitive.
 - When ready to battle press 9 then enter in the main menu to start! If either team has no pokemon or the pokemon have no moves, it will let you know and kick you back to the main menu.
 </details>
 
