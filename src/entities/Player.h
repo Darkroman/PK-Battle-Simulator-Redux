@@ -25,8 +25,6 @@ public:
     AIController& GetAIController() const;
     void SetController(std::unique_ptr<IPlayerController>, ControllerType);
 
-    //std::array<BattlePokemon, 6>& GetBeltArray();
-    //const std::array<BattlePokemon, 6>& GetBeltArray() const;
     std::span<BattlePokemon> GetBeltArray();
     std::span<const BattlePokemon> GetBeltArray() const;
 

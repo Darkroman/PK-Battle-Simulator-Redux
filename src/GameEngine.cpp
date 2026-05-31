@@ -30,12 +30,7 @@ GameEngine::GameEngine()
         return v;
         }()),
     context(players)
-    //textSink(std::make_unique<ConsoleTextSink>()),
-    //battleAnnouncer(std::make_unique<BattleAnnouncerHeadless>()),
-    //moveResults(std::make_unique<MoveResultsHeadless>()),
-    //statusEffect(std::make_unique<StatusEffectHeadless>())
 {
-    SetupUI(false);
     Bootstrap();
 }
 
@@ -84,19 +79,17 @@ void GameEngine::Run()
                     menu.emplace(players);
                 }
 
-                if (menu->RunMenu())
-                {
-                    currentState = AppState::Exit;
-                }
-                else
-                {
-                    menu.reset();
-                    currentState = AppState::InitBattle;
-                }
+                currentState = menu->RunMenu(simIterations);
 
                 break;
 
             case AppState::InitBattle:
+
+                textSink = std::make_unique<ConsoleTextSink>();
+                battleAnnouncer = std::make_unique<BattleAnnouncerText>();
+                moveResults = std::make_unique<MoveResultsText>(*textSink);
+                statusEffect = std::make_unique<StatusEffectText>(*textSink);
+
                 PresetupBattle();
 
                 if (!battleManager)
@@ -142,7 +135,9 @@ void GameEngine::Run()
 
 void GameEngine::RunSimulate()
 {
-    simIterations = 100000;
+    battleAnnouncer = std::make_unique<BattleAnnouncerHeadless>();
+    moveResults = std::make_unique<MoveResultsHeadless>();
+    statusEffect = std::make_unique<StatusEffectHeadless>();
 
     if (simIterations <= 0)
     {

@@ -9,12 +9,11 @@
 #include "ui/interfaces/IBattleAnnouncerUI.h"
 #include "ui/interfaces/IMoveResultsUI.h"
 #include "ui/interfaces/IStatusEffectUI.h"
+#include "common/AppState.h"
 #include "ui/Menu.h"
 #include "battle/BattleManager.h"
 
 class Database;
-
-enum class AppState { MainMenu, InitBattle, Battle, Victory, Simulate, Exit };
 
 class GameEngine
 {
@@ -43,7 +42,7 @@ private:
     std::optional<Menu> menu;
     std::optional<BattleManager> battleManager;
 
-    unsigned int simIterations{};
+    unsigned int simIterations{ 1 };
     int playerOneVictories{};
     int playerTwoVictories{};
 };

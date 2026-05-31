@@ -13,7 +13,7 @@ namespace DatabaseTextView
 	{
         int colCount{};
 
-        const auto& pokedex = db.GetPokedexVector();
+        auto pokedex = db.GetPokedexView();
 
         for (size_t i = 0; i < pokedex.size(); ++i)
         {
@@ -37,7 +37,7 @@ namespace DatabaseTextView
     {
         int colCount{};
 
-        const auto& movedex = db.GetMovedexVector();
+        auto movedex = db.GetMovedexView();
 
         for (size_t i = 0; i < movedex.size(); ++i)
         {
@@ -59,7 +59,7 @@ namespace DatabaseTextView
 
     void DisplayMovesWithZeroPower(const Database& db)
     {
-        const auto& movedex = db.GetMovedexVector();
+        auto movedex = db.GetMovedexView();
 
         for (const auto& move : movedex)
         {

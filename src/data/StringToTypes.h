@@ -1,6 +1,6 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <string>
 
 enum class Category // Used in Moves
@@ -11,11 +11,11 @@ enum class Category // Used in Moves
     None
 };
 
-using mapOfStringsToCategories = std::map<std::string_view, Category>;
+using mapOfStringsToCategories = std::unordered_map<std::string_view, Category>;
 
 Category ConvertStringToCategory(std::string_view);
 
-enum class PokemonType // Used in Moves, Pokemon, and BattlePokemon
+enum class PokemonType : size_t // Used in Moves, Pokemon, and BattlePokemon
 {
     Normal = 0,
     Fire,
@@ -38,7 +38,7 @@ enum class PokemonType // Used in Moves, Pokemon, and BattlePokemon
     None
 };
 
-using mapOfStringsToPokemonTypes = std::map<std::string_view, PokemonType>;
+using mapOfStringsToPokemonTypes = std::unordered_map<std::string_view, PokemonType>;
 
 PokemonType ConvertStringToPokemonType(std::string_view);
 

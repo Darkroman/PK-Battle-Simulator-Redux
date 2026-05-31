@@ -6,9 +6,6 @@ set(SOURCES
 
     # data
     data/Database.cpp
-    data/LoadEmbeddedLearnset.cpp
-    data/LoadEmbeddedMoves.cpp
-    data/LoadEmbeddedPokemon.cpp
     data/Move.cpp
     data/Pokemon.cpp
     data/StringToTypes.cpp
@@ -81,6 +78,27 @@ include_directories(
 
 add_executable(PokemonBattleSimulator ${SOURCES})
 
+# Enable Interprocedural Optimization (Link-Time Optimization)
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+
+if(ipo_supported)
+    # Target-specific activation (Replace 'YourTargetName' with your actual target)
+    set_target_properties(PokemonBattleSimulator PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    message(STATUS "LTO / Full Program Optimization enabled successfully.")
+else()
+    message(WARNING "LTO / Full Program Optimization not supported: ${ipo_error}")
+endif()
+
+if(MSVC)
+    target_compile_options(PokemonBattleSimulator PRIVATE 
+        $<$<CONFIG:Release>:/O2 /Oi /Ot /Gw>
+    )
+else() # GCC and Clang
+    target_compile_options(PokemonBattleSimulator PRIVATE 
+        $<$<CONFIG:Release>:-O2 -msse4.2 -fomit-frame-pointer>
+    )
+endif()
 
 add_custom_command(TARGET PokemonBattleSimulator POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/SavedParties"

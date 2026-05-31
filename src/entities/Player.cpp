@@ -57,18 +57,6 @@ void Player::SetController(std::unique_ptr<IPlayerController> controller, Contro
     e_type = type;
 }
 
-/*
-std::array<BattlePokemon, 6>& Player::GetBeltArray()
-{
-    return belt;
-}
-*/
-/*
-const std::array<BattlePokemon, 6>& Player::GetBeltArray() const
-{
-    return belt;
-}
-*/
 std::span<BattlePokemon> Player::GetBeltArray()
 {
     return belt;

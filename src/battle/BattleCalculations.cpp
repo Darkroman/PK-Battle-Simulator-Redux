@@ -6,15 +6,16 @@
 #include "RandomEngine.h"
 #include "BattleContext.h"
 #include "Typechart.h"
+#include "StageRatios.h"
 #include "../entities/Player.h"
 
 BattleCalculations::BattleCalculations(BattleContext& context, RandomEngine& rng) : m_context(context), m_rng(rng) {}
 
-int BattleCalculations::CalculatePokemonSpeed(const BattlePokemon& pokemon)
+unsigned int BattleCalculations::CalculatePokemonSpeed(const BattlePokemon& pokemon)
 {
 	auto [numerator, denominator] = GetStageRatio(pokemon.GetSpeedStage());
 
-	int speed = pokemon.GetSpeed() * numerator / denominator;
+	unsigned int speed = pokemon.GetSpeed() * numerator / denominator;
 
 	if (pokemon.GetStatus() == Status::Paralyzed)
 	{
@@ -69,20 +70,14 @@ bool BattleCalculations::CalculateCriticalHit(BattleContext& ctx, const BattlePo
 	return ctx.flags.isCriticalHit;
 }
 
-std::pair<int, int> BattleCalculations::GetStageRatio(int stage)
-{
-	stage = std::clamp(stage, -6, 6);
-	return m_arr_StageRatio[static_cast<size_t>(stage + 6)];
-}
-
-int BattleCalculations::MultiplyEffectiveness(uint16_t effect1, uint16_t effect2)
+unsigned int BattleCalculations::MultiplyEffectiveness(unsigned int effect1, unsigned effect2)
 {
 	if (effect1 == 0 || effect2 == 0)
 	{
 		return 0;
 	}
 
-	int product = static_cast<int>(effect1 * effect2);
+	unsigned int product = effect1 * effect2;
 	return (product / 4096);
 }
 
@@ -102,12 +97,12 @@ void BattleCalculations::CalculateTypeEffectiveness(BattleContext& ctx, const po
 	size_t defensiveTypeOne = static_cast<size_t>(target.GetTypeOneEnum());
 	size_t defensiveTypeTwo = static_cast<size_t>(target.GetTypeTwoEnum());
 
-	uint16_t effect1 = typeChart[moveType][defensiveTypeOne];
-	uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
+	unsigned int effect1 = typeChart[moveType][defensiveTypeOne];
+	unsigned int effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
 
 	ctx.effectiveness = MultiplyEffectiveness(effect1, effect2);
 
-	int moveEffectiveness = ctx.effectiveness;
+	unsigned int moveEffectiveness = ctx.effectiveness;
 
 	if (moveEffectiveness == 0)
 	{
@@ -142,10 +137,14 @@ bool BattleCalculations::CalculateHitChance(const pokemonMove& currentMove, cons
 		return false;
 	}
 
-	int adjustedStages = (source.GetAccuracyStage() - target.GetEvasionStage());
+	size_t sourceAccuracy = source.GetAccuracyStage();
+	size_t targetEvasion = target.GetEvasionStage();
 
-	adjustedStages = std::clamp(adjustedStages, -6, 6);
-	const auto& [numerator, denominator] = m_arr_accuracyStageRatio[static_cast<size_t>(adjustedStages + 6)];
+	int netStage{ static_cast<int>(sourceAccuracy) - static_cast<int>(targetEvasion) };
+	int targetIndex = netStage + 6;
+	size_t adjustedStages = static_cast<size_t>(std::clamp(targetIndex, 0, 12));
+
+	const auto& [numerator, denominator] = GetAccuracyStageRatio(adjustedStages);
 
 	int moveAccuracy = currentMove.GetAccuracy();
 
@@ -159,6 +158,11 @@ bool BattleCalculations::CalculateHitChance(const pokemonMove& currentMove, cons
 	else
 	{
 		accuracyMod = (source.GetLevel() - target.GetLevel()) + 30; // for OHKO moves
+
+		if (accuracyMod < 0)
+		{
+			accuracyMod = 0;
+		}
 	}
 
 	if (accuracyMod >= 100)
@@ -175,16 +179,16 @@ bool BattleCalculations::CalculateHitChance(const pokemonMove& currentMove, cons
 	}
 }
 
-int BattleCalculations::CalculateDamage(BattleContext& ctx, const Player& targetPlayer, const pokemonMove& currentMove, const BattlePokemon& source, BattlePokemon& target)
+unsigned int BattleCalculations::CalculateDamage(BattleContext& ctx, const Player& targetPlayer, const pokemonMove& currentMove, const BattlePokemon& source, BattlePokemon& target)
 {
-	int effectiveness = ctx.effectiveness;
+	unsigned int effectiveness = ctx.effectiveness;
 
 	if (effectiveness == 0)
 	{
 		return 0;
 	}
 
-	int baseDamage{ 0 };
+	unsigned int baseDamage{ 0 };
 
 	if ((currentMove.GetMoveEffectEnum() == MoveEffect::OHKO) && effectiveness != 0)
 	{
@@ -199,61 +203,61 @@ int BattleCalculations::CalculateDamage(BattleContext& ctx, const Player& target
 	// START: Calculate total attack and defense values of attacker and defender
 	bool isPhysical{ currentMove.GetCategoryEnum() == Category::Physical };
 
-	int baseSourceAttack{ isPhysical ? source.GetAttack() : source.GetSpecialAttack() };
-	int baseTargetDefense{ isPhysical ? target.GetDefense() : target.GetSpecialDefense() };
+	unsigned int baseSourceAttack{ isPhysical ? source.GetAttack() : source.GetSpecialAttack() };
+	unsigned int baseTargetDefense{ isPhysical ? target.GetDefense() : target.GetSpecialDefense() };
 
-	int sourceStage{ isPhysical ? source.GetAttackStage() : source.GetSpecialAttackStage() };
-	int targetStage{ isPhysical ? target.GetDefenseStage() : target.GetSpecialDefenseStage() };
+	size_t sourceStage{ isPhysical ? source.GetAttackStage() : source.GetSpecialAttackStage() };
+	size_t targetStage{ isPhysical ? target.GetDefenseStage() : target.GetSpecialDefenseStage() };
 
 	if (isCritical)
 	{
-		// If attacker's attack stage is less than 0, clamp to 0
-		sourceStage = std::max(sourceStage, 0);
+		// If attacker's attack stage is less than 6, clamp to 6
+		sourceStage = std::max(sourceStage, (size_t)6);
 		
-		// If defender's defense stage is greater than 0, clamp to 0
-		targetStage = std::min(targetStage, 0);
+		// If defender's defense stage is greater than 6, clamp to 6
+		targetStage = std::min(targetStage, (size_t)6);
 	}
 
 	auto [atkNumerator, atkDenominator] = GetStageRatio(sourceStage);
-	int sourceAttack{ baseSourceAttack * atkNumerator / atkDenominator };
+	unsigned int sourceAttack{ baseSourceAttack * atkNumerator / atkDenominator };
 	
 	auto [defNumerator, defDenominator] = GetStageRatio(targetStage);
-	int targetDefense{ baseTargetDefense * defNumerator / defDenominator };
+	unsigned int targetDefense{ baseTargetDefense * defNumerator / defDenominator };
 	// END:
 
-	int currentMovePower{ currentMove.GetPower() };
+	unsigned int currentMovePower{ currentMove.GetPower() };
 
 	if (currentMove.GetMoveEffectEnum() == MoveEffect::LowKick)
 	{
 		currentMovePower = CalculateLowKickPower(target);
 	}
 
-	int powerModifier = ctx.initialPowerMultiplier;
+	unsigned int powerModifier = ctx.initialPowerMultiplier;
 
 	if (powerModifier > 10)
 	{
 		currentMovePower = currentMovePower * powerModifier / 10;
 	}
 
-	int level = source.GetLevel();
+	unsigned int level = source.GetLevel();
 
 	// Damage formula: (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / targetDefense) / 50) + 2
 	// Truncates int after every division
-	int step1 = (2 * level / 5) + 2;
-	int step2 = step1 * currentMovePower;
-	int step3 = step2 * sourceAttack;
-	int step4 = step3 / targetDefense;
+	unsigned int step1 = (2 * level / 5) + 2;
+	unsigned int step2 = step1 * currentMovePower;
+	unsigned int step3 = step2 * sourceAttack;
+	unsigned int step4 = step3 / targetDefense;
 	baseDamage = step4 / 50 + 2;
 	
-	int interimDamage = baseDamage;
+	unsigned int interimDamage = baseDamage;
 
 	if (isCritical)
 	{
 		interimDamage = interimDamage * 6144 / 4096;
 	}
 
-	std::uniform_int_distribution<int> dist(85, 100);
-	int randPercent = dist(m_rng.GetGenerator());
+	std::uniform_int_distribution<unsigned int> dist(85, 100);
+	unsigned int randPercent = dist(m_rng.GetGenerator());
 
 	interimDamage = interimDamage * randPercent / 100;
 
@@ -273,7 +277,7 @@ int BattleCalculations::CalculateDamage(BattleContext& ctx, const Player& target
 		interimDamage = interimDamage * 2048 / 4096;
 	}
 
-	int other{ 4096 };
+	unsigned int other{ 4096 };
 
 	if ((currentMove.GetMoveEffectEnum() == MoveEffect::Stomp || currentMove.GetMoveEffectEnum() == MoveEffect::BodySlam) && target.HasUsedMinimize())
 	{
@@ -295,11 +299,11 @@ int BattleCalculations::CalculateDamage(BattleContext& ctx, const Player& target
 		other = (other * 2048 + 2048) / 4096;
 	}
 
-	int finalDamage = interimDamage * other / 4096;
+	unsigned int finalDamage = interimDamage * other / 4096;
 
 	if (effectiveness != 0)
 	{
-		finalDamage = std::max(1, finalDamage);
+		finalDamage = std::max((unsigned int)1, finalDamage);
 	}
 
 	/*
@@ -312,9 +316,9 @@ int BattleCalculations::CalculateDamage(BattleContext& ctx, const Player& target
 	return finalDamage;
 }
 
-void BattleCalculations::ApplyDamage(const pokemonMove& currentMove, BattlePokemon& target, int damage)
+void BattleCalculations::ApplyDamage(const pokemonMove& currentMove, BattlePokemon& target, unsigned int damage)
 {
-	const int HP_BAR_WIDTH = m_context.HP_BAR_WIDTH;
+	const unsigned int HP_BAR_WIDTH = m_context.HP_BAR_WIDTH;
 
 	if (damage == 0)
 	{
@@ -325,7 +329,7 @@ void BattleCalculations::ApplyDamage(const pokemonMove& currentMove, BattlePokem
 	m_context.flags.hitSubstitute = hitSubstitute;
 	damage = (hitSubstitute ? std::min(damage, target.GetSubstituteHP()) : std::min(damage, target.GetCurrentHP()));
 
-	int currentPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
+	unsigned int currentPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
 	m_context.prevPixels = currentPixel;
 
 	if (hitSubstitute)
@@ -336,7 +340,7 @@ void BattleCalculations::ApplyDamage(const pokemonMove& currentMove, BattlePokem
 	{
 		target.DamageCurrentHP(damage);
 		m_context.damageTaken = damage;
-		int newPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
+		unsigned int newPixel = target.GetCurrentHP() * HP_BAR_WIDTH / target.GetMaxHP();
 		m_context.pixelsLost = currentPixel - newPixel;
 		m_context.damageInPixels = m_context.prevPixels - newPixel;
 	}
@@ -348,9 +352,9 @@ void BattleCalculations::ApplyDamage(const pokemonMove& currentMove, BattlePokem
 }
 
 // Calculate power of low kick based on target Pokemon's weight (in hectograms)
-int BattleCalculations::CalculateLowKickPower(const BattlePokemon& target)
+unsigned int BattleCalculations::CalculateLowKickPower(const BattlePokemon& target)
 {
-	int pokemonWeight = target.GetPokemonDatabasePointer()->GetPokemonWeightHg();
+	unsigned int pokemonWeight = target.GetPokemonDatabasePointer()->GetPokemonWeightHg();
 
 	if (pokemonWeight <= 0)
 	{

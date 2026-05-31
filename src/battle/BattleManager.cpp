@@ -211,7 +211,7 @@ void BattleManager::ResetValues()
 		pokemon.ResetValues();
 	}
 
-	for (const auto* aiPlayers : m_context.vec_aiPlayers)
+	for (auto* aiPlayers : m_context.vec_aiPlayers)
 	{
 		aiPlayers->GetAIController().ResetObservedMoves();
 	}

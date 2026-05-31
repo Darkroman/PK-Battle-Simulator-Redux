@@ -85,8 +85,8 @@ void InflictNVStatus(Status status, int chance, MoveRoutineDeps& deps)
 
 	if (status == Status::Sleeping)
 	{
-		std::uniform_int_distribution<int> sleepTurnDistributor(1, 3);
-		int randomMod(sleepTurnDistributor(deps.rng.GetGenerator()));
+		std::uniform_int_distribution<unsigned int> sleepTurnDistributor(1, 3);
+		unsigned int randomMod(sleepTurnDistributor(deps.rng.GetGenerator()));
 		ctx.defendingPokemon->SetSleepTurnCount(randomMod);
 		ctx.defendingPokemon->ResetSleepCounter();
 	}
@@ -100,7 +100,7 @@ void DamageRoutine(MoveRoutineDeps& deps)
 	auto& calc = deps.calculations;
 	auto& resultsUI = deps.resultsUI;
 
-	int damage = calc.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+	unsigned int damage = calc.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 	calc.ApplyDamage(*ctx.currentMove, *ctx.defendingPokemon, damage);
 	resultsUI.DisplayDirectDamageInflictedMsg(damage);
 	resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -114,10 +114,10 @@ void MultiStrikeRoutine(MoveRoutineDeps& deps, int turnCount)
 
 	int timesHit{};
 
-	int totalDamage{};
+	unsigned int totalDamage{};
 	for (int i = 0; i < turnCount; ++i)
 	{
-		int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
+		unsigned int damage = deps.calculations.CalculateDamage(ctx, *ctx.defendingPlayer, *ctx.currentMove, *ctx.attackingPokemon, *ctx.defendingPokemon);
 		deps.calculations.ApplyDamage(*ctx.currentMove, *ctx.defendingPokemon, damage);
 		totalDamage += damage;
 		deps.resultsUI.DisplayCritTextDialog(ctx.flags.isCriticalHit);
@@ -147,15 +147,15 @@ void MultiStrikeRoutine(MoveRoutineDeps& deps, int turnCount)
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(totalDamage);
 }
 
-void FixedDamageRoutine(MoveRoutineDeps& deps, int fixedDamage)
+void FixedDamageRoutine(MoveRoutineDeps& deps, unsigned int fixedDamage)
 {
 	auto& ctx = deps.context;
 
 	bool hasSubstitute = ctx.defendingPokemon->HasSubstitute() && !ctx.currentMove->CanBypassSubstitute();
 
-	int maxDamage = hasSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
+	unsigned int maxDamage = hasSubstitute ? ctx.defendingPokemon->GetSubstituteHP() : ctx.defendingPokemon->GetCurrentHP();
 
-	int finalDamage = std::min(fixedDamage, maxDamage);
+	unsigned int finalDamage = std::min(fixedDamage, maxDamage);
 
 	deps.calculations.ApplyDamage(*ctx.currentMove, *ctx.defendingPokemon, finalDamage);
 	deps.resultsUI.DisplayDirectDamageInflictedMsg(fixedDamage);
@@ -178,13 +178,13 @@ void FlinchRoutine(MoveRoutineDeps& deps)
 	}
 }
 
-void RecoilRoutine(MoveRoutineDeps& deps, int recoilDivisor, int targetHPBegin, int targetHPEnd)
+void RecoilRoutine(MoveRoutineDeps& deps, unsigned int recoilDivisor, unsigned int targetHPBegin, unsigned int targetHPEnd)
 {
 	auto& ctx = deps.context;
 
-	int recoilDamage = (targetHPBegin - targetHPEnd) / recoilDivisor;
+	unsigned int recoilDamage = (targetHPBegin - targetHPEnd) / recoilDivisor;
 
-	int finalDamage = std::max(1, recoilDamage);
+	unsigned int finalDamage = std::max((unsigned int)1, recoilDamage);
 
 	ctx.attackingPokemon->DamageCurrentHP(finalDamage);
 
@@ -210,7 +210,7 @@ bool HandleCharging(MoveRoutineDeps& deps, ChargeMsgMemFn chargeMsg, const Charg
 
 		if (hooks.stageUp)
 		{
-			int amount = hooks.stageIncreaseAmount;
+			size_t amount = hooks.stageIncreaseAmount;
 			std::string_view stageName = hooks.stageName;
 
 			hooks.stageUp(deps, amount, stageName, hooks.getStage, hooks.setStage);
@@ -233,7 +233,7 @@ bool HandleCharging(MoveRoutineDeps& deps, ChargeMsgMemFn chargeMsg, const Charg
 	return false;
 }
 
-void StageUpRoutine(MoveRoutineDeps& deps, int amount, std::string_view stageName, GetStageFn getStage, SetStageFn setStage)
+void StageUpRoutine(MoveRoutineDeps& deps, size_t amount, std::string_view stageName, GetStageFn getStage, SetStageFn setStage)
 {
 	auto& ctx = deps.context;
 	auto& atkPlayer = *ctx.attackingPlayer;
@@ -241,9 +241,10 @@ void StageUpRoutine(MoveRoutineDeps& deps, int amount, std::string_view stageNam
 	auto playerName = atkPlayer.GetPlayerNameView();
 	auto pokemonName = atkPkmn.GetNameView();
 
-	int stage{ getStage(atkPkmn) };
+	size_t stage{ getStage(atkPkmn) };
 
-	int rise{ std::min(amount, 6 - stage) };
+	size_t max{ 12 };
+	size_t rise{ std::min(amount, max - stage) };
 
 	if (rise <= 0)
 	{
@@ -255,7 +256,7 @@ void StageUpRoutine(MoveRoutineDeps& deps, int amount, std::string_view stageNam
 	DisplayStatChange(deps.resultsUI, rise, true, stageName, playerName, pokemonName);
 }
 
-void StageDownRoutine(MoveRoutineDeps& deps, int amount, std::string_view stageName, GetStageFn getStage, SetStageFn setStage)
+void StageDownRoutine(MoveRoutineDeps& deps, size_t amount, std::string_view stageName, GetStageFn getStage, SetStageFn setStage)
 {
 	auto& ctx = deps.context;
 	auto& defPlayer = *ctx.defendingPlayer;
@@ -263,9 +264,9 @@ void StageDownRoutine(MoveRoutineDeps& deps, int amount, std::string_view stageN
 	auto playerName = defPlayer.GetPlayerNameView();
 	auto pokemonName = defPkmn.GetNameView();
 
-	int stage{ getStage(defPkmn) };
+	size_t stage{ getStage(defPkmn) };
 
-	int drop{ std::min(amount, stage + 6) };
+	size_t drop{ std::min(amount, stage) };
 
 	if (drop <= 0)
 	{
@@ -273,12 +274,12 @@ void StageDownRoutine(MoveRoutineDeps& deps, int amount, std::string_view stageN
 		return;
 	}
 
-	setStage(defPkmn, stage - drop);
+	setStage(defPkmn, drop);
 
 	DisplayStatChange(deps.resultsUI, drop, false, stageName, playerName, pokemonName);
 }
 
-void StageDownDamageRoutine(MoveRoutineDeps& deps, int amount, std::string_view stageName, GetStageFn getStage, SetStageFn setStage)
+void StageDownDamageRoutine(MoveRoutineDeps& deps, size_t amount, std::string_view stageName, GetStageFn getStage, SetStageFn setStage)
 {
 	auto& ctx = deps.context;
 	auto& defPlayer = *ctx.defendingPlayer;
@@ -291,9 +292,9 @@ void StageDownDamageRoutine(MoveRoutineDeps& deps, int amount, std::string_view 
 		return;
 	}
 
-	int stage = getStage(defPkmn);
+	size_t stage = getStage(defPkmn);
 
-	int drop{ std::min(amount, stage + 6) };
+	size_t drop{ std::min(amount, stage) };
 
 	if (drop <= 0)
 	{
@@ -311,7 +312,7 @@ void StageDownDamageRoutine(MoveRoutineDeps& deps, int amount, std::string_view 
 	}
 }
 
-void DisplayStatChange(IMoveResultsUI& ui, int amount, bool isUp, std::string_view stageName, std::string_view playerName, std::string_view pokemonName)
+void DisplayStatChange(IMoveResultsUI& ui, size_t amount, bool isUp, std::string_view stageName, std::string_view playerName, std::string_view pokemonName)
 {
 	if (amount == 1)
 	{

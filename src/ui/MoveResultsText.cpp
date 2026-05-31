@@ -97,7 +97,7 @@ void MoveResultsText::DisplayNoopMsg() const
 	m_sink.Emit(std::format("This isn't implemented yet!"));
 }
 
-void MoveResultsText::DisplayDirectDamageInflictedMsg(int damage) const
+void MoveResultsText::DisplayDirectDamageInflictedMsg(unsigned int damage) const
 {
 	if (damage > 0)
 	{

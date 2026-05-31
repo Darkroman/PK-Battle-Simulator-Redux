@@ -1,6 +1,9 @@
 #pragma once
 
-#include <vector>
+#include <span>
+
+#include "PokedexConstexpr.h"
+#include "MovedexConstexpr.h"
 
 class Pokemon;
 class Move;
@@ -15,36 +18,20 @@ public:
     Database(const Database&) = delete; // No copy constructor
     Database& operator=(const Database&) = delete; // no copy assignment
 
-    Pokemon* GetPointerToPokedexNumber(size_t);
-    Move*    GetPointerToMovedexNumber(size_t);
+    const Pokemon* GetPointerToPokedexNumber(size_t) const;
+    const Move*    GetPointerToMovedexNumber(size_t) const;
 
-    const std::vector<Pokemon>& GetPokedexVector() const;
-    const std::vector<Move>&    GetMovedexVector() const;
-    
-    std::vector<Pokemon>::iterator        PokedexBegin();
-    std::vector<Pokemon>::iterator          PokedexEnd();
-    std::vector<Pokemon>::const_iterator cPokedexBegin() const;
-    std::vector<Pokemon>::const_iterator   cPokedexEnd() const;
-
-    std::vector<Move>::iterator        MovedexBegin();
-    std::vector<Move>::iterator          MovedexEnd();
-    std::vector<Move>::const_iterator cMovedexBegin() const;
-    std::vector<Move>::const_iterator   cMovedexEnd() const;
+    std::span<const Pokemon> GetPokedexView() const;
+    std::span<const Move> GetMovedexView() const;
 
     static Database& GetInstance();
 
-private:
-
-    void TestingPokemonAndMoves();
-
-    void LoadEmbedPokemon();
-
-    void LoadEmbedMoves();
-
-    void LoadEmbedLearnset();
+    void TestingPokemonAndMoves(Pokemon*&, Pokemon*&);
 
 private:
 
-    std::vector<Pokemon> pokedex;
-    std::vector<Move>    movedex;
+private:
+
+    std::span<const Pokemon> pokedex = global_pokedex;
+    std::span<const Move> movedex = global_movedex;
 };

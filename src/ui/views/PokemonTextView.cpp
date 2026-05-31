@@ -70,16 +70,16 @@ namespace PokemonTextView
         const Pokemon* basePokemon = pokemon.GetPokemonDatabasePointer();
         auto& db = Database::GetInstance();
 
+        auto movelist = basePokemon->GetMoveList();
+
         int colCount = 0;
 
-        for (auto it = basePokemon->MovelistBegin();
-            it != basePokemon->MovelistEnd();
-            ++it)
+        for (auto move : movelist)
         {
             ++colCount;
 
-            size_t moveIndex = basePokemon->FetchMoveNumber(it);
-            Move* move = db.GetPointerToMovedexNumber(moveIndex);
+            size_t moveIndex = basePokemon->FetchMoveNumber(move);
+            const Move* move = db.GetPointerToMovedexNumber(moveIndex);
 
             size_t displayIndex = moveIndex + 1;
 

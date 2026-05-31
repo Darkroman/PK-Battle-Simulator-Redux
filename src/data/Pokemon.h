@@ -1,69 +1,74 @@
 #pragma once
 
-#include <vector>
+//#include <array>
+#include <span>
 #include <string_view>
 
-enum class PokemonType;
+enum class PokemonType : size_t;
 
 class Pokemon
 {
 public:
+    
     Pokemon
-    (int, std::string_view,
-     int, int, int,
-     int, int, int,
-     std::string_view, PokemonType, std::string_view, PokemonType, int);
+    (unsigned int nationalDexNumber, std::string_view name,
+        unsigned int basehp, unsigned int baseattack, unsigned int basedefense,
+        unsigned int basespecialattack, unsigned int basespecialdefense, unsigned int basespeed,
+        std::string_view type1, PokemonType type1e, std::string_view type2, PokemonType type2e, unsigned int weight);
+    
+    constexpr Pokemon
+    (unsigned int nationalDexNumber, std::string_view name,
+        unsigned int basehp, unsigned int baseattack, unsigned int basedefense,
+        unsigned int basespecialattack, unsigned int basespecialdefense, unsigned int basespeed,
+        std::string_view type1, PokemonType type1e, std::string_view type2, PokemonType type2e, unsigned int weight, std::span<const size_t> moves)
+        : m_nationalDexNumber{ nationalDexNumber }, m_name{ name },
+        m_basehp{ basehp }, m_baseattack{ baseattack }, m_basedefense{ basedefense },
+        m_basespecialattack{ basespecialattack }, m_basespecialdefense{ basespecialdefense }, m_basespeed{ basespeed },
+        m_type1{ type1 }, m_type1e{ type1e }, m_type2{ type2 }, m_type2e{ type2e }, m_weight{ weight }, m_movelist(moves)//, b_isDynamic(false)
+    {
+    }
 
-    int        GetNationalDexNumber() const;
-    std::string_view        GetName() const;
-    int                   GetBaseHP() const;
-    int               GetBaseAttack() const;
-    int              GetBaseDefense() const;
-    int        GetBaseSpecialAttack() const;
-    int       GetBaseSpecialDefense() const;
-    int                GetBaseSpeed() const;
-    std::string_view   GetFirstType() const;
-    PokemonType    GetFirstTypeEnum() const;
-    std::string_view  GetSecondType() const;
-    PokemonType   GetSecondTypeEnum() const;
-    std::vector<size_t> GetMoveList() const;
+    unsigned int        GetNationalDexNumber() const;
+    std::string_view                 GetName() const;
+    unsigned int                   GetBaseHP() const;
+    unsigned int               GetBaseAttack() const;
+    unsigned int              GetBaseDefense() const;
+    unsigned int        GetBaseSpecialAttack() const;
+    unsigned int       GetBaseSpecialDefense() const;
+    unsigned int                GetBaseSpeed() const;
+    std::string_view            GetFirstType() const;
+    PokemonType             GetFirstTypeEnum() const;
+    std::string_view           GetSecondType() const;
+    PokemonType            GetSecondTypeEnum() const;
+    std::span<const size_t>      GetMoveList() const;
 
     int GetPokemonWeightHg() const;
     double GetPokemonWeightKg() const;
 
-    std::vector<size_t>::iterator MovelistBegin();
-    std::vector<size_t>::iterator   MovelistEnd();
-
-    std::vector<size_t>::const_iterator MovelistBegin() const;
-    std::vector<size_t>::const_iterator   MovelistEnd() const;
-
     bool CheckPokemonMoveList(size_t) const;
-    size_t FetchMoveNumber(std::vector<size_t>::iterator);
-    size_t FetchMoveNumber(std::vector<size_t>::const_iterator) const;
+    size_t FetchMoveNumber(size_t) const;
 
-    void ReserveMoveListVector();
-    void EmplaceBackIntoMoveList(size_t);
-    void ResizeMoveList(size_t);
-    void ShrinkToFitMoveList();
-    size_t Size();
-    size_t Capacity();
-    void CopyMoveListVector(std::vector<size_t>&);
-    void AssignMoveListVector(std::initializer_list<size_t>);
+    //void DebugAddMove(size_t moveId);
 
 private:
-    int  m_nationalDexNumber;
-    std::string_view  m_name;
-    int             m_basehp;
-    int         m_baseattack;
-    int        m_basedefense;
-    int  m_basespecialattack;
-    int m_basespecialdefense;
-    int          m_basespeed;
-    std::string_view m_type1;
-    PokemonType     m_type1e;
-    std::string_view m_type2;
-    PokemonType     m_type2e;
-    int             m_weight;
+    std::span<const size_t> m_movelist;
+    std::string_view      m_name;
+    std::string_view      m_type1;
+    std::string_view      m_type2;
 
-    std::vector<size_t> m_movelist;
+    unsigned int  m_nationalDexNumber;
+    unsigned int             m_basehp;
+    unsigned int         m_baseattack;
+    unsigned int        m_basedefense;
+    unsigned int  m_basespecialattack;
+    unsigned int m_basespecialdefense;
+    unsigned int          m_basespeed;
+    PokemonType              m_type1e;
+    PokemonType              m_type2e;
+    unsigned int             m_weight;
+
+    //bool b_isDynamic{ false };
+
+    //std::array<size_t, 164> m_debugMovelist{};
+    //size_t m_debugMoveCount{};
 };

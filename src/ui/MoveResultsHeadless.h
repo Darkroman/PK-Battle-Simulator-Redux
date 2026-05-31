@@ -24,7 +24,7 @@ public:
 
 	void DisplayNoopMsg() const override {}
 
-	void DisplayDirectDamageInflictedMsg(int) const override {}
+	void DisplayDirectDamageInflictedMsg(unsigned int) const override {}
 
 	void DisplayMultiAttackMsg(std::string_view, int) const override {}
 

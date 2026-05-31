@@ -1,19 +1,17 @@
 #include "Pokemon.h"
 
 Pokemon::Pokemon
-(int nationalDexNumber, std::string_view name,
-    int basehp, int baseattack, int basedefense,
-    int basespecialattack, int basespecialdefense, int basespeed,
-    std::string_view type1, PokemonType type1e, std::string_view type2, PokemonType type2e, int weight)
+(unsigned int nationalDexNumber, std::string_view name,
+    unsigned int basehp, unsigned int baseattack, unsigned int basedefense,
+    unsigned int basespecialattack, unsigned int basespecialdefense, unsigned int basespeed,
+    std::string_view type1, PokemonType type1e, std::string_view type2, PokemonType type2e, unsigned int weight)
     : m_nationalDexNumber{ nationalDexNumber }, m_name{ name },
     m_basehp{ basehp }, m_baseattack{ baseattack }, m_basedefense{ basedefense },
     m_basespecialattack{ basespecialattack }, m_basespecialdefense{ basespecialdefense }, m_basespeed{ basespeed },
-    m_type1{ type1 }, m_type1e{ type1e }, m_type2{ type2 }, m_type2e{ type2e }, m_weight{ weight }
-{
+    m_type1{ type1 }, m_type1e{ type1e }, m_type2{ type2 }, m_type2e{ type2e }, m_weight{ weight }//, b_isDynamic(true)
+{ }
 
-}
-
-int Pokemon::GetNationalDexNumber() const
+unsigned int Pokemon::GetNationalDexNumber() const
 {
     return m_nationalDexNumber;
 }
@@ -23,32 +21,32 @@ std::string_view Pokemon::GetName() const
     return m_name;
 }
 
-int Pokemon::GetBaseHP() const
+unsigned int Pokemon::GetBaseHP() const
 {
     return m_basehp;
 }
 
-int Pokemon::GetBaseAttack() const
+unsigned int Pokemon::GetBaseAttack() const
 {
     return m_baseattack;
 }
 
-int Pokemon::GetBaseDefense() const
+unsigned int Pokemon::GetBaseDefense() const
 {
     return m_basedefense;
 }
 
-int Pokemon::GetBaseSpecialAttack() const
+unsigned int Pokemon::GetBaseSpecialAttack() const
 {
     return m_basespecialattack;
 }
 
-int Pokemon::GetBaseSpecialDefense() const
+unsigned int Pokemon::GetBaseSpecialDefense() const
 {
     return m_basespecialdefense;
 }
 
-int Pokemon::GetBaseSpeed() const
+unsigned int Pokemon::GetBaseSpeed() const
 {
     return m_basespeed;
 }
@@ -83,34 +81,31 @@ double Pokemon::GetPokemonWeightKg() const
     return static_cast<double>(m_weight) / 10;
 }
 
-std::vector<size_t> Pokemon::GetMoveList() const
+std::span<const size_t> Pokemon::GetMoveList() const
 {
+    /*
+    if (b_isDynamic)
+    {
+        return std::span<const size_t>(m_debugMovelist.data(), m_debugMoveCount);
+    }
+    */
     return m_movelist;
-}
-
-std::vector<size_t>::iterator Pokemon::MovelistBegin()
-{
-    return m_movelist.begin();
-}
-
-std::vector<size_t>::iterator Pokemon::MovelistEnd()
-{
-    return m_movelist.end();
-}
-
-std::vector<size_t>::const_iterator Pokemon::MovelistBegin() const
-{
-    return m_movelist.cbegin();
-}
-
-std::vector<size_t>::const_iterator Pokemon::MovelistEnd() const
-{
-    return m_movelist.cend();
 }
 
 bool Pokemon::CheckPokemonMoveList(size_t movenum) const
 {
     ++movenum;
+    /*
+    if (b_isDynamic)
+    {
+        for (size_t index = 1; index < 165; ++index)
+        {
+            if (movenum == index)
+                return true;
+        }
+        return false;
+    }
+    */
     for (auto index = m_movelist.begin(); index != m_movelist.end(); ++index)
     {
         if (movenum == *index)
@@ -119,54 +114,16 @@ bool Pokemon::CheckPokemonMoveList(size_t movenum) const
     return false;
 }
 
-size_t Pokemon::FetchMoveNumber(std::vector<size_t>::iterator index)
+size_t Pokemon::FetchMoveNumber(size_t index) const
 {
-    size_t element = *index - 1;
-    return element;
+    return index - 1;
 }
-
-size_t Pokemon::FetchMoveNumber(std::vector<size_t>::const_iterator index) const
+/*
+void Pokemon::DebugAddMove(size_t moveId)
 {
-    size_t element = *index - 1;
-    return element;
+    if (b_isDynamic && m_debugMoveCount < m_debugMovelist.size())
+    {
+        m_debugMovelist[m_debugMoveCount++] = moveId;
+    }
 }
-
-void Pokemon::ReserveMoveListVector()
-{
-    m_movelist.reserve(57);
-}
-
-void Pokemon::EmplaceBackIntoMoveList(size_t number)
-{
-    m_movelist.emplace_back(number);
-}
-
-void Pokemon::ResizeMoveList(size_t number)
-{
-    m_movelist.resize(number);
-}
-
-void Pokemon::ShrinkToFitMoveList()
-{
-    m_movelist.shrink_to_fit();
-}
-
-size_t Pokemon::Size()
-{
-    return m_movelist.size();
-}
-
-size_t Pokemon::Capacity()
-{
-    return m_movelist.capacity();
-}
-
-void Pokemon::CopyMoveListVector(std::vector<size_t>& vec)
-{
-    m_movelist = vec;
-}
-
-void Pokemon::AssignMoveListVector(std::initializer_list<size_t> li)
-{
-    m_movelist.assign(li);
-}
+*/

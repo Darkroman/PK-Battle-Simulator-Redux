@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "../common/PartyEditResults.h"
+#include "../common/AppState.h"
 
 class BattlePokemon;
 class Player;
@@ -22,7 +23,7 @@ public:
 	explicit Menu(std::vector<std::unique_ptr<Player>>&);
 
 	SetPokemonResult SetPlayerPokemon(BattlePokemon&, std::string_view);
-	SetMoveResult SetPlayerPokemonMove(BattlePokemon&, size_t, std::string_view);
+	SetMoveResult SetPlayerPokemonMove(BattlePokemon&, uint16_t, std::string_view);
 
 	bool SetPlayerPokemonNickname(BattlePokemon&);
 
@@ -42,7 +43,7 @@ public:
 	bool SetPlayerPokemonSpecialDefenseEV(BattlePokemon&);
 	bool SetPlayerPokemonSpeedEV(BattlePokemon&);
 
-	bool RunMenu();
+	AppState RunMenu(unsigned int&);
 	void ChangePlayerOneName();
 	void EditPlayerOnePokemon();
 	void ChangePlayerOneType();
@@ -77,6 +78,9 @@ public:
 	std::vector<std::filesystem::path> ListSavedParties();
 	std::vector<std::filesystem::path> GetSavedParties();
 
+	unsigned int SetSimIterations(unsigned int);
+
+	bool CheckIfBothPlayersAI();
 	bool IsPokemonSetupIncomplete();
 
 	void SetDefaultPokemon();

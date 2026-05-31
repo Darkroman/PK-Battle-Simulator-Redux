@@ -88,5 +88,7 @@ enum class MoveEffect
 	TriAttack,
 	SuperFang,
 	Substitute,
-	Struggle
+	Struggle,
+	Noop,
+	COUNT
 };

@@ -7,20 +7,28 @@
 
 #include <string_view>
 
-enum class PokemonType;
+enum class PokemonType : size_t;
 enum class Category;
 enum class MoveEffect;
 
 class Move
 {
 public:
-    Move
-    (size_t, std::string_view,
-     std::string_view, PokemonType, std::string_view, Category,
-     int, MoveEffect, int,
-     int, int, int, int,
-     bool, bool, bool,
-     bool, bool, bool, bool, bool);
+    constexpr Move
+    (size_t movenum, std::string_view name,
+        std::string_view type, PokemonType typee, std::string_view category, Category categorye,
+        int priority, MoveEffect moveEffectEnum, int effectChance,
+        int pp, int maxpp, unsigned int power, int accuracy,
+        bool contact, bool protect, bool magicCoat,
+        bool snatch, bool mirrorMove, bool kingRock, bool soundBased, bool bypassSubstitute)
+        : m_movenum{ movenum }, m_name{ name },
+        m_type{ type }, m_typee{ typee }, m_category{ category }, m_categorye{ categorye },
+        m_priority{ priority }, m_moveEffectEnum{ moveEffectEnum }, m_effectChance{ effectChance },
+        m_pp{ pp }, m_maxpp{ maxpp }, m_power{ power }, m_accuracy{ accuracy },
+        b_DoesMakeContact{ contact }, b_IsAffectedByProtect{ protect }, b_IsAffectedByMagicCoat{ magicCoat },
+        b_IsAffectedBySnatch{ snatch }, b_IsAffectedByMirrorMove{ mirrorMove }, b_IsAffectedByKingRock{ kingRock }, b_isSoundBased{ soundBased }, b_bypassSubstitute{ bypassSubstitute }
+    {
+    }
 
     size_t         GetMoveIndex() const;
     std::string_view    GetName() const;
@@ -34,10 +42,10 @@ public:
     MoveEffect GetMoveEffectEnum() const;
     int          GetEffectChance() const;
     
-    int       GetPP() const;
-    int    GetMaxPP() const;
-    int    GetPower() const;
-    int GetAccuracy() const;
+    int             GetPP() const;
+    int          GetMaxPP() const;
+    unsigned int GetPower() const;
+    int       GetAccuracy() const;
 
     bool        DoesMakeContact() const;
     bool    IsAffectedByProtect() const;
@@ -49,22 +57,23 @@ public:
     bool    CanBypassSubstitute() const;
 
 private:
-    size_t            m_movenum;
     std::string_view     m_name;
-
     std::string_view     m_type;
-    PokemonType         m_typee;
     std::string_view m_category;
+
+    size_t            m_movenum;
+
+    PokemonType         m_typee;
     Category        m_categorye;
+    MoveEffect m_moveEffectEnum;
 
     int              m_priority;
-    MoveEffect m_moveEffectEnum;
     int          m_effectChance;
 
-    int       m_pp;
-    int    m_maxpp;
-    int    m_power;
-    int m_accuracy;
+    int                    m_pp;
+    int                 m_maxpp;
+    unsigned int        m_power;
+    int        m_accuracy;
 
     bool        b_DoesMakeContact;
     bool    b_IsAffectedByProtect;

@@ -27,7 +27,7 @@ public:
 
 	virtual void DisplayNoopMsg() const = 0;
 
-	virtual void DisplayDirectDamageInflictedMsg(int) const = 0;
+	virtual void DisplayDirectDamageInflictedMsg(unsigned int) const = 0;
 
 	virtual void DisplayMultiAttackMsg(std::string_view, int) const = 0;
 

@@ -1,20 +1,5 @@
 #include "Move.h"
 
-Move::Move
-(size_t movenum, std::string_view name,
-    std::string_view type, PokemonType typee, std::string_view category, Category categorye,
-    int priority, MoveEffect moveEffectEnum, int effectChance,
-    int pp, int maxpp, int power, int accuracy,
-    bool contact, bool protect, bool magicCoat,
-    bool snatch, bool mirrorMove, bool kingRock, bool soundBased, bool bypassSubstitute)
-    : m_movenum{ movenum }, m_name{ name },
-    m_type{ type }, m_typee{ typee }, m_category{ category }, m_categorye{ categorye },
-    m_priority{ priority }, m_moveEffectEnum{ moveEffectEnum }, m_effectChance{effectChance},
-    m_pp{ pp }, m_maxpp{ maxpp }, m_power{ power }, m_accuracy{ accuracy },
-    b_DoesMakeContact{ contact }, b_IsAffectedByProtect{ protect }, b_IsAffectedByMagicCoat{ magicCoat },
-    b_IsAffectedBySnatch{ snatch }, b_IsAffectedByMirrorMove{ mirrorMove }, b_IsAffectedByKingRock{ kingRock }, b_isSoundBased{ soundBased }, b_bypassSubstitute{ bypassSubstitute }
-{}
-
 size_t Move::GetMoveIndex() const
 {
     return m_movenum;
@@ -70,7 +55,7 @@ int Move::GetMaxPP() const
     return m_maxpp;
 }
 
-int Move::GetPower() const
+unsigned int Move::GetPower() const
 {
     return m_power;
 }
@@ -119,4 +104,3 @@ bool Move::CanBypassSubstitute() const
 {
     return b_bypassSubstitute;
 }
-

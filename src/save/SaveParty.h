@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <filesystem>
-#include <array>
 
 class Player;
 
@@ -19,7 +18,6 @@ public:
 	void SavePokemonMoves(int);
 
 private:
-	std::array<Player*, 2> players{};
 	Player* player{};
 	std::ofstream outFile{};
 	int num{};

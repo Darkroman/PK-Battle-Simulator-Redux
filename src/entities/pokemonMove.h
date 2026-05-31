@@ -3,7 +3,8 @@
 #include <string_view>
 
 class Move;
-enum class PokemonType;
+
+enum class PokemonType : size_t;
 enum class Category;
 enum class MoveEffect;
 
@@ -16,8 +17,8 @@ struct pokemonMove
     bool IsActive() const;
     bool IsDisabled() const;
 
-    void SetMovePointer(Move*);
-    Move* GetMovePointer() const;
+    void SetMovePointer(const Move*);
+    const Move* GetMovePointer() const;
     void ResetMove();
 
     size_t   GetMoveIndex() const;
@@ -34,7 +35,7 @@ struct pokemonMove
 
     int       GetPP() const;
     int    GetMaxPP() const;
-    int    GetPower() const;
+    unsigned int    GetPower() const;
     int GetAccuracy() const;
 
     void DeductPP();
@@ -49,7 +50,7 @@ struct pokemonMove
     bool    CanBypassSubstitute() const;
 
 private:
-    Move* mp_move{ nullptr };
+    const Move* mp_move{ nullptr };
 
 public:
     int m_currentPP{ 0 };

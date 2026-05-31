@@ -50,7 +50,7 @@ SetPokemonResult Menu::SetPlayerPokemon(BattlePokemon& pokemon, std::string_view
 	return outcome.result;
 }
 
-SetMoveResult Menu::SetPlayerPokemonMove(BattlePokemon& pokemon, size_t moveslot, std::string_view movename)
+SetMoveResult Menu::SetPlayerPokemonMove(BattlePokemon& pokemon, uint16_t moveslot, std::string_view movename)
 {
 	SetMoveOutcome outcome = pokemon.SetMove(moveslot, movename);
 
@@ -644,7 +644,7 @@ bool Menu::SetPlayerPokemonSpeedEV(BattlePokemon& pokemon)
 	return false;
 }
 
-bool Menu::RunMenu()
+AppState Menu::RunMenu(unsigned int& simIterations)
 {
 	//DatabaseTextView::DisplayMovesWithZeroPower(Database::GetInstance());
 
@@ -660,7 +660,9 @@ bool Menu::RunMenu()
 		std::cout << "6 - Change player two's type (human or A.I)\n";
 		std::cout << "7 - Save Party\n";
 		std::cout << "8 - Load Party\n";
-		std::cout << "9 - BATTLE!!!\n";
+		std::cout << "9 - Set Simulation Iterations\n";
+		std::cout << "10 - Run Simulations\n";
+		std::cout << "11 - BATTLE!!!\n";
 		std::cout << "0 - Exit Game\n";
 
 		std::cout << "\"00\" from any sub menu will return you to the Main Menu.\n";
@@ -681,7 +683,7 @@ bool Menu::RunMenu()
 		switch (choice)
 		{
 		case 0:
-			return true;
+			return AppState::Exit;
 		
 		case 1:
 			ChangePlayerOneName();
@@ -716,18 +718,28 @@ bool Menu::RunMenu()
 			break;
 
 		case 9:
+			simIterations = SetSimIterations(simIterations);
+			break;
+
+		case 10:
+			if (CheckIfBothPlayersAI() || IsPokemonSetupIncomplete())
+			{
+				continue;
+			}
+			return AppState::Simulate;
+
+		case 11:
 			if (IsPokemonSetupIncomplete())
 			{
 				continue;
 			}
-			return false;
+			return AppState::InitBattle;
 
 		default:
 			std::cout << "Invalid input!\n\n";
 			break;
 		}
 	}
-	return false;
 }
 
 void Menu::ChangePlayerOneName()
@@ -1890,8 +1902,8 @@ bool Menu::AddMove(BattlePokemon& pokemon)
 			return false;
 		}
 
-		size_t slot{ 1 };
-		size_t moveslot{ 1 };
+		uint16_t slot{ 1 };
+		uint16_t moveslot{ 1 };
 		for (slot = 1; slot <= 4; ++slot)
 		{
 			if (!pokemon.HasMove(slot))
@@ -1946,7 +1958,8 @@ bool Menu::ChangeMove(BattlePokemon& pokemon)
 			continue;
 		}
 
-		size_t moveslot{ std::stoul(moveslot_input) };
+		uint16_t moveslot{};
+		std::from_chars(moveslot_input.data(), moveslot_input.data() + moveslot_input.size(), moveslot);
 
 		if (moveslot == 0)
 		{
@@ -2264,13 +2277,20 @@ bool Menu::ReorderMoves(BattlePokemon& pokemon)
 
 void Menu::SetDefaultPokemon()
 {
+
+#if !defined NDEBUG
+	Pokemon* test1;
+	Pokemon* test2;
+		Database::GetInstance().TestingPokemonAndMoves(test1, test2);
+#endif
+
 	if (players[0]->GetPokemonCount() > 0 && players[1]->GetPokemonCount() > 0)
 	{
 		return;
 	}
 
-	players[0]->GetBelt(1).SetPokemon("Poketest1");
-	players[1]->GetBelt(1).SetPokemon("Poketest2");
+	//players[0]->GetBelt(1).SetPokemon(test1);
+	//players[1]->GetBelt(1).SetPokemon(test2);
 
 	if (players[0]->GetBelt(1).GetCurrentHP() != 0)
 	{
@@ -2639,6 +2659,68 @@ std::vector<std::filesystem::path> Menu::GetSavedParties()
 	}
 
 	return files;
+}
+
+unsigned int Menu::SetSimIterations(unsigned int simIterations)
+{
+	while (true)
+	{
+		std::cout << "---Set Simulation Iterations---\n";
+
+		std::cout << "WARNING: Running simulations will max out your CPU.\n";
+		std::cout << "Recommended to keep iterations under 10 million.\n";
+		std::cout << "On an 8-core 16-thread AMD 5800x CPU and depending on AI difficulty >\n";
+		std::cout << "10 million iterations can take roughly 15-25 seconds.\n\n";
+
+		std::cout << "Iterations (currently at " << simIterations << "): ";
+		std::string input{};
+		std::getline(std::cin >> std::ws, input);
+		std::cout << '\n';
+
+		if (input == "0" || input == "00")
+		{
+			return simIterations;
+		}
+
+		if (!IsDigits(input) || input.size() > 10)
+		{
+			std::cout << "Invalid input!\n\n";
+			continue;
+		}
+
+		int iterations{};
+		std::from_chars(input.data(), input.data() + input.size(), iterations);
+
+		if (iterations < 1)
+		{
+			std::cout << "Invalid input!\n\n";
+			continue;
+		}
+
+		std::cout << "Iterations set at " << iterations << '\n';
+		return iterations;
+	}
+}
+
+bool Menu::CheckIfBothPlayersAI()
+{
+	if (!players[0]->IsAI() && !players[1]->IsAI())
+	{
+		std::cout << "Neither player is AI!\n\n";
+		return true;
+	}
+	else if (players[0]->IsAI() && !players[1]->IsAI())
+	{
+		std::cout << players[1]->GetPlayerNameView() << " isn't AI!\n\n";
+		return true;
+	}
+	else if (players[1]->IsAI() && !players[0]->IsAI())
+	{
+		std::cout << players[0]->GetPlayerNameView() << " isn't AI!\n\n";
+		return true;
+	}
+
+	return false;
 }
 
 bool Menu::IsPokemonSetupIncomplete()

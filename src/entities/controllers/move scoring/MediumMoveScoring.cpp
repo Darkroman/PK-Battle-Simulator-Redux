@@ -13,7 +13,7 @@ namespace MediumMoveScoring
 		std::vector<ScoringResults*> damagingMoves{};
 		damagingMoves.reserve(results.size());
 
-		int highestDamage = INT_MIN;
+		unsigned int highestDamage = 0;
 		for (auto& result : results)
 		{
 			if (result.damage > 0)
@@ -35,7 +35,7 @@ namespace MediumMoveScoring
 		{
 			auto tag = result->tag;
 
-			bool isRechargeMove = tag == AIScoreTag::RechargeMove ? true : false;
+			bool isRechargeMove = tag == AIScoreTag::RechargeMove;
 
 			bool canKill{ false };
 			if (result->damage >= targetMon.GetCurrentHP())

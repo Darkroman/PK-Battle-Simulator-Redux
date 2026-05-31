@@ -8,7 +8,8 @@ class MoveResultsText : public IMoveResultsUI
 {
 public:
 	MoveResultsText(ITextSink& sink)
-		: m_sink(sink) {}
+		: m_sink(sink) {
+	}
 
 	void UsedTextDialog(std::string_view, std::string_view, std::string_view) const override;
 
@@ -28,7 +29,7 @@ public:
 
 	void DisplayNoopMsg() const override;
 
-	void DisplayDirectDamageInflictedMsg(int) const override;
+	void DisplayDirectDamageInflictedMsg(unsigned int) const override;
 
 	void DisplayMultiAttackMsg(std::string_view, int) const override;
 

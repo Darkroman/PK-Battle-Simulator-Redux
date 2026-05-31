@@ -170,8 +170,8 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		int attackerLevel{ selfMon.GetLevel() };
-		int defenderLevel{ targetMon.GetLevel() };
+		unsigned int attackerLevel{ selfMon.GetLevel() };
+		unsigned int defenderLevel{ targetMon.GetLevel() };
 
 		if (attackerLevel < defenderLevel)
 		{
@@ -287,7 +287,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (selfMon.GetAttackStage() == 6)
+		if (selfMon.GetAttackStage() == 12)
 		{
 			delta -= 10;
 		}
@@ -299,7 +299,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (selfMon.GetDefenseStage() == 6)
+		if (selfMon.GetDefenseStage() == 12)
 		{
 			delta -= 10;
 		}
@@ -311,7 +311,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (selfMon.GetAttackStage() == 6 && selfMon.GetSpecialAttackStage() == 6)
+		if (selfMon.GetAttackStage() == 12 && selfMon.GetSpecialAttackStage() == 12)
 		{
 			delta -= 10;
 		}
@@ -323,7 +323,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (selfMon.GetSpecialDefenseStage() == 6)
+		if (selfMon.GetSpecialDefenseStage() == 12)
 		{
 			delta -= 10;
 		}
@@ -335,7 +335,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (selfMon.GetSpeedStage() == 6)
+		if (selfMon.GetSpeedStage() == 12)
 		{
 			delta -= 10;
 		}
@@ -347,7 +347,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (selfMon.GetEvasionStage() == 6)
+		if (selfMon.GetEvasionStage() == 12)
 		{
 			delta -= 10;
 		}
@@ -359,7 +359,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (targetMon.GetAttackStage() == -6)
+		if (targetMon.GetAttackStage() == 0)
 		{
 			delta -= 10;
 		}
@@ -371,7 +371,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (targetMon.GetDefenseStage() == -6)
+		if (targetMon.GetDefenseStage() == 0)
 		{
 			delta -= 10;
 		}
@@ -383,7 +383,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (targetMon.GetSpeedStage() == -6)
+		if (targetMon.GetSpeedStage() == 0)
 		{
 			delta -= 10;
 		}
@@ -395,7 +395,7 @@ namespace BasicScoring
 	{
 		int delta{};
 
-		if (targetMon.GetAccuracyStage() == -6)
+		if (targetMon.GetAccuracyStage() == 0)
 		{
 			delta -= 10;
 		}
@@ -408,10 +408,10 @@ namespace BasicScoring
 		int delta{};
 
 		auto selfStats = { selfMon.GetAttackStage(), selfMon.GetDefenseStage(), selfMon.GetSpecialAttackStage(), selfMon.GetSpecialDefenseStage(), selfMon.GetSpeedStage(), selfMon.GetAccuracyStage(), selfMon.GetEvasionStage() };
-		bool selfHasBuff = std::any_of(selfStats.begin(), selfStats.end(), [](int s) { return s > 0; });
+		bool selfHasBuff = std::any_of(selfStats.begin(), selfStats.end(), [](size_t s) { return s > 6; });
 
 		auto targetStats = { targetMon.GetAttackStage(), targetMon.GetDefenseStage(), targetMon.GetSpecialAttackStage(), targetMon.GetSpecialDefenseStage(), targetMon.GetSpeedStage(), targetMon.GetAccuracyStage(), targetMon.GetEvasionStage() };
-		bool targetHasDebuff = std::any_of(targetStats.begin(), targetStats.end(), [](int s) { return s < 0; });
+		bool targetHasDebuff = std::any_of(targetStats.begin(), targetStats.end(), [](size_t s) { return s < 6; });
 
 		if (selfHasBuff || targetHasDebuff)
 		{
@@ -514,7 +514,7 @@ namespace BasicScoring
 			delta -= 8;
 		}
 
-		int hpPercent{ selfMon.GetCurrentHP() * 100 / selfMon.GetMaxHP() };
+		unsigned int hpPercent{ selfMon.GetCurrentHP() * 100 / selfMon.GetMaxHP() };
 
 		if (hpPercent < 26)
 		{

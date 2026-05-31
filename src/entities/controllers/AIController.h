@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <span>
 
 #include "IPlayerController.h"
 
@@ -52,14 +53,16 @@ public:
 	void OnBattleStart(const Player&, BattleContext&);
 	void OnActivePokemonChanged(const BattleContext&);
 
-	std::array<const pokemonMove*, 4> GetObservedMoves() const;
+	//std::array<const pokemonMove*, 4> GetObservedMoves() const;
+	std::span<const pokemonMove*> GetObservedMoves() const;
 
 	void ResetObservedMoves();
 
 	void OnMoveResolved(const BattleContext&);
-	int  AICalculatePokemonTypeEffectiveness(const BattlePokemon& source, const BattlePokemon& target);
-	int  AICalculateMoveTypeEffectiveness(const pokemonMove& currentMove, const BattlePokemon& target);
-	int  AICalculateDamage(const pokemonMove&, const Player&, const BattlePokemon&, const BattlePokemon&);
+	unsigned int  AICalculatePokemonTypeEffectiveness(const BattlePokemon& source, const BattlePokemon& target) const;
+	unsigned int  AICalculateMoveTypeEffectiveness(const pokemonMove& currentMove, const BattlePokemon& target) const;
+	unsigned int  AICalculateDamage(const pokemonMove&, const Player&, const BattlePokemon&, const BattlePokemon&) const;
+	bool CalculateStatusMoveEffectiveness(const pokemonMove& currentMove, const Player& targetPlayer, const BattlePokemon& source, const BattlePokemon& target) const;
 
 private:
 	pokemonMove* FightAction(const Player&, const Player&, BattlePokemon&, const BattlePokemon&, RandomEngine&);
@@ -75,7 +78,6 @@ private:
 	void UpdateOpponentActivePokemon(const BattlePokemon&);
 
 	PersistentMemory* FindActivePokemonSlot();
-	//const PersistentMemory* FindActivePokemonSlot() const;
 
 public:
 	AIMemory memory;

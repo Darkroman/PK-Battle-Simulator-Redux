@@ -1,7 +1,6 @@
-#include <iostream>
-
 #include "AISwitchLogic.h"
 
+#include "../../../battle/RandomEngine.h"
 #include "../move scoring/AIMoveScoring.h"
 #include "../../Player.h"
 #include "../AIController.h"
@@ -9,7 +8,7 @@
 
 namespace AISwitchLogic
 {
-	bool WantsToSwitch(const Player& self, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
+	bool WantsToSwitch(const Player& self, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon, RandomEngine& rng)
 	{
 		// if on last pokemon, don't switch
 		if (self.GetPokemonLeft() < 2)
@@ -39,63 +38,46 @@ namespace AISwitchLogic
 			}
 		}
 
-		int selfMonSpeed = AIMoveScoring::CalculateSpeed(selfMon);
-		int targetMonSpeed = AIMoveScoring::CalculateSpeed(targetMon);
+		unsigned int highestDamage{ 0 };
+		const pokemonMove* highestDamagingMove{};
 
-		bool isFaster = selfMonSpeed >= targetMonSpeed ? true : false;
 		bool canKO{};
-
 		bool priorityCanKO{};
 
-		bool targetCantAttack = (targetMon.GetStatus() == Status::Frozen || targetMon.GetStatus() == Status::Sleeping) ? true : false;
-		int typeEffectiveness{ PokemonTypeEffectiveness(self, targetMon, selfMon) };
-		bool selfTypingDisadvantageous = typeEffectiveness > 4096 ? true : false;
-		bool selfTypingSDisadvantageous = PokemonTypeEffectiveness(self, targetMon, selfMon) > 8192 ? true : false;
-
-		auto targetMonLastUsedMove = targetMon.GetLastUsedMove();
-		bool lastMoveSE{};
-		bool lastMoveCanKO{};
-
-		bool hasEffectiveMove{};
-
-		if (targetMonLastUsedMove)
-		{
-			lastMoveSE = IsMoveSuperEffective(self, *targetMonLastUsedMove, selfMon);
-			
-			int damage = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *targetMonLastUsedMove, targetMon, selfMon);
-
-			if (damage >= selfMon.GetCurrentHP())
-			{
-				lastMoveCanKO = true;
-			}
-		}
-
-		int highestDamage{ 0 };
 		for (const auto& move : selfMon.GetMoveArray())
 		{
 			if (move.IsActive())
 			{
-				int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, selfMon, targetMon);
-				if (damage >= targetMon.GetCurrentHP())
+				unsigned int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, selfMon, targetMon);
+				
+				if (damage > highestDamage)
 				{
-					if (damage > highestDamage)
-					{
-						highestDamage = damage;
-						canKO = true;
-					}
-
-					if (move.GetPriority() > 0)
-					{
-						priorityCanKO = true;
-					}
+					highestDamage = damage;
+					highestDamagingMove = &move;
 				}
 
-				if (IsMoveAtLeastEffective(self, move, targetMon) && move.GetCategoryEnum() != Category::Status)
+				if (highestDamagingMove && highestDamage >= targetMon.GetCurrentHP())
 				{
-					hasEffectiveMove = true;
+					canKO = true;
+				}
+
+				if (move.GetPriority() > 0 && damage >= targetMon.GetCurrentHP())
+				{
+					priorityCanKO = true;
 				}
 			}
 		}
+
+		// if all damaging moves are immune, switch
+		if (highestDamage == 0)
+		{
+			return true;
+		}
+
+		unsigned int selfMonSpeed = AIMoveScoring::CalculateSpeed(selfMon);
+		unsigned int targetMonSpeed = AIMoveScoring::CalculateSpeed(targetMon);
+
+		bool isFaster{ selfMonSpeed >= targetMonSpeed };
 
 		// if selfMon is faster and has move that can one-hit KO targetMon, don't switch
 		if (isFaster && canKO)
@@ -103,11 +85,13 @@ namespace AISwitchLogic
 			return false;
 		}
 
-		// if selfMon has priority move that can KO targetMon, don't switch
-		if (priorityCanKO)
+		// if selfMon has priority move that can KO targetMon, don't switch (and self is hard difficulty)
+		if (self.GetAIController().GetDifficulty() == Difficulty::Hard && priorityCanKO)
 		{
 			return false;
 		}
+
+		bool targetCantAttack = (targetMon.GetStatus() == Status::Frozen || targetMon.GetStatus() == Status::Sleeping);
 
 		// if targetMon is asleep or frozen, don't switch
 		if (targetCantAttack)
@@ -115,46 +99,57 @@ namespace AISwitchLogic
 			return false;
 		}
 
-		// if selfMon is slower and last used move by targetMon was super effective and it can KO, switch
-		if (!isFaster && lastMoveSE && lastMoveCanKO)
+		auto targetMonLastUsedMove = targetMon.GetLastUsedMove();
+		bool lastMoveCanKO{};
+
+		if (targetMonLastUsedMove)
 		{
-			return true;
+			unsigned int damage = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *targetMonLastUsedMove, targetMon, selfMon);
+
+			if (damage >= selfMon.GetCurrentHP())
+			{
+				lastMoveCanKO = true;
+			}
 		}
 
-		// if selfMon's typing is super disadvantageous, switch
-		if (selfTypingSDisadvantageous)
+		// if selfMon is slower and last used move by targetMon can KO, switch
+		if (targetMonLastUsedMove && !isFaster && lastMoveCanKO)
 		{
 			return true;
 		}
 
 		if (self.GetAIController().GetDifficulty() == Difficulty::Hard)
 		{
-			// if selfMon's typing is disadvantageous and is slower than targetMon, switch
-			if (selfTypingDisadvantageous && !isFaster)
+			bool selfTypingDisadvantageous{ PokemonTypeEffectiveness(self, targetMon, selfMon) > 4096 };
+
+			// if selfMon is slower and typing is disadvantageous, switch
+			if (!isFaster && selfTypingDisadvantageous)
 			{
 				return true;
 			}
 
-			// if selfMon's typing is disadvantageous and has no neutral effective moves, switch
-			if (selfTypingDisadvantageous && !hasEffectiveMove)
+			bool isNotVeryEffective{ IsMoveNotVeryEffective(self, *highestDamagingMove, targetMon) };
+
+			// if selfMon's typing is disadvantageous and highest damaging move is not very effective and cannot KO, switch
+			if (selfTypingDisadvantageous && isNotVeryEffective && !canKO)
 			{
 				return true;
 			}
-
+			
 			const auto& observedMoves = self.GetAIController().GetObservedMoves();
-			std::vector<const pokemonMove*> observedDamagingMoves{};
-			observedDamagingMoves.reserve(4);
+			std::array<const pokemonMove*, 4> observedDamagingMoves{};
+			size_t observedCount{};
 
 			bool targetMonHasKOMove{ false };
 
-			int highestDamageToSelf{ 0 };
 			for (const auto& observedMove : observedMoves)
 			{
 				if (observedMove != nullptr)
 				{
-					if (observedMove->GetCategoryEnum() != Category::Status)
+					if (observedMove->GetCategoryEnum() != Category::Status && observedMove->IsActive())
 					{
-						observedDamagingMoves.emplace_back(observedMove);
+						observedDamagingMoves[observedCount] = observedMove;
+						++observedCount;
 					}
 				}
 				else
@@ -162,80 +157,90 @@ namespace AISwitchLogic
 					break;
 				}
 
-				int damageToSelf = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, selfMon);
+				unsigned int damageToSelf = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, selfMon);
 
-				if (damageToSelf > highestDamageToSelf)
-				{
-					highestDamageToSelf = damageToSelf;
-				}
-
-				if (highestDamageToSelf >= selfMon.GetCurrentHP())
+				if (damageToSelf >= selfMon.GetCurrentHP())
 				{
 					targetMonHasKOMove = true;
+					break;
 				}
 			}
 
+			std::span<const pokemonMove*> validObservedMoves{ observedDamagingMoves.data(), observedCount };
+
 			// If no observed damaging moves found, return early with no switch
-			if (observedDamagingMoves.empty())
+			if (validObservedMoves.empty())
 			{
 				return false;
 			}
-
-			// If selfMon is slower, and targetMon's highest damaging observed move will KO selfMon
+			
+			// If selfMon is slower, and targetMon's highest damaging observed move will KO selfMon, switch
 			if (!isFaster && targetMonHasKOMove)
 			{
 				return true;
 			}
 		}
-
+		
 		return false;
 	}
 
 	BattlePokemon* ChooseSwitch(Player& self, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 	{
-		std::vector<BattlePokemon*> viablePokemon{};
+		struct CandidatePokemon
+		{
+			BattlePokemon* pokemon{};
+			unsigned int highestDamageMove{};
+			unsigned int typeEffectiveness{};
+			bool isFaster{};
+			bool canKO{};
+			bool canSurviveTwoHits{};
+			bool canSurviveOneHit{};
+		};
+
+		std::array<CandidatePokemon, 6> candidatePkmnPool{};
 
 		auto canAttack = [&](const BattlePokemon& pokemon) -> bool { return !(pokemon.GetStatus() == Status::Frozen || pokemon.GetStatus() == Status::Sleeping); };
 
+		size_t count{};
 		for (auto& pokemon : self.GetBeltArray())
 		{
 			if (pokemon.HasPokemon() && !pokemon.IsFainted() && canAttack(pokemon))
 			{
-				viablePokemon.emplace_back(&pokemon);
+				candidatePkmnPool[count].pokemon = &pokemon;
+				++count;
 			}
 		}
 
-		int targetMonSpeed = AIMoveScoring::CalculateSpeed(targetMon);
-
-		BattlePokemon* chosenPokemon{};
-
-		int highestDamage{ INT_MIN };
+		std::span<CandidatePokemon> candidatePkmn{ candidatePkmnPool.data(), count };
 
 		const auto& observedMoves = self.GetAIController().GetObservedMoves();
-		std::vector<const pokemonMove*> observedDamagingMoves{};
-		observedDamagingMoves.reserve(4);
+		std::array<const pokemonMove*, 4> observedDamagingMoves{};
+		size_t observedCount{};
 
 		for (const auto& observedMove : observedMoves)
 		{
-			if (observedMove == nullptr)
+			if (observedMove == nullptr || !observedMove->IsActive())
 			{
 				break;
 			}
 			else if (observedMove->GetCategoryEnum() != Category::Status)
-			{	
-				observedDamagingMoves.emplace_back(observedMove);
+			{
+				observedDamagingMoves[observedCount] = observedMove;
+				++observedCount;
 			}
 		}
 
-		if (!observedDamagingMoves.empty())
-		{
-			int highestDamageToSelf{ INT_MIN };
-			const pokemonMove* mostLikelyMove{};
+		std::span<const pokemonMove*> validObservedMoves{ observedDamagingMoves.data(), observedCount };
 
+		unsigned int highestDamageToSelf{ 0 };
+		const pokemonMove* mostLikelyMove{};
+		if (!validObservedMoves.empty())
+		{
+			mostLikelyMove = validObservedMoves.front();
 			// Evaluate most likely observed move AI will do against selfMon
-			for (const auto& observedMove : observedDamagingMoves)
+			for (const auto& observedMove : validObservedMoves)
 			{
-				int damageToSelf = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, selfMon);
+				unsigned int damageToSelf = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, selfMon);
 
 				if (damageToSelf > highestDamageToSelf)
 				{
@@ -243,432 +248,285 @@ namespace AISwitchLogic
 					mostLikelyMove = observedMove;
 				}
 			}
+		}
 
-			// if viablePokemon is faster and has move that can one-hit KO targetMon and won't be KO'd by switch-in, choose highest damage dealer
-			for (const auto& pokemon : viablePokemon)
+		for (auto& candidate : candidatePkmn)
+		{
+			for (const auto& move : candidate.pokemon->GetMoveArray())
 			{
-				if (PokemonTypeEffectiveness(self, targetMon, *pokemon) > 8192)
+				if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
 				{
-					continue;
-				}
+					unsigned int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *candidate.pokemon, targetMon);
 
-				int candidateSpeed = AIMoveScoring::CalculateSpeed(*pokemon);
-
-				if (candidateSpeed < targetMonSpeed)
-				{
-					continue;
-				}
-
-				int damageToCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *mostLikelyMove, targetMon, *pokemon);
-
-				if (damageToCandidate >= pokemon->GetCurrentHP())
-				{
-					continue;
-				}
-
-				for (const auto& move : pokemon->GetMoveArray())
-				{
-					if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
+					if (damage > candidate.highestDamageMove)
 					{
-						int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-					
-						if (damage > highestDamage)
-						{
-							highestDamage = damage;
-						}
+						candidate.highestDamageMove = damage;
 					}
 				}
-				if (highestDamage >= targetMon.GetCurrentHP())
-				{
-					chosenPokemon = pokemon;
-				}
 			}
 
-			if (chosenPokemon == &selfMon)
-			{
-				chosenPokemon = nullptr;
-				return chosenPokemon;
-			}
+			candidate.typeEffectiveness = PokemonTypeEffectiveness(self, targetMon, *candidate.pokemon);
 
-			if (chosenPokemon && chosenPokemon != &selfMon)
-			{
-				self.SetPokemonToSwitchTo(chosenPokemon);
-				return chosenPokemon;
-			}
+			unsigned int candidateMonSpeed = AIMoveScoring::CalculateSpeed(*candidate.pokemon);
+			unsigned int targetMonSpeed = AIMoveScoring::CalculateSpeed(targetMon);
 
-			highestDamage = INT_MIN;
+			candidate.isFaster = candidateMonSpeed >= targetMonSpeed;
 
-			// If none found above, find pokemon that can survive at least 2 hits and has highest damage move
-			for (const auto& pokemon : viablePokemon)
+			candidate.canKO = candidate.highestDamageMove >= targetMon.GetCurrentHP();
+
+			if (!validObservedMoves.empty())
 			{
-				if (PokemonTypeEffectiveness(self, targetMon, *pokemon) > 8192)
+				unsigned int firstAttackVsCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *mostLikelyMove, targetMon, *candidate.pokemon);
+				unsigned int secondAttackVsCandidate{ 0 };
+
+				// Evaluate most likely observed move AI will do against candidateMon
+				for (const auto& observedMove : validObservedMoves)
 				{
-					continue;
-				}
-
-				int firstAttackVsCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *mostLikelyMove, targetMon, *pokemon);
-				int secondAttackVsCandidate{INT_MIN};
-
-				// Evaluate most likely observed move AI will do against candidate
-				for (const auto& observedMove : observedDamagingMoves)
-				{
-					int damageToCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, *pokemon);
+					unsigned int damageToCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, *candidate.pokemon);
 					if (damageToCandidate > secondAttackVsCandidate)
 					{
 						secondAttackVsCandidate = damageToCandidate;
 					}
 				}
 
-				if ((firstAttackVsCandidate + secondAttackVsCandidate) < pokemon->GetCurrentHP())
+				candidate.canSurviveOneHit = firstAttackVsCandidate < candidate.pokemon->GetCurrentHP();
+
+				candidate.canSurviveTwoHits = (firstAttackVsCandidate + secondAttackVsCandidate) < candidate.pokemon->GetCurrentHP();
+			}
+		}
+
+		std::ranges::sort(candidatePkmn, [](const CandidatePokemon& a, const CandidatePokemon& b)
+			{
+				return std::tie(a.typeEffectiveness, b.highestDamageMove) <
+					std::tie(b.typeEffectiveness, a.highestDamageMove);
+			});
+
+		auto it = candidatePkmn.end();
+
+		if (!validObservedMoves.empty())
+		{
+			it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
 				{
-					for (const auto& move : pokemon->GetMoveArray())
+					return cp.canKO && cp.isFaster && cp.canSurviveOneHit;
+				});
+			
+
+			if (it == candidatePkmn.end())
+			{
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
 					{
-						if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
-						{
-							int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-							if (damage > highestDamage)
-							{
-								highestDamage = damage;
-								chosenPokemon = pokemon;
-							}
-						}
-					}
-				}
-			}
-
-			if (chosenPokemon == &selfMon)
-			{
-				chosenPokemon = nullptr;
-				return chosenPokemon;
-			}
-
-			if (chosenPokemon && chosenPokemon != &selfMon)
-			{
-				self.SetPokemonToSwitchTo(chosenPokemon);
-				return chosenPokemon;
+						return cp.canKO && cp.canSurviveTwoHits;
+					});
 			}
 		}
-
-		highestDamage = INT_MIN;
-
-		auto targetMonLastUsedMove = targetMon.GetLastUsedMove();
-		bool isDamagingMove{};
-
-		if (targetMonLastUsedMove)
+		else
 		{
-			isDamagingMove = targetMonLastUsedMove->GetCategoryEnum() != Category::Status;
-		}
-		
-		// if still nothing found, pick pokemon that will not be KO'd by targetMon's last used move, is faster, and pick the one that can do highest damage
-		if (targetMonLastUsedMove && isDamagingMove)
-		{
-			for (const auto& pokemon : viablePokemon)
-			{
-				int candidateSpeed = AIMoveScoring::CalculateSpeed(*pokemon);
-				int damageToCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *targetMonLastUsedMove, targetMon, *pokemon);
-
-				if (candidateSpeed >= targetMonSpeed && damageToCandidate < pokemon->GetCurrentHP())
+			it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
 				{
-					for (const auto& move : pokemon->GetMoveArray())
+					return cp.canKO && cp.typeEffectiveness <= 2048;
+				});
+
+			if (it == candidatePkmn.end())
+			{
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
 					{
-						if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
-						{
-							int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-
-							if (damage > highestDamage)
-							{
-								highestDamage = damage;
-								chosenPokemon = pokemon;
-							}
-						}
-					}
-				}
+						return cp.canKO && cp.isFaster && cp.pokemon->GetCurrentHP() == cp.pokemon->GetMaxHP();
+					});
 			}
 
-			if (chosenPokemon == &selfMon)
+			if (it == candidatePkmn.end())
 			{
-				chosenPokemon = nullptr;
-				return chosenPokemon;
-			}
-
-			if (chosenPokemon && chosenPokemon != &selfMon)
-			{
-				self.SetPokemonToSwitchTo(chosenPokemon);
-				return chosenPokemon;
-			}
-
-			// if still nothing found, pick pokemon that will take zero damage by targetMon's last used move, is faster, and pick the one that can do highest damage
-			for (const auto& pokemon : viablePokemon)
-			{
-				int candidateSpeed = AIMoveScoring::CalculateSpeed(*pokemon);
-				int damageToCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *targetMonLastUsedMove, targetMon, *pokemon);
-
-				if (candidateSpeed >= targetMonSpeed && damageToCandidate == 0)
-				{
-					for (const auto& move : pokemon->GetMoveArray())
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
 					{
-						if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
-						{
-							int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-
-							if (damage > highestDamage)
-							{
-								highestDamage = damage;
-								chosenPokemon = pokemon;
-							}
-						}
-					}
-				}
-			}
-
-			if (chosenPokemon == &selfMon)
-			{
-				chosenPokemon = nullptr;
-				return chosenPokemon;
-			}
-
-			if (chosenPokemon && chosenPokemon != &selfMon)
-			{
-				self.SetPokemonToSwitchTo(chosenPokemon);
-				return chosenPokemon;
+						return cp.typeEffectiveness <= 2048;
+					});
 			}
 		}
+		BattlePokemon* chosenPokemon{};
 
-		std::vector<BattlePokemon*> bestCandidates{};
-		bestCandidates.reserve(6);
-		int bestTypeEffectiveness{ INT_MAX };
-
-		// if still nothing found, pick pokemon that has the best defensive type advantage and if pokemon tie, pick the one that can do highest damage
-		for (const auto& pokemon : viablePokemon)
+		if (it == candidatePkmn.end())
 		{
-			int typeEffectiveness = PokemonTypeEffectiveness(self, targetMon, *pokemon);
-
-			if (typeEffectiveness < bestTypeEffectiveness)
-			{
-				bestTypeEffectiveness = typeEffectiveness;
-			}
+			return nullptr;
 		}
-
-		for (const auto& pokemon : viablePokemon)
+		else
 		{
-			if (bestTypeEffectiveness == PokemonTypeEffectiveness(self, targetMon, *pokemon) && pokemon->GetCurrentHP() == pokemon->GetMaxHP())
-			{
-				bestCandidates.emplace_back(pokemon);
-			}
-		}
-
-		for (const auto& pokemon : bestCandidates)
-		{
-			for (const auto& move : pokemon->GetMoveArray())
-			{
-				if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
-				{
-					int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-					if (damage > highestDamage)
-					{
-						chosenPokemon = pokemon;
-						highestDamage = damage;
-					}
-				}
-			}
-		}
-
-		if (chosenPokemon != nullptr && chosenPokemon != &selfMon)
-		{
-			self.SetPokemonToSwitchTo(chosenPokemon);
+			chosenPokemon = it->pokemon;
 		}
 
 		if (chosenPokemon == &selfMon)
 		{
-			chosenPokemon = nullptr;
-		}
-
-		return chosenPokemon;
-	}
-
-	BattlePokemon* ChoosePostKOSwitch(Player& self, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
-	{
-		std::vector<BattlePokemon*> viablePokemon;
-
-		for (auto& pokemon : self.GetBeltArray())
-		{
-			if (pokemon.HasPokemon() && !pokemon.IsFainted() && &pokemon != &selfMon)
-			{
-				viablePokemon.emplace_back(&pokemon);
-			}
-		}
-
-		int targetMonSpeed = AIMoveScoring::CalculateSpeed(targetMon);
-
-		BattlePokemon* chosenPokemon{};
-
-		int highestDamage{ INT_MIN };
-
-		auto canAttack = [&](const BattlePokemon& pokemon) -> bool { return !(pokemon.GetStatus() == Status::Frozen || pokemon.GetStatus() == Status::Sleeping); };
-
-		// if viablePokemon is faster and has move that can one-hit KO targetMon
-		for (const auto& pokemon : viablePokemon)
-		{
-			int candidateMonSpeed = AIMoveScoring::CalculateSpeed(*pokemon);
-
-			if (candidateMonSpeed >= targetMonSpeed && canAttack(*pokemon))
-			{
-				for (const auto& move : pokemon->GetMoveArray())
-				{
-					if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
-					{
-						int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-						if (damage > highestDamage && damage >= targetMon.GetCurrentHP())
-						{
-							highestDamage = damage;
-							chosenPokemon = pokemon;
-						}
-					}
-				}
-			}
-		}
-
-		if (chosenPokemon)
-		{
-			self.SetPokemonToSwitchTo(chosenPokemon);
-			return chosenPokemon;
-		}
-
-		highestDamage = INT_MIN;
-
-		const auto& observedMoves = self.GetAIController().GetObservedMoves();
-		std::vector<const pokemonMove*> observedDamagingMoves{};
-		observedDamagingMoves.reserve(4);
-
-		for (const auto& observedMove : observedMoves)
-		{
-			if (observedMove == nullptr)
-			{
-				break;
-			}
-			else if (observedMove->GetCategoryEnum() != Category::Status)
-			{
-				observedDamagingMoves.emplace_back(observedMove);
-			}
-		}
-
-		// If none found above, find pokemon that doesn't have super disadvantageous type, can survive at least 1 hit and does highest damage
-		if (!observedDamagingMoves.empty())
-		{
-			for (const auto& pokemon : viablePokemon)
-			{
-				if (PokemonTypeEffectiveness(self, targetMon, *pokemon) > 8192 || !canAttack(*pokemon))
-				{
-					continue;
-				}
-
-				int highestDamageToSelf{ INT_MIN };
-
-				for (const auto& observedMove : observedDamagingMoves)
-				{
-					int damageToSelf = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, *pokemon);
-
-					if (damageToSelf > highestDamageToSelf)
-					{
-						highestDamageToSelf = damageToSelf;
-					}
-
-					if (highestDamageToSelf >= pokemon->GetCurrentHP())
-					{
-						break;
-					}
-				}
-
-				if (highestDamageToSelf < pokemon->GetCurrentHP())
-				{
-					for (const auto& move : pokemon->GetMoveArray())
-					{
-						if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
-						{
-							int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-							if (damage > highestDamage)
-							{
-								highestDamage = damage;
-								chosenPokemon = pokemon;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if (chosenPokemon)
-		{
-			self.SetPokemonToSwitchTo(chosenPokemon);
-			return chosenPokemon;
-		}
-
-		highestDamage = INT_MIN;
-
-		std::vector<BattlePokemon*> bestCandidates{};
-		bestCandidates.reserve(6);
-		int bestTypeEffectiveness{ INT_MAX };
-
-		// if still nothing found, prioritize pokemon that are faster than targetMon and have the best defensive type advantage. Pick the one that can do most damage
-		// if no Pokemon are found that are faster, go with slower
-		for (const auto& pokemon : viablePokemon)
-		{
-			int typeEffectiveness = PokemonTypeEffectiveness(self, targetMon, *pokemon);
-
-			if (typeEffectiveness < bestTypeEffectiveness)
-			{
-				bestTypeEffectiveness = typeEffectiveness;
-			}
-		}
-
-		for (const auto& pokemon : viablePokemon)
-		{
-			int candidateMonSpeed = AIMoveScoring::CalculateSpeed(*pokemon);
-
-			if (bestTypeEffectiveness == PokemonTypeEffectiveness(self, targetMon, *pokemon) && candidateMonSpeed >= targetMonSpeed)
-			{
-				bestCandidates.emplace_back(pokemon);
-			}
-		}
-
-		if (bestCandidates.empty())
-		{
-			for (const auto& pokemon : viablePokemon)
-			{
-				if (bestTypeEffectiveness == PokemonTypeEffectiveness(self, targetMon, *pokemon))
-				{
-					bestCandidates.emplace_back(pokemon);
-				}
-			}
-		}
-
-		for (const auto& pokemon : bestCandidates)
-		{
-			for (const auto& move : pokemon->GetMoveArray())
-			{
-				if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
-				{
-					int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *pokemon, targetMon);
-					if (damage > highestDamage)
-					{
-						chosenPokemon = pokemon;
-						highestDamage = damage;
-					}
-				}
-			}
-		}
-
-		// default: if none found from above, switch to next in party line
-		if (!chosenPokemon)
-		{
-			self.SetPokemonToSwitchTo(viablePokemon[0]);
-			return viablePokemon[0];
+			return nullptr;
 		}
 		else
 		{
 			self.SetPokemonToSwitchTo(chosenPokemon);
 			return chosenPokemon;
 		}
+	}
+
+	BattlePokemon* ChoosePostKOSwitch(Player& self, const Player& targetPlayer, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
+	{
+		struct CandidatePokemon
+		{
+			BattlePokemon* pokemon{};
+			unsigned int highestDamageMove{};
+			unsigned int typeEffectiveness{};
+			bool isFaster{};
+			bool canKO{};
+			bool canSurviveOneHit{};
+		};
+
+		std::array<CandidatePokemon, 6> candidatePkmnPool{};
+
+		auto canAttack = [&](const BattlePokemon& pokemon) -> bool { return !(pokemon.GetStatus() == Status::Frozen || pokemon.GetStatus() == Status::Sleeping); };
+
+		size_t count{};
+		for (auto& pokemon : self.GetBeltArray())
+		{
+			if (pokemon.HasPokemon() && !pokemon.IsFainted() && &pokemon != &selfMon)
+			{
+				candidatePkmnPool[count].pokemon = &pokemon;
+				++count;
+			}
+		}
+
+		std::span<CandidatePokemon> candidatePkmn{ candidatePkmnPool.data(), count };
+
+		const auto& observedMoves = self.GetAIController().GetObservedMoves();
+		std::array<const pokemonMove*, 4> observedDamagingMoves{};
+		size_t observedCount{};
+
+		for (const auto& observedMove : observedMoves)
+		{
+			if (observedMove == nullptr || !observedMove->IsActive())
+			{
+				break;
+			}
+			else if (observedMove->GetCategoryEnum() != Category::Status)
+			{
+				observedDamagingMoves[observedCount] = observedMove;
+				++observedCount;
+			}
+		}
+
+		std::span<const pokemonMove*> validObservedMoves{ observedDamagingMoves.data(), observedCount };
+
+		for (auto& candidate : candidatePkmn)
+		{
+			for (const auto& move : candidate.pokemon->GetMoveArray())
+			{
+				if (move.IsActive() && move.GetCategoryEnum() != Category::Status)
+				{
+					unsigned int damage = AIMoveScoring::SwitchDamageScoringRoutine(self, targetPlayer, move, *candidate.pokemon, targetMon);
+
+					if (damage > candidate.highestDamageMove)
+					{
+						candidate.highestDamageMove = damage;
+					}
+				}
+			}
+
+			candidate.typeEffectiveness = PokemonTypeEffectiveness(self, targetMon, *candidate.pokemon);
+
+			unsigned int candidateMonSpeed = AIMoveScoring::CalculateSpeed(*candidate.pokemon);
+			unsigned int targetMonSpeed = AIMoveScoring::CalculateSpeed(targetMon);
+
+			candidate.isFaster = candidateMonSpeed >= targetMonSpeed;
+
+			candidate.canKO = candidate.highestDamageMove >= targetMon.GetCurrentHP();
+
+			if (!validObservedMoves.empty())
+			{
+				unsigned int highestDamageToCandidate{ 0 };
+				for (const auto& observedMove : validObservedMoves)
+				{
+					unsigned int damageToCandidate = AIMoveScoring::SwitchDamageScoringRoutine(targetPlayer, self, *observedMove, targetMon, *candidate.pokemon);
+
+					if (damageToCandidate > highestDamageToCandidate)
+					{
+						highestDamageToCandidate = damageToCandidate;
+					}
+				}
+
+				candidate.canSurviveOneHit = highestDamageToCandidate < candidate.pokemon->GetCurrentHP();
+			}
+		}
+
+		std::ranges::sort(candidatePkmn, [](const CandidatePokemon& a, const CandidatePokemon& b)
+			{
+				return std::tie(a.typeEffectiveness, b.highestDamageMove) <
+					std::tie(b.typeEffectiveness, a.highestDamageMove);
+			});
+
+		auto it = candidatePkmn.end();
+
+		if (!validObservedMoves.empty())
+		{
+			it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
+				{
+					return cp.canKO && cp.isFaster;
+				});
+
+			if (it == candidatePkmn.end())
+			{
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
+					{
+						return cp.canKO && cp.canSurviveOneHit;
+					});
+			}
+
+			if (it == candidatePkmn.end())
+			{
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
+					{
+						return cp.isFaster && cp.canSurviveOneHit;
+					});
+			}
+
+			if (it == candidatePkmn.end())
+			{
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
+					{
+						return cp.canSurviveOneHit;
+					});
+			}
+
+			if (it == candidatePkmn.end())
+			{
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
+					{
+						return cp.isFaster;
+					});
+			}
+		}
+		else
+		{
+			it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
+				{
+					return cp.canKO && cp.isFaster;
+				});
+
+			if (it == candidatePkmn.end())
+			{
+				it = std::ranges::find_if(candidatePkmn, [](const CandidatePokemon& cp)
+					{
+						return cp.isFaster;
+					});
+			}
+		}
+		BattlePokemon* chosenPokemon{};
+
+		if (it == candidatePkmn.end())
+		{
+			chosenPokemon = candidatePkmn.front().pokemon;
+		}
+		else
+		{
+			chosenPokemon = it->pokemon;
+		}
+
+		self.SetPokemonToSwitchTo(chosenPokemon);
+		return chosenPokemon;
 	}
 
 	bool IsMoveSuperEffective(const Player& self, const pokemonMove& move, const BattlePokemon& pokemon)
@@ -716,7 +574,16 @@ namespace AISwitchLogic
 		return MoveEffectiveness(move, pokemon) <= 2048 && move.GetPower() > 0 && move.m_currentPP > 0;
 	}
 
-	int PokemonTypeEffectiveness(const Player& self, const BattlePokemon& source, const BattlePokemon& target)
+	bool IsStatusMoveEffective(const Player& self, const pokemonMove& move, const BattlePokemon& pokemon)
+	{
+		auto MoveEffectiveness = [&](const pokemonMove& move, const BattlePokemon& targetMon) {
+			return self.GetAIController().AICalculateMoveTypeEffectiveness(move, targetMon);
+			};
+
+		return MoveEffectiveness(move, pokemon) <= 2048 && move.GetPower() > 0 && move.m_currentPP > 0;
+	}
+
+	unsigned int PokemonTypeEffectiveness(const Player& self, const BattlePokemon& source, const BattlePokemon& target)
 	{
 		return self.GetAIController().AICalculatePokemonTypeEffectiveness(source, target);
 	}

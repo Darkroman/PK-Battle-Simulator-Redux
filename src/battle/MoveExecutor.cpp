@@ -24,5 +24,5 @@ MoveExecutor::MoveExecutor(
 
 void MoveExecutor::ExecuteMove()
 {
-    Execute(m_deps.context.currentMove->GetMoveEffectEnum(), m_deps);
+    MoveRoutines::Execute(m_deps.context.currentMove->GetMoveEffectEnum(), m_deps);
 }

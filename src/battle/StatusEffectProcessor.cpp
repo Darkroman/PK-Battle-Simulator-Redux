@@ -32,7 +32,7 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 		m_context.attackingPokemon->IncrementBideCounter();
 	}
 
-	switch (m_context.attackingPokemon->currentStatus)
+	switch (m_context.attackingPokemon->GetStatus())
 	{
 	case Status::Sleeping:
 		canPerform = SleepStatus();
@@ -59,7 +59,7 @@ bool StatusEffectProcessor::CheckPerformativeStatus()
 		canPerform = ConfusedStatus();
 	}
 
-	if (m_context.attackingPokemon->currentStatus == Status::Paralyzed && canPerform == true)
+	if (m_context.attackingPokemon->GetStatus() == Status::Paralyzed && canPerform == true)
 	{
 		canPerform = ParalysisStatus();
 	}
@@ -169,17 +169,17 @@ bool StatusEffectProcessor::ConfusedStatus()
 			m_statusEffectUI.DisplayHurtItselfConfuseMsg();
 
 			// Confused damage does not take into account Pokemon's stat boosts, burn status, stab, nor critical, and is a typeless physical move
-			int level{ m_context.attackingPokemon->GetLevel() };
-			int confusePower{ 40 };
+			unsigned int level{ m_context.attackingPokemon->GetLevel() };
+			unsigned int confusePower{ 40 };
 
-			int sourceAttack{ m_context.attackingPokemon->GetAttack() };
-			int targetDefense{ m_context.attackingPokemon->GetDefense() };
+			unsigned int sourceAttack{ m_context.attackingPokemon->GetAttack() };
+			unsigned int targetDefense{ m_context.attackingPokemon->GetDefense() };
 
-			int baseDamage = (((((2 * level / 5) + 2) * confusePower * sourceAttack) / targetDefense) / 50) + 2;
+			unsigned int baseDamage = (((((2 * level / 5) + 2) * confusePower * sourceAttack) / targetDefense) / 50) + 2;
 
-			std::uniform_int_distribution<int> damagemoddistributor(85, 100);
-			int damageMod{ damagemoddistributor(m_rng.GetGenerator()) };
-			int finalDamage = baseDamage * damageMod / 100;
+			std::uniform_int_distribution<unsigned int> damagemoddistributor(85, 100);
+			unsigned int damageMod{ damagemoddistributor(m_rng.GetGenerator()) };
+			unsigned int finalDamage = baseDamage * damageMod / 100;
 
 			m_context.attackingPokemon->DamageCurrentHP(finalDamage);
 
@@ -218,8 +218,8 @@ void StatusEffectProcessor::ThrashConfuse()
 
 	m_context.attackingPokemon->SetConfusedStatus(true);
 
-	std::uniform_int_distribution<int> randomModDistributor(2, 4);
-	int randomMod(randomModDistributor(m_rng.GetGenerator()));
+	std::uniform_int_distribution<unsigned int> randomModDistributor(2, 4);
+	unsigned int randomMod(randomModDistributor(m_rng.GetGenerator()));
 	m_context.attackingPokemon->SetConfusedTurnCount(randomMod);
 	m_context.attackingPokemon->ResetConfusedCounter();
 }
@@ -262,9 +262,9 @@ void StatusEffectProcessor::RageCheck()
 	if ((m_context.defendingPokemon->IsRaging() && (m_context.damageTaken > 0 && !m_context.defendingPokemon->HasSubstitute()))
 		|| m_context.currentMove->GetMoveEffectEnum() == MoveEffect::Disable) // Target took damage or was targeted by Disable while raging
 	{
-		int attackStage = m_context.defendingPokemon->GetAttackStage();
+		size_t attackStage = m_context.defendingPokemon->GetAttackStage();
 
-		if (attackStage >= 6)
+		if (attackStage >= 12)
 		{
 			m_statusEffectUI.DisplayStatRaiseFailMsg("attack", m_context.defendingPlayer->GetPlayerNameView(), m_context.defendingPokemon->GetNameView());
 		}

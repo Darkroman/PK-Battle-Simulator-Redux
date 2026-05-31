@@ -7,6 +7,7 @@
 #include "MediumMoveScoring.h"
 
 #include "AIMoveClassifier.h"
+#include "../../../battle/StageRatios.h"
 #include "../../../data/StringToTypes.h"
 #include "../../Player.h"
 #include "../../../battle/RandomEngine.h"
@@ -19,7 +20,7 @@ namespace AIMoveScoring
 		std::vector<ScoringResults> results{};
 		results.reserve(4);
 
-		const auto moveArray = selfMon.GetMoveArray();
+		auto moveArray = selfMon.GetMoveArray();
 
 		size_t index{};
 		for (size_t i = 0; i < 4; ++i)
@@ -89,31 +90,16 @@ namespace AIMoveScoring
 		return results;
 	}
 
-	int SwitchDamageScoringRoutine(const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
+	unsigned int SwitchDamageScoringRoutine(const Player& self, const Player& targetPlayer, const pokemonMove& move, const BattlePokemon& selfMon, const BattlePokemon& targetMon)
 	{
 		return self.GetAIController().AICalculateDamage(move, targetPlayer, selfMon, targetMon);
 	}
 
-	int CalculateSpeed(const BattlePokemon& pokemon)
+	unsigned int CalculateSpeed(const BattlePokemon& pokemon)
 	{
-		auto GetStageRatio = [](int stage) -> std::pair<int, int>
-			{
-				if (stage < 0)
-				{
-					return { 2, -stage + 2 };
-				}
-
-				if (stage == 0)
-				{
-					return { 2, 2 };
-				}
-
-				return { 2 + stage, 2 };
-			};
-
 		auto [numerator, denominator] = GetStageRatio(pokemon.GetSpeedStage());
 
-		int speed = pokemon.GetSpeed() * numerator / denominator;
+		unsigned int speed = pokemon.GetSpeed() * numerator / denominator;
 
 		if (pokemon.GetStatus() == Status::Paralyzed)
 		{

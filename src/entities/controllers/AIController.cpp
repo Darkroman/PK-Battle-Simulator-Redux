@@ -5,6 +5,7 @@
 
 #include "../../battle/BattleContext.h"
 #include "../../battle/Typechart.h"
+#include "../../battle/StageRatios.h"
 #include "../Player.h"
 #include "../../moves/MoveEffectEnums.h"
 #include "../../data/StringToTypes.h"
@@ -28,7 +29,7 @@ PlayerDecisionOutcome AIController::ChooseAction(Player& player, const Player& t
 
 	if (player.GetAIController().GetDifficulty() >= Difficulty::Medium)
 	{
-		if (AISwitchLogic::WantsToSwitch(player, targetPlayer, selfMon, targetMon))
+		if (AISwitchLogic::WantsToSwitch(player, targetPlayer, selfMon, targetMon, rng))
 		{
 			decision.action = BattleAction::SwitchPokemon;
 			decision.chosenPokemon = SwitchAction(player, targetPlayer, selfMon, targetMon);
@@ -132,13 +133,13 @@ void AIController::GetOpponentParty(const Player& opponent)
     }
 }
 
-std::array<const pokemonMove*, 4> AIController::GetObservedMoves() const
+std::span<const pokemonMove*> AIController::GetObservedMoves() const
 {
-	const auto* activePokemon = memory.slotOfActivePokemon;
+	auto activePokemon = memory.slotOfActivePokemon;
 
 	if (activePokemon == nullptr || activePokemon->pokemon->IsFainted())
 	{
-		return std::array<const pokemonMove*, 4>{};
+		return std::span<const pokemonMove*>{};
 	}
 
 	return activePokemon->observedMoves.moves;
@@ -217,7 +218,7 @@ void AIController::OnMoveResolved(const BattleContext& context)
 	}
 }
 
-int AIController::AICalculatePokemonTypeEffectiveness(const BattlePokemon& source, const BattlePokemon& target)
+unsigned int AIController::AICalculatePokemonTypeEffectiveness(const BattlePokemon& source, const BattlePokemon& target) const
 {
 	size_t atk1 = static_cast<size_t>(source.GetTypeOneEnum());
 	size_t atk2 = static_cast<size_t>(source.GetTypeTwoEnum());
@@ -226,11 +227,11 @@ int AIController::AICalculatePokemonTypeEffectiveness(const BattlePokemon& sourc
 
 	bool atk2Exists = (atk2 != 18);
 
-	int score1 = typeChart[atk1][def1];
+	unsigned int score1 = typeChart[atk1][def1];
 	if (def2 != 18)
 		score1 = (score1 * typeChart[atk1][def2]) / 4096;
 
-	int score2 = 0;
+	unsigned int score2 = 0;
 	if (atk2Exists)
 	{
 		score2 = typeChart[atk2][def1];
@@ -241,7 +242,7 @@ int AIController::AICalculatePokemonTypeEffectiveness(const BattlePokemon& sourc
 	return std::max(score1, score2);
 }
 
-int AIController::AICalculateMoveTypeEffectiveness(const pokemonMove& currentMove, const BattlePokemon& target)
+unsigned int AIController::AICalculateMoveTypeEffectiveness(const pokemonMove& currentMove, const BattlePokemon& target) const
 {
 	if (currentMove.GetCategoryEnum() == Category::Status)
 	{
@@ -252,23 +253,23 @@ int AIController::AICalculateMoveTypeEffectiveness(const pokemonMove& currentMov
 	size_t defensiveTypeOne = static_cast<size_t>(target.GetTypeOneEnum());
 	size_t defensiveTypeTwo = static_cast<size_t>(target.GetTypeTwoEnum());
 
-	uint16_t effect1 = typeChart[moveType][defensiveTypeOne];
-	uint16_t effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
+	unsigned int effect1 = typeChart[moveType][defensiveTypeOne];
+	unsigned int effect2 = (defensiveTypeTwo == 18) ? 4096 : typeChart[moveType][defensiveTypeTwo];
 
 	if (effect1 == 0 || effect2 == 0)
 	{
 		return 0;
 	}
 
-	int product = static_cast<int>(effect1 * effect2);
+	unsigned int product = effect1 * effect2;
 	return (product / 4096);
 }
 
-int AIController::AICalculateDamage(const pokemonMove& currentMove, const Player& targetPlayer, const BattlePokemon& source, const BattlePokemon& target)
+unsigned int AIController::AICalculateDamage(const pokemonMove& currentMove, const Player& targetPlayer, const BattlePokemon& source, const BattlePokemon& target) const
 {
-	int baseDamage{ 0 };
+	unsigned int baseDamage{ 0 };
 
-	int effectiveness = AICalculateMoveTypeEffectiveness(currentMove, target);
+	unsigned int effectiveness = AICalculateMoveTypeEffectiveness(currentMove, target);
 
 	if (effectiveness <= 0)
 	{
@@ -281,42 +282,27 @@ int AIController::AICalculateDamage(const pokemonMove& currentMove, const Player
 		return baseDamage;
 	}
 
-	auto GetStageRatio = [](int stage) -> std::pair<int, int>
-		{
-			if (stage < 0)
-			{
-				return { 2, -stage + 2 };
-			}
-
-			if (stage == 0)
-			{
-				return { 2, 2 };
-			}
-
-			return { 2 + stage, 2 };
-		};
-
 	// START: Calculate total attack and defense values of attacker and defender
 	bool isPhysical{ currentMove.GetCategoryEnum() == Category::Physical };
 
-	int baseSourceAttack{ isPhysical ? source.GetAttack() : source.GetSpecialAttack() };
-	int baseTargetDefense{ isPhysical ? target.GetDefense() : target.GetSpecialDefense() };
+	unsigned int baseSourceAttack{ isPhysical ? source.GetAttack() : source.GetSpecialAttack() };
+	unsigned int baseTargetDefense{ isPhysical ? target.GetDefense() : target.GetSpecialDefense() };
 
-	int sourceStage{ isPhysical ? source.GetAttackStage() : source.GetSpecialAttackStage() };
-	int targetStage{ isPhysical ? target.GetDefenseStage() : target.GetSpecialDefenseStage() };
+	size_t sourceStage{ isPhysical ? source.GetAttackStage() : source.GetSpecialAttackStage() };
+	size_t targetStage{ isPhysical ? target.GetDefenseStage() : target.GetSpecialDefenseStage() };
 
 	auto [atkNumerator, atkDenominator] = GetStageRatio(sourceStage);
-	int sourceAttack{ baseSourceAttack * atkNumerator / atkDenominator };
+	unsigned int sourceAttack{ baseSourceAttack * atkNumerator / atkDenominator };
 
 	auto [defNumerator, defDenominator] = GetStageRatio(targetStage);
-	int targetDefense{ baseTargetDefense * defNumerator / defDenominator };
+	unsigned int targetDefense{ baseTargetDefense * defNumerator / defDenominator };
 	// END:
 
-	int currentMovePower{ currentMove.GetPower() };
+	unsigned int currentMovePower{ currentMove.GetPower() };
 
-	auto CalculateLowKickPower = [](const BattlePokemon& target)
+	auto CalculateLowKickPower = [](const BattlePokemon& target) -> unsigned int
 		{
-			int pokemonWeight = target.GetPokemonDatabasePointer()->GetPokemonWeightHg();
+			unsigned int pokemonWeight = target.GetPokemonDatabasePointer()->GetPokemonWeightHg();
 
 			if (pokemonWeight <= 0)
 			{
@@ -356,17 +342,17 @@ int AIController::AICalculateDamage(const pokemonMove& currentMove, const Player
 		currentMovePower = CalculateLowKickPower(target);
 	}
 
-	int level = source.GetLevel();
+	unsigned int level = source.GetLevel();
 
 	// Damage formula: (((((2 * level / 5) + 2) * currentMovePower * sourceAttack) / targetDefense) / 50) + 2
 	// Truncates int after every division
-	int step1 = (2 * level / 5) + 2;
-	int step2 = step1 * currentMovePower;
-	int step3 = step2 * sourceAttack;
-	int step4 = step3 / targetDefense;
+	unsigned int step1 = (2 * level / 5) + 2;
+	unsigned int step2 = step1 * currentMovePower;
+	unsigned int step3 = step2 * sourceAttack;
+	unsigned int step4 = step3 / targetDefense;
 	baseDamage = step4 / 50 + 2;
 
-	int interimDamage = baseDamage;
+	unsigned int interimDamage = baseDamage;
 
 	bool hasStab = (currentMove.GetMoveTypeEnum() == source.GetTypeOneEnum() ||
 		currentMove.GetMoveTypeEnum() == source.GetTypeTwoEnum())
@@ -384,7 +370,7 @@ int AIController::AICalculateDamage(const pokemonMove& currentMove, const Player
 		interimDamage = interimDamage * 2048 / 4096;
 	}
 
-	int other{ 4096 };
+	unsigned int other{ 4096 };
 
 	if ((currentMove.GetMoveEffectEnum() == MoveEffect::Stomp || currentMove.GetMoveEffectEnum() == MoveEffect::BodySlam) && target.HasUsedMinimize())
 	{
@@ -406,14 +392,49 @@ int AIController::AICalculateDamage(const pokemonMove& currentMove, const Player
 		other = (other * 2048 + 2048) / 4096;
 	}
 
-	int finalDamage = interimDamage * other / 4096;
+	unsigned int finalDamage = interimDamage * other / 4096;
 
 	if (effectiveness != 0)
 	{
-		finalDamage = std::max(1, finalDamage);
+		finalDamage = std::max((unsigned int)1, finalDamage);
 	}
 
 	return finalDamage;
+}
+
+bool AIController::CalculateStatusMoveEffectiveness(const pokemonMove& currentMove, const Player& targetPlayer, const BattlePokemon& source, const BattlePokemon& target) const
+{
+	if (target.GetStatus() != Status::Normal)
+	{
+		return false;
+	}
+
+	bool hasMist = targetPlayer.HasMist();
+
+	bool isGrassImmune = (currentMove.GetMoveEffectEnum() == MoveEffect::PoisonPowder
+		|| currentMove.GetMoveEffectEnum() == MoveEffect::StunSpore
+		|| currentMove.GetMoveEffectEnum() == MoveEffect::SleepPowder
+		|| currentMove.GetMoveEffectEnum() == MoveEffect::LeechSeed)
+		&& (target.GetTypeOneEnum() == PokemonType::Grass || target.GetTypeTwoEnum() == PokemonType::Grass);
+
+	bool isElectricImmune = (currentMove.GetMoveEffectEnum() == MoveEffect::Paralyze || currentMove.GetMoveEffectEnum() == MoveEffect::StunSpore)
+		&& (target.GetTypeOneEnum() == PokemonType::Electric || target.GetTypeTwoEnum() == PokemonType::Electric);
+
+	bool isThunderWaveImmune = (currentMove.GetMoveTypeEnum() == PokemonType::Electric
+		&& (target.GetTypeOneEnum() == PokemonType::Ground || target.GetTypeTwoEnum() == PokemonType::Ground));
+
+	bool isPoisonImmune = (currentMove.GetMoveTypeEnum() == PokemonType::Poison)
+		&& ((target.GetTypeOneEnum() == PokemonType::Poison || target.GetTypeTwoEnum() == PokemonType::Poison)
+			|| (target.GetTypeOneEnum() == PokemonType::Steel || target.GetTypeTwoEnum() == PokemonType::Steel));
+
+	if (hasMist || isGrassImmune || isElectricImmune || isThunderWaveImmune || isPoisonImmune)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 PersistentMemory* AIController::FindActivePokemonSlot()
@@ -426,19 +447,5 @@ PersistentMemory* AIController::FindActivePokemonSlot()
 			return memory.activeOpponent.opponentActivePokemon == mem.pokemon;
 		});
 
-	return (it == memory.opponentMemory.end()) ? nullptr : &(*it);
+	return (it == memory.opponentMemory.end()) ? nullptr : std::to_address(it);
 }
-/*
-const PersistentMemory* AIController::FindActivePokemonSlot() const
-{
-	auto it = std::find_if(
-		memory.opponentMemory.begin(),
-		memory.opponentMemory.end(),
-		[this](const PersistentMemory& mem)
-		{
-			return memory.activeOpponent.opponentActivePokemon == mem.pokemon;
-		});
-
-	return (it == memory.opponentMemory.end()) ? nullptr : &(*it);
-}
-*/

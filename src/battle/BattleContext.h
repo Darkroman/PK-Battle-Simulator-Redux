@@ -59,12 +59,12 @@ struct BattleContext
 
     int battleTurn{ 0 };
 
-    int damageTaken{};
+    unsigned int damageTaken{};
 
-    int pixelsLost{};
-    int prevPixels{ 400 };
-    int damageInPixels{};
+    unsigned int pixelsLost{};
+    unsigned int prevPixels{ 400 };
+    unsigned int damageInPixels{};
 
-    int initialPowerMultiplier{ 10 };
-    int effectiveness{ 4096 };
+    unsigned int initialPowerMultiplier{ 10 };
+    unsigned int effectiveness{ 4096 };
 };

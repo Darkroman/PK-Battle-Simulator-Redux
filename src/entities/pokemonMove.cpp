@@ -13,12 +13,12 @@ pokemonMove::pokemonMove(size_t dexNumber) :
 
 }
 
-void pokemonMove::SetMovePointer(Move* move)
+void pokemonMove::SetMovePointer(const Move* move)
 {
     mp_move = move;
 }
 
-Move* pokemonMove::GetMovePointer() const
+const Move* pokemonMove::GetMovePointer() const
 {
     return mp_move;
 }
@@ -112,7 +112,7 @@ int pokemonMove::GetMaxPP() const
     return mp_move->GetMaxPP();
 }
 
-int pokemonMove::GetPower() const
+unsigned int pokemonMove::GetPower() const
 {
     return mp_move->GetPower();
 }

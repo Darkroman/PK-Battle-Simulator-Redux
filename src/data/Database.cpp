@@ -1,22 +1,6 @@
 #include "Database.h"
 
-#include "Pokemon.h"
-#include "Move.h"
-#include "StringToTypes.h"
-
-Database::Database()
-{
-    pokedex.reserve(151); //Number of Pokemon
-    movedex.reserve(165); //Number of moves
-
-    LoadEmbedMoves();
-    LoadEmbedPokemon();
-    LoadEmbedLearnset();
-
-#if !defined NDEBUG
-        TestingPokemonAndMoves();
-#endif
-}
+Database::Database(){}
 
 Database& Database::GetInstance()
 {
@@ -24,80 +8,41 @@ Database& Database::GetInstance()
     return instance;
 }
 
-void Database::TestingPokemonAndMoves()
+void Database::TestingPokemonAndMoves(Pokemon*& pkmn1, Pokemon*& pkmn2)
 {
-    pokedex.emplace_back(152, "Poketest1", 999, 100, 100, 100, 100, 100, "Bug", ConvertStringToPokemonType("Bug"), "None", ConvertStringToPokemonType("None"), 10);
+    Pokemon* test1 = new Pokemon(152, "Poketest1", 255, 100, 100, 100, 100, 100, "Bug", ConvertStringToPokemonType("Bug"), "None", ConvertStringToPokemonType("None"), 10);
+    Pokemon* test2 = new Pokemon(153, "Poketest2", 255, 100, 100, 100, 100, 100, "Psychic", ConvertStringToPokemonType("Psychic"), "None", ConvertStringToPokemonType("None"), 10);
 
-    std::vector<size_t> tmp_movelist2{};
-    tmp_movelist2.reserve(165);
     for (size_t i = 1; i < 165; ++i)
     {
-        tmp_movelist2.emplace_back(i);
+        //test1->DebugAddMove(i);
     }
 
-    pokedex[151].CopyMoveListVector(tmp_movelist2);
+    for (size_t i = 1; i < 165; ++i)
+    {
+        //test1->DebugAddMove(i);
+    }
 
-    pokedex.emplace_back(153, "Poketest2", 999, 100, 100, 100, 100, 100, "Psychic", ConvertStringToPokemonType("Psychic"), "None", ConvertStringToPokemonType("None"), 10);
-
-    pokedex[152].CopyMoveListVector(tmp_movelist2);
+    pkmn1 = test1;
+    pkmn2 = test2;
 }
 
-const std::vector<Pokemon>& Database::GetPokedexVector() const
+std::span<const Pokemon> Database::GetPokedexView() const
 {
     return pokedex;
 }
 
-const std::vector<Move>& Database::GetMovedexVector() const
+std::span<const Move> Database::GetMovedexView() const
 {
     return movedex;
 }
 
-Pokemon* Database::GetPointerToPokedexNumber(size_t index)
+const Pokemon* Database::GetPointerToPokedexNumber(size_t index) const
 {
     return &(pokedex[index]);
 }
 
-Move* Database::GetPointerToMovedexNumber(size_t index)
+const Move* Database::GetPointerToMovedexNumber(size_t index) const
 {
     return &(movedex[index]);
-}
-
-std::vector<Pokemon>::iterator Database::PokedexBegin()
-{
-    return pokedex.begin();
-}
-
-std::vector<Pokemon>::iterator Database::PokedexEnd()
-{
-    return pokedex.end();
-}
-
-std::vector<Pokemon>::const_iterator Database::cPokedexBegin() const
-{
-    return pokedex.cbegin();
-}
-
-std::vector<Pokemon>::const_iterator Database::cPokedexEnd() const
-{
-    return pokedex.cend();
-}
-
-std::vector<Move>::iterator Database::MovedexBegin()
-{
-    return movedex.begin();
-}
-
-std::vector<Move>::iterator Database::MovedexEnd()
-{
-    return movedex.end();
-}
-
-std::vector<Move>::const_iterator Database::cMovedexBegin() const
-{
-    return movedex.cbegin();
-}
-
-std::vector<Move>::const_iterator Database::cMovedexEnd() const
-{
-    return movedex.cend();
 }

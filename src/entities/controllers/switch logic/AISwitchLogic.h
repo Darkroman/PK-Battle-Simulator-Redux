@@ -7,7 +7,7 @@ class RandomEngine;
 
 namespace AISwitchLogic
 {
-	bool WantsToSwitch(const Player&, const Player&, const BattlePokemon&, const BattlePokemon&);
+	bool WantsToSwitch(const Player&, const Player&, const BattlePokemon&, const BattlePokemon&, RandomEngine&);
 
 	BattlePokemon* ChooseSwitch(Player&, const Player&, const BattlePokemon&, const BattlePokemon&);
 
@@ -23,5 +23,7 @@ namespace AISwitchLogic
 
 	bool IsMoveNotVeryEffective(const Player&, const pokemonMove&, const BattlePokemon&);
 
-	int PokemonTypeEffectiveness(const Player& self, const BattlePokemon& source, const BattlePokemon& target);
+	bool isStatusMoveEffective(const Player&, const pokemonMove&, const BattlePokemon&);
+
+	unsigned int PokemonTypeEffectiveness(const Player& self, const BattlePokemon& source, const BattlePokemon& target);
 }
