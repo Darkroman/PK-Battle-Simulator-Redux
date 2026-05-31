@@ -7,6 +7,27 @@
 
    </summary>
 
+### 5/30/2026
+- **More AI switching logic improvements**
+  - Optimized the mid-turn and Post-KO switching algorithms which resulted in decent performance gains in simulation times with medium and hard difficulty AIs.
+  - Better AI switching logic. Should result in much less switch jittering, more consistent and conservative decision making.
+    - AI switching won't be as aggressive to switch to another Pokemon.
+    - AI shouldn't be sending in a Pokemon to its death.
+- **Simulations now added into the main menu**
+  - You can sim x amount of iterations of 2 customizable AI teams. You can use this for benchmarking and/or see how different trainers at different AI levels compare against eachother.
+  - **NOTE:** The simulations will utilize all your CPU cores to the fullest. Recommend not to go over 10 million iterations. Even less iterations on less powerful CPUs. It's just gonna take a while.
+    - As an example on my 8 core 16 thread AMD 5800x CPU, Red trainer vs Blue trainer and with both AIs at hard difficulty, 10 million iterations takes around 25-27 seconds.
+- **Developer notes**
+  - Besides the AI switching algorithms, I also converted my Move Routines to use compile-time function pointer jump table instead std::variant which resulted in a negligible speed bump, but slightly cleaner code.
+  - The other big performance gain was actually from making sure to not needlessly run RandomizePostTurnOrder() in my PostTurnEffectProcessor after every status check.
+    - The RandomizePostTurnOrder() method only runs when both Pokemon have a specific status (such as both having leech seed or both having some sort of damage status or same field effect).
+  - Stage ratios are no longer stored, they are calculated but result in the same outcomes. This allowed for multiple files having access to the same GetStageRatio() constexpr functions.
+  - Added MoveRoutines namespace. 
+  - StageRatio.h, AppState.h, PokedexConstexpr.h, MovedexConstexpr.h, and LearnsetData.h files added.
+    - Removed LoadEmbed .cpp files.
+  - Instead of Pokemon, moves and learnsets being instantiated via std::vector, they're compile-time constant arrays now.
+  - Experimented with data types. A lot of int types are now unsigned int types. Also using size_t a little more when indexing into contiguous memory data structures.
+
 ### 5/15/2026
 - **AI Switching improvements, additions and bug fixes**
   - Added a few more gating checks for when AI determines if it should switch or not.
@@ -217,13 +238,16 @@ This was coded in VS2026 Community, utilizing up to the C++23 standard features.
 
   </summary>
   
-- On the main menu screen you can choose up to 9 options to edit Player One or Player Two's Pokemon, controller type (human, or different AI difficulties), load or save party.
+- On the main menu screen you can choose up to 8 options to edit Player One or Player Two's Pokemon, controller type (human, or different AI difficulties), load or save party.
+- Option 9 is for sim iteration amount, 10 to run simulations and 11 for normal battle.
   - Each option screen requires pressing the number then hitting enter.
-- The game comes with default teams of gen 1's protagonist Red's based team, the rival Blue's team and Lance's Yellow version team. Choose Load Party (8) in the menu if you want to use them.
-- Editing a player's pokemon puts you in a submenu to choose options to add, change, release (delete) pokemon as well as edit their moves, stats, and placing in the party.
+- The game comes with default teams of versions of gen 1's protagonist Red's team, the rival Blue's team and Lance's Yellow version team. Choose Load Party (8) in the menu if you want to use them.- Editing a player's pokemon puts you in a submenu to choose options to add, change, release (delete) pokemon as well as edit their moves, stats, and placing in the party.
   - You can select between all gen 1's 151 Pokemon, as well as their moves. Names of the Pokemon, moves and their numbers can be used as input.
-    - **note:** Move names are hyphen and space sensitive, but not case sensitive.
-- When ready to battle press 9 then enter in the main menu to start! If either team has no pokemon or the pokemon have no moves, it will let you know and kick you back to the main menu.
+  - There aren't level restrictions on moves so a level 1 Bulbasaur can have Solar Beam if you so choose.
+    - **NOTE:** Move names are hyphen and space sensitive, but not case sensitive.
+- When teams are set, type 11 then enter in the main menu to start a battle! If either team has no pokemon or the pokemon have no moves, it will let you know and kick you back to the main menu.
+- If you want to sim AI teams vs eachother (multiple battles without any output accept total wins and losses), you can do that as well!
+  - 9 in main menu to set amount of battle iterations, and 10 to start the sims. It will kick you out if no Pokemon or moves on pokemon or if player controller types are human.
 </details>
 
 <details open>
@@ -271,6 +295,7 @@ I started this project a long time ago and have been working on it off and on wh
 - All generation 1 volatile and non-volatile status conditions working as they do in later generations.
 - Easy and Medium A.I difficulties largely based on gen 4's Basic and Strong/Evaluate Attack scoring.
 - There are however no natures, held items, or abilities. Whether I might add them in the future is up in the air.
+- Bulk match AI battle simulations. Sim up to x amount of battles between 2 AI teams utilizing all CPU cores.
 </details>
 
 <details>

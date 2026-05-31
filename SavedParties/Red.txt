@@ -33,7 +33,7 @@ IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
 Pokemon 4:
 Venusaur
 Level: 100
-EVs: 4 HP  / 0 Atk  / 0 Def  / 252 SpA  / 0 SpD  / 252 Spe
+EVs: 4 HP  / 252 Atk  / 0 Def  / 0 SpA  / 0 SpD  / 252 Spe
 IVs: 31 HP  / 31 Atk  / 31 Def  / 31 SpA  / 31 SpD  / 31 Spe
 - Sleep Powder
 - Body Slam
